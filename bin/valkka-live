@@ -1,0 +1,6 @@
+#!/bin/bash
+# disable vsync for intel:
+export vblank_mode=0
+# disable vsync for nvidia proprietary drivers:
+export __GL_SYNC_TO_VBLANK=0
+run-valkka-live
