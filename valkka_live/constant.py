@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    constant.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.0 
+@version 0.1.1 
 @brief   Constant strings, etc.
 """
 
