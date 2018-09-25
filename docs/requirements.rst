@@ -24,7 +24,7 @@ Install with
 
 ::
 
-    sudo pip3 install valkka-live
+    pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git 
     install-valkka-core
     
 *install-valkka-core* is a script that subscribes you to a PPA repository and installs valkka-core binary packages.
@@ -35,6 +35,13 @@ Run with
 
     valkka-live
 
+    
+In the case *install-valkka-core* and *valkka-live* don't work, you must fix your path with
+
+::
+    
+    export PATH=$PATH:$HOME/.local/bin
+    
     
 Development version
 -------------------

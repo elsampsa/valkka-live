@@ -57,13 +57,17 @@
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>Install with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">pip3</span> <span class="n">install</span> <span class="n">valkka</span><span class="o">-</span><span class="n">live</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="o">--</span><span class="n">upgrade</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">.</span><span class="n">git</span>
 <span class="n">install</span><span class="o">-</span><span class="n">valkka</span><span class="o">-</span><span class="n">core</span>
 </pre></div>
 </div>
 <p><em>install-valkka-core</em> is a script that subscribes you to a PPA repository and installs valkka-core binary packages.</p>
 <p>Run with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span>
+</pre></div>
+</div>
+<p>In the case <em>install-valkka-core</em> and <em>valkka-live</em> don’t work, you must fix your path with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/.local/bin
 </pre></div>
 </div>
 </div>

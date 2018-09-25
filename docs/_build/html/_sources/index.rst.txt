@@ -34,9 +34,12 @@ Quickstart
 
 Install with
 
+.. pypi sucks
+.. pip3 install --user --upgrade valkka-live
+
 ::
 
-    sudo pip3 install valkka-live
+    pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git    
     install-valkka-core
     
 Run with
@@ -45,7 +48,13 @@ Run with
 
     valkka-live
     
-   
+    
+In the case *install-valkka-core* and *valkka-live* don't work, you must fix your path with
+
+::
+    
+    export PATH=$PATH:$HOME/.local/bin
+  
    
 Contents:
 
