@@ -90,6 +90,8 @@ class FilterChainGroup:
 
     def update(self):
         """Reads all devices from the database.  Creates new filterchains and removes old ones
+        
+        TODO: currently this is broken: if user changes any other field than the ip address, the cameras don't get updated
         """
         new_ids = []
         old_ids = []

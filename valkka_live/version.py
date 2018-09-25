@@ -33,14 +33,22 @@ VERSION_PATCH=0
 
 # required valkka version
 MIN_VALKKA_VERSION_MAJOR = 0
-MIN_VALKKA_VERSION_MINOR = 5 # TODO: 6
+MIN_VALKKA_VERSION_MINOR = 5
+MIN_VALKKA_VERSION_PATCH = 4
 
 
 def check():
     # check that the imported valkka is fresh enough
-    if ( (MIN_VALKKA_VERSION_MAJOR > VALKKA_VERSION_MAJOR) or (MIN_VALKKA_VERSION_MINOR > VALKKA_VERSION_MINOR) ):
-        print(constant.valkka_core_old % (MIN_VALKKA_VERSION_MAJOR, MIN_VALKKA_VERSION_MINOR, VALKKA_VERSION_MAJOR, VALKKA_VERSION_MINOR)) 
-        raise SystemExit()
+    if ( (MIN_VALKKA_VERSION_MAJOR > VALKKA_VERSION_MAJOR) 
+        or (MIN_VALKKA_VERSION_MINOR > VALKKA_VERSION_MINOR) 
+        or (MIN_VALKKA_VERSION_PATCH > VALKKA_VERSION_PATCH) ):
+            print(constant.valkka_core_old % (MIN_VALKKA_VERSION_MAJOR, 
+                                              MIN_VALKKA_VERSION_MINOR, 
+                                              MIN_VALKKA_VERSION_PATCH,
+                                              VALKKA_VERSION_MAJOR, 
+                                              VALKKA_VERSION_MINOR,
+                                              VALKKA_VERSION_PATCH,))
+            raise SystemExit()
 
 
 def get():

@@ -497,9 +497,12 @@ class RootVideoContainer:
                 QuickMenuElement(title="Screen 1"),
                 QuickMenuElement(title="Screen 2")
             ]
+            
+        """ TODO: activate after gpu-hopping has been debugged
         self.screenmenu = ScreenMenu(self.window)
         self.screenmenu.screen_1.triggered.connect(self.test_slot)
         self.screenmenu.screen_2.triggered.connect(self.test_slot)
+        """
 
         if (len(self.gpu_handler.true_screens) > 1):
             # so, there's more than a single x screen: create a button for

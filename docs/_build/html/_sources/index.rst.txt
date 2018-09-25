@@ -11,7 +11,7 @@ Valkka Live
    :description: A python video surveillance program
    :keywords: opensource, python, video surveillance, video management, video analysis, machine vision, qt
 
-**Currently under construction.  Please come back in few days**
+.. **Currently under construction.  Please come back in few days**
    
 Valkka Live is an OpenSource video surveillance and management program for Linux 
 

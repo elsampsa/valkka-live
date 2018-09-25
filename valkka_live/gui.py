@@ -204,7 +204,8 @@ class MyGui(QtWidgets.QMainWindow):
     def makeLogic(self):
         # *** When camera list has been closed, re-create the cameralist tree and update filterchains ***
         self.manage_cameras_win.signals.close.connect(self.updateCameraTree)
-        self.manage_cameras_win.signals.close.connect(self.filterchain_group.update)
+        # self.manage_cameras_win.signals.close.connect(self.filterchain_group.update) # TODO: use this once fixed
+        self.manage_cameras_win.signals.close.connect(self.filterchain_group.read)
         self.manage_memory_container.signals.save.connect(self.save_memory_conf_slot)
     
         # *** Menu bar connections ***
@@ -322,8 +323,8 @@ class MyGui(QtWidgets.QMainWindow):
         )
         
         self.filterchain_group = FilterChainGroup(datamodel = self.dm, livethread = self.livethread, gpu_handler = self.gpu_handler)
-        # self.filterchain_group.read()
-        self.filterchain_group.update()
+        self.filterchain_group.read()
+        # self.filterchain_group.update() # TODO: use this once fixed
 
     
     def closeValkka(self):

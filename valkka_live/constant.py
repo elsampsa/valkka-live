@@ -41,7 +41,7 @@ valkka_core_old="""
 
 Valkka core module is not up to date
 
-(required version %i.%i, valkka-core version %i.%i)
+(required version %i.%i.%i, valkka-core version %i.%i.%i)
 
 Please update with
 
