@@ -37,7 +37,7 @@ setup(
     description = "Valkka Live video surveillance program",
     license = "AGPL",
     keywords = "valkka video surveillance",
-    url = "http://www.iki.fi/sampsa.riikonen", # TODO: fix this, once ready
+    url = "https://elsampsa.github.io/valkka-live/",
 
     long_description ="""
     Valkka Live is modular, hackable and customizable OpenSource approach to modern video surveillance and management solutions in local area networks
