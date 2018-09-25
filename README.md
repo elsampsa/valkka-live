@@ -7,6 +7,6 @@
 
 For installation instructions, manual, etc. go [here](https://elsampsa.github.io/valkka-live)
 
-### Copyright Sampsa Riikonen 2018
+Copyright Sampsa Riikonen 2018
 
-### License: AGPLv3+
+License: AGPLv3+
