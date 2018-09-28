@@ -20,7 +20,13 @@ System requirements
 Installing
 ----------
 
-Install with
+We'll be installing directly from github, so git is required:
+
+::
+
+    sudo apt-get install git
+
+After that, install with:
 
 ::
 
