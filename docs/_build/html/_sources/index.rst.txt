@@ -37,6 +37,14 @@ Install with
 .. pypi sucks
 .. pip3 install --user --upgrade valkka-live
 
+We'll be installing directly from github, so git is required:
+
+::
+
+    sudo apt-get install git
+
+After that, install with:
+
 ::
 
     pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git    

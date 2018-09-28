@@ -35,6 +35,9 @@ class QuickMenuElement(object):
     def getTitle(self):
         return self.title
 
+    def getMethodName(self):
+        return self.method_name
+
 
 class QuickMenuSection(object):
 
@@ -110,6 +113,10 @@ class QuickMenu(object):
     def connect(self, name, cb):
         method = getattr(self, name)
         method.triggered.connect(cb)
+
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     def popup(self, qp):
         self.menu.popup(qp)

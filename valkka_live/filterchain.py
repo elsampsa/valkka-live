@@ -24,7 +24,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 from valkka_live.datamodel import DataModel
 from valkka_live.gpuhandler import GPUHandler
-from valkka.api2.chains import ManagedFilterchain
+from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2
 from valkka.api2.threads import LiveThread
 from valkka.api2.tools import parameterInitCheck
 
@@ -73,7 +73,8 @@ class FilterChainGroup:
         for device in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
             if (self.verbose): print(self.pre, "read : device", device)
             if (device["classname"] == DataModel.RTSPCameraRow.__name__):
-                chain = ManagedFilterchain( # decoding and branching the stream happens here
+                # chain = ManagedFilterchain( # decoding and branching the stream happens here
+                chain = ManagedFilterchain2( # decoding and branching the stream happens here
                     livethread  = self.livethread,
                     openglthreads
                                 = self.gpu_handler.openglthreads,

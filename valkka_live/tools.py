@@ -48,15 +48,33 @@ def getConfigFile(fname):
     return os.path.join(config_dir, fname)
 
 
-""" # TODO
-def scanMvision():
-    import valkka_mvision
+def scanMVisionClasses():
+    mvision_classes = []
+    
+    try:
+        import valkka_mvision
+    except ModuleNotFoundError:
+        return mvision_classes
+        
     dic = valkka_mvision.__dict__
-    submodules = []
-    for key in dic:
+    
+    # search for namespaces:
+    # valkka_mvision.*.base.MVisionProcess : should have class member "name"
+    for key in dic: # valkka_mvision.*
         obj = dic[key]
         if isinstance(obj, types.ModuleType):
-            print key
-"""
-
+            # print(key)
+            # print(dir(obj), obj.__loader__)
+            # loader = obj.__loader__
+            # print(dir(loader))
+            if (hasattr(obj, "base")):
+                base = getattr(obj, "base")
+                if hasattr(base, "MVisionProcess"):
+                    mvisionclass = getattr(base, "MVisionProcess")
+                    if hasattr(mvisionclass, "name"):
+                        name = getattr(mvisionclass, "name")
+                        print("found machine vision class with name", name)
+                        mvision_classes.append(mvisionclass)
+    return mvision_classes                
+    
 
