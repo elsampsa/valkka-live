@@ -42,23 +42,32 @@ class VideoContainerNxM(RootVideoContainer):
         "title"             : (str, "Video Grid"),
         "n_dim"             : (int, 1),  # y  3
         "m_dim"             : (int, 1),  # x  2
-        "child_class"       : (type, VideoContainer)
+        "child_class"       : (type, VideoContainer),
+        "child_class_pars"  : (dict, {})
     }
 
     def __init__(self, **kwargs):
+        parameterInitCheck(VideoContainerNxM.parameter_defs, kwargs, self)
+        kwargs.pop("n_dim"); kwargs.pop("m_dim")
         super().__init__(**kwargs)
 
     def serialize(self):
         dic = super().serialize()
-        dic["kwargs"] = {"title": self.title,
-                         "n_dim": self.n_dim,
-                         "m_dim": self.m_dim
-                         }
+        dic["kwargs"] = {
+            "title": self.title,
+            "n_dim": self.n_dim,
+            "m_dim": self.m_dim
+            }
         return dic
 
     def createChildren(self):
         for i in range(self.n_dim * self.m_dim):
-            vc = self.child_class(filterchain_group = self.filterchain_group, n_xscreen = self.n_xscreen)
+            pars = {
+                "filterchain_group" : self.filterchain_group,
+                "n_xscreen"         : self.n_xscreen
+                }
+            pars.update(self.child_class_pars) # whatever extra parameters there might be ..
+            vc = self.child_class(**pars)
             self.children.append(vc)
 
     def placeChildren(self):

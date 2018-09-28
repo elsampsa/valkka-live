@@ -33,12 +33,15 @@ class GPUHandler:
     """
 
     # copy parameter definitions from OpenGLThread, apply same parameters to each OpenGLThread
-    parameter_defs = OpenGLThread.parameter_defs 
+    parameter_defs = OpenGLThread.parameter_defs
+    parameter_defs.update({
+        "cpu_scheme" : None
+        })
     
     
     def __init__(self, **kwargs):
         self.pre = self.__class__.__name__+" : " # auxiliary string for debugging output
-        parameterInitCheck(self.parameter_defs, kwargs, self) # check kwargs agains parameter_defs, attach ok'd parameters to this object as attributes
+        parameterInitCheck(GPUHandler.parameter_defs, kwargs, self) # check kwargs agains parameter_defs, attach ok'd parameters to this object as attributes
         self.kwargs = kwargs
         self.true_screens = []  # list of QtCore.QScreen
         self.openglthreads = [] # list of OpenGLThread instances
@@ -54,6 +57,10 @@ class GPUHandler:
 
             print(pre, "GPUHandler: starting OpenGLThread with", x_connection)
 
+            affinity = -1
+            if self.cpu_scheme:
+                affinity = self.cpu_scheme.getOpenGL()
+
             openglthread = OpenGLThread(
                 name="gpu_" + str(n_gpu),
                 # reserve stacks of YUV video frames for various resolutions
@@ -63,7 +70,7 @@ class GPUHandler:
                 n_4K    = self.n_4K,
                 verbose = False,
                 msbuftime    = self.msbuftime,
-                # affinity     = self.affinity,
+                affinity     = affinity,
                 x_connection = x_connection
             )
 

@@ -158,7 +158,7 @@ class VideoContainer:
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(VideoContainer.parameter_defs, kwargs, self)
         self.signals = self.Signals()
         
         # reset callback functions

@@ -168,7 +168,7 @@ class DataModel:
             self.pre = self.__class__.__name__ + " : "
             # check for input parameters, attach them to this instance as
             # attributes
-            parameterInitCheck(self.parameter_defs, kwargs, self)
+            parameterInitCheck(DataModel.RTSPCameraDevice.parameter_defs, kwargs, self)
 
         def __eq__(self, other):
             return self._id == other._id

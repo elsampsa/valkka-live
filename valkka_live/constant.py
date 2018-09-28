@@ -69,3 +69,9 @@ config_skeleton={ # TODO: do we need this, really?
   "containers" : [],
   }
 
+
+# shared memory ring-buffer and image sizes
+shmem_n_buffer = 10
+shmem_image_dimensions = (1920 // 4, 1080 // 4)
+shmem_image_interval = 1000
+

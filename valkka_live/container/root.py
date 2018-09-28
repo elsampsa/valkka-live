@@ -69,7 +69,8 @@ class RootVideoContainer:
         "gpu_handler"           : GPUHandler,
         "filterchain_group"     : FilterChainGroup, # this will be passed upstream to VideoContainer
         "title"                 : (str, "Video Grid"),
-        "child_class"           : (type, VideoContainer)
+        "child_class"           : (type, VideoContainer),
+        "child_class_pars"      : (dict, {})
     }
 
     def __init__(self, **kwargs):
@@ -77,7 +78,7 @@ class RootVideoContainer:
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(RootVideoContainer.parameter_defs, kwargs, self)
         self.signals = self.Signals()
         self.closed = False
         self.children = []

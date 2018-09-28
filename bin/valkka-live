@@ -3,4 +3,8 @@
 export vblank_mode=0
 # disable vsync for nvidia proprietary drivers:
 export __GL_SYNC_TO_VBLANK=0
+# turn off compositor
+qdbus org.kde.KWin /Compositor suspend
 run-valkka-live
+# if we would like to resume compositor ..
+# qdbus org.kde.KWin /Compositor resume

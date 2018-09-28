@@ -21,13 +21,36 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.api2.tools import parameterInitCheck
 from valkka_live.container.video import VideoContainer
+from valkka_live.filterchain import FilterChainGroup
+from valkka_live import constant
+from valkka_mvision import multiprocess
+
 
 
 class MVisionContainer(VideoContainer):
     """This class starts an analyzer process and passes it the correct shmem identifier
     """
     
+    parameter_defs = {
+        "parent_container"  : None,                 # RootVideoContainer or child class
+        "filterchain_group" : FilterChainGroup,     # Filterchain manager class
+        "n_xscreen"         : (int,0),              # x-screen index
+        "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
+        "thread"            : None # thread that watches the multiprocesses communication pipes
+    }
+
+    def __init__(self, **kwargs):
+        # auxiliary string for debugging output
+        self.pre = self.__class__.__name__ + " : "
+        # check for input parameters, attach them to this instance as
+        # attributes
+        parameterInitCheck(MVisionContainer.parameter_defs, kwargs, self)
+        assert(issubclass(self.mvision_class,multiprocess.QValkkaOpenCVProcess))
+        super().__init__(parent_container = self.parent_container, filterchain_group = self.filterchain_group, n_xscreen = self.n_xscreen)
+        
+        
     def makeWidget(self, parent=None):
         self.main_widget = self.ContainerWidget(parent)
         # self.signals.close.connect(self.close_slot) # not closed by clicking
@@ -83,6 +106,7 @@ class MVisionContainer(VideoContainer):
             - Get the custom widget from the analyzer.  Embed into the view.
             - Start the analyzer multiprocess
             """
+            """
             # a simulation ..
             self.mvision_widget = QtWidgets.QFrame()
             self.mvision_widget.setAutoFillBackground(True)
@@ -90,6 +114,19 @@ class MVisionContainer(VideoContainer):
             
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
+            """
+            # initiate mvision process
+            self.mvision_process = self.mvision_class(
+                n_buffer         = constant.shmem_n_buffer,
+                image_dimensions = constant.shmem_image_dimensions,
+                shmem_name       = self.shmem_name
+                )
+            
+            self.mvision_widget = self.mvision_process.getWidget()
+            self.mvision_widget.setParent(self.main_widget)
+            self.main_layout.addWidget(self.mvision_widget)
+            
+            self.thread.addProcess(self.mvision_process) # process starts running .. thread (QValkkaThread) calls processes (QValkkaOpenCVProcess) start method
             
             
     def clearDevice(self):
@@ -107,7 +144,9 @@ class MVisionContainer(VideoContainer):
         """
         self.main_layout.removeWidget(self.mvision_widget)
         self.mvision_widget = None
+        self.thread.delProcess(self.mvision_process)
         
+        self.mvision_process = None
         self.filterchain = None
         self.device = None
         

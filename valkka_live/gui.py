@@ -11,13 +11,13 @@ Valkka Live is free software: you can redistribute it and/or modify it under the
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
+You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
-@brief   Main graphical user interface for the Valkka Live program   
+@version 0.1.1
+@brief   Main graphical user interface for the Valkka Live program
 """
 
 
@@ -29,7 +29,7 @@ except ImportError:
     print(constant.valkka_core_not_found)
     raise SystemExit()
 
-from valkka_live import version 
+from valkka_live import version
 version.check() # checks the valkka version
 
 import sys
@@ -42,6 +42,7 @@ from valkka_live.menu import FileMenu, ViewMenu, ConfigMenu, AboutMenu
 from valkka_live.gpuhandler import GPUHandler
 from valkka_live import style, container, tools, constant
 from valkka_live import default
+from valkka_live.cpu import CPUScheme
 from valkka_live.quickmenu import QuickMenu, QuickMenuElement
 
 from valkka_live.datamodel import DataModel
@@ -67,10 +68,14 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def initVars(self):
+        self.thread = None # a QThread that reads multiprocess pipes
         self.containers = []
         self.mvision_containers = []
         self.mvision_classes = tools.scanMVisionClasses()
-
+        if (len(self.mvision_classes) > 0):
+            self.mvision = True
+        else:
+            self.mvision = False
 
     def initConfigFiles(self):
         self.config_file = tools.getConfigFile("config")
@@ -85,8 +90,8 @@ class MyGui(QtWidgets.QMainWindow):
             self.saveConfigFile()
             self.save_window_layout()
             self.first_start = True
-            
-        
+
+
     def readDB(self):
         """Datamodel includes the following files: config.dat, devices.dat
         """
@@ -95,31 +100,31 @@ class MyGui(QtWidgets.QMainWindow):
             print(pre, "readDB : first start")
             self.dm.clearAll()
             self.dm.saveAll()
-            
-            
-            
+
+
+
         # If camera collection is corrupt
         if not self.dm.checkCameraCollection():
             self.dm.clearCameraCollection()
-            
-        
+
+
     def generateMethods(self):
         """Generate some member functions
         """
         for i in range(1, 5):
             # adds member function grid_ixi_slot(self)
             self.make_grid_slot(i, i)
-            
+
         for cl in self.mvision_classes:
-            self.make_mvision_slot(cl.name, cl.name)
-            
+            self.make_mvision_slot(cl)
+
 
     def QCapsulate(self, widget, name, blocking = False):
         """Helper function that encapsulates QWidget into a QMainWindow
         """
-        
+
         class QuickWindow(QtWidgets.QMainWindow):
-            
+
             class Signals(QtCore.QObject):
                 close = QtCore.Signal()
 
@@ -128,11 +133,11 @@ class MyGui(QtWidgets.QMainWindow):
                 if (blocking):
                     self.setWindowModality(QtCore.Qt.ApplicationModal)
                 self.signals = self.Signals()
-                            
+
             def closeEvent(self, e):
                 self.signals.close.emit()
                 e.accept()
-                
+
         win = QuickWindow(blocking = blocking)
         win.setCentralWidget(widget)
         win.setLayout(QtWidgets.QHBoxLayout())
@@ -152,20 +157,20 @@ class MyGui(QtWidgets.QMainWindow):
         self.filemenu = FileMenu(parent=self)
         self.viewmenu = ViewMenu(parent=self)  # grids up to 4x4
         self.configmenu = ConfigMenu(parent=self)
-        
-        if (len(self.mvision_classes)>0):
+
+        if self.mvision:
             mvision_elements = []
-            
+
             for cl in self.mvision_classes:
                 el = QuickMenuElement(title = cl.name, method_name = cl.name)
                 mvision_elements.append(el)
-                
+
             class MVisionMenu(QuickMenu):
                 title = "Machine Vision"
                 elements = mvision_elements
-            
+
             self.mvisionmenu = MVisionMenu(parent = self)
-            
+
         self.aboutmenu = AboutMenu(parent=self)
 
 
@@ -177,23 +182,23 @@ class MyGui(QtWidgets.QMainWindow):
         self.manage_memory_container = self.dm.getConfigForm()
         self.manage_memory_win = self.QCapsulate(
             self.manage_memory_container.widget, "Memory Configuration", blocking = True)
-        
+
         self.makeCameraTree()
         self.camera_list_win = self.QCapsulate(
             self.treelist, "Camera List")
-        
+
         # self.camera_list_win.show()
-        
-       
+
+
     def makeCameraTree(self):
         self.root = HeaderListItem()
         self.treelist = BasicView(parent = None, root = self.root)
         self.updateCameraTree()
-        
-        
+
+
     def updateCameraTree(self):
         self.treelist.reset_()
-        
+
         self.server = ServerListItem(
             name = "Localhost", ip = "127.0.0.1", parent = self.root)
         """
@@ -207,28 +212,28 @@ class MyGui(QtWidgets.QMainWindow):
             ip="192.168.1.4", username="admin", password="1234"), parent=self.server1)
         """
         devices = []
-        
+
         for row in self.dm.camera_collection.get():
             print(pre, "makeCameraTree : row", row)
             if (row["classname"] == DataModel.RTSPCameraRow.__name__):
                 row.pop("classname")
                 devices.append(
                     RTSPCameraListItem(
-                        camera = DataModel.RTSPCameraDevice(**row), 
+                        camera = DataModel.RTSPCameraDevice(**row),
                         parent = self.server
                     )
                 )
-                    
+
         self.treelist.update()
-        
-    
+
+
     def makeLogic(self):
         # *** When camera list has been closed, re-create the cameralist tree and update filterchains ***
         self.manage_cameras_win.signals.close.connect(self.updateCameraTree)
         # self.manage_cameras_win.signals.close.connect(self.filterchain_group.update) # TODO: use this once fixed
         self.manage_cameras_win.signals.close.connect(self.filterchain_group.read)
         self.manage_memory_container.signals.save.connect(self.save_memory_conf_slot)
-    
+
         # *** Menu bar connections ***
         # the self.filemenu.exit attribute was autogenerated
         self.filemenu.exit.               triggered.connect(self.exit_slot)
@@ -255,7 +260,7 @@ class MyGui(QtWidgets.QMainWindow):
             menu_func.triggered.connect(slot_func)
             # i.e., like this : self.viewmenu.video_grid.grid_1x1.triggered.connect(slot_func)
 
-            
+
         # *** autogenerated machine vision menu and slots ***
         for cl in self.mvision_classes:
             getattr(self.mvisionmenu,cl.name).triggered.connect(getattr(self,cl.name+"_slot"))
@@ -263,7 +268,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def post(self):
-        # """
+        """
         self.mvision_container = container.VideoContainerNxM(
             parent            = None,
             gpu_handler       = self.gpu_handler,
@@ -271,9 +276,10 @@ class MyGui(QtWidgets.QMainWindow):
             title             = "MVision",
             n_dim             = 1,
             m_dim             = 1,
-            child_class       = container.MVisionContainer
+            child_class       = container.MVisionContainer,
+            child_class_pars  = mvision
             )
-        # """
+        """
 
 
     def serializeContainers(self):
@@ -307,8 +313,8 @@ class MyGui(QtWidgets.QMainWindow):
         f.write(configdump)
         f.close()
         self.saveVersionNumber()
-        
-        
+
+
     def loadConfigFile(self):
         ver = self.readVersionNumber()
         print("valkka_live : loading config file for version number", ver)
@@ -325,8 +331,8 @@ class MyGui(QtWidgets.QMainWindow):
         f = open(self.version_file, "w")
         f.write(version.get())
         f.close()
-    
-    
+
+
     def readVersionNumber(self):
         f = open(self.version_file, "r")
         st = f.read()
@@ -335,61 +341,75 @@ class MyGui(QtWidgets.QMainWindow):
         for s in st.split("."):
             vs.append(int(s))
         return vs
-    
+
 
     def openValkka(self):
+        self.cpu_scheme = CPUScheme()
+        
         # self.dm.camera_collection
         try:
             memory_config = next(self.dm.config_collection.get({"classname" : DataModel.MemoryConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default mem config")
             memory_config = default.memory_config
-        
+
         n_frames = round(memory_config["msbuftime"] * default.fps / 1000.) # accumulated frames per buffering time = n_frames
-        
+
         self.gpu_handler = GPUHandler(
             n_720p  = memory_config["n_720p"] * n_frames, # n_cameras * n_frames
             n_1080p = memory_config["n_1080p"] * n_frames,
             n_1440p = memory_config["n_1440p"] * n_frames,
             n_4K    = memory_config["n_4K"] * n_frames,
             msbuftime = memory_config["msbuftime"],
-            verbose = False
+            verbose = False,
+            cpu_scheme = self.cpu_scheme
         )
-    
+
         self.livethread = LiveThread(
             name = "live_thread",
             # verbose = True,
             verbose = False,
-            # affinity = self.pardic["live affinity"]
+            affinity = self.cpu_scheme.getLive()
         )
-        
-        self.filterchain_group = FilterChainGroup(datamodel = self.dm, livethread = self.livethread, gpu_handler = self.gpu_handler)
+
+        self.filterchain_group = FilterChainGroup(datamodel = self.dm, livethread = self.livethread, gpu_handler = self.gpu_handler, cpu_scheme = self.cpu_scheme)
         self.filterchain_group.read()
         # self.filterchain_group.update() # TODO: use this once fixed
-
-    
+        
+        try:
+            from valkka_mvision import multiprocess
+        except ImportError:
+            pass
+        else:
+            if self.mvision:
+                self.thread = multiprocess.QValkkaThread()
+                self.thread.start()
+                
+                
     def closeValkka(self):
-        # live => chain => opengl 
+        # live => chain => opengl
         self.livethread.close()
         self.filterchain_group.close()
         self.gpu_handler.close()
-        
-        
+        if self.thread:
+            self.thread.stop()
+
+
     def reOpenValkka(self):
         self.save_window_layout("tmplayout")
         self.closeContainers()
         self.closeValkka()
         self.openValkka()
         self.load_window_layout("tmplayout")
-        
-        
+
+
     def closeContainers(self):
         for container in self.containers:
             container.close()
-        
-        
+
+
     def closeEvent(self, e):
-        print("closeEvent!")
+        print("gui : closeEvent!")
         self.closeContainers()
 
         self.manage_cameras_win.close()
@@ -412,26 +432,27 @@ class MyGui(QtWidgets.QMainWindow):
         setattr(self, "grid_%ix%i_slot" % (n, m), slot_func)
 
 
-    def make_mvision_slot(self, name, method_name):
+    def make_mvision_slot(self, cl):
         def slot_func():
             self.mvision_containers.append(
                 container.VideoContainerNxM(
                 parent            = None,
                 gpu_handler       = self.gpu_handler,
                 filterchain_group = self.filterchain_group,
-                title             = name,
+                title             = cl.name,
                 n_dim             = 1,
                 m_dim             = 1,
-                child_class       = container.MVisionContainer
+                child_class       = container.MVisionContainer,
+                child_class_pars  = {"mvision_class": cl, "thread": self.thread}
                 )
             )
-        setattr(self, method_name+"_slot", slot_func)
-            
-        
-        
-        
+        setattr(self, cl.name+"_slot", slot_func)
 
-    
+
+
+
+
+
     def save_window_layout(self, filename = "layout"):
         container_list = self.serializeContainers()
         print(pre, "save_window_layout : container_list =",container_list)
@@ -451,9 +472,9 @@ class MyGui(QtWidgets.QMainWindow):
         f.close()
         print("load_window_layout_slot", container_list)
         namespace = container.__dict__
-        
+
         devices_by_id = self.dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
-        
+
         for cont in container_list:
 
             classname = cont["classname"]
@@ -467,7 +488,7 @@ class MyGui(QtWidgets.QMainWindow):
             # move it to the right position
             container_instance.deSerialize(cont, devices_by_id)
             self.containers.append(container_instance)
-    
+
 
 
     # explictly defined slot functions
@@ -493,13 +514,13 @@ class MyGui(QtWidgets.QMainWindow):
 
     def load_window_layout_slot(self):
         self.load_window_layout()
-        
+
     def about_slot(self):
         QtWidgets.QMessageBox.about(self, "About", constant.program_info % (version.get(), version.getValkka()))
-        
-        
-        
-        
+
+
+
+
 
 def main():
     app = QtWidgets.QApplication(["test_app"])
