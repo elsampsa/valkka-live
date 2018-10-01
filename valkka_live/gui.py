@@ -34,6 +34,7 @@ version.check() # checks the valkka version
 
 import sys
 import json
+import pickle
 from valkka.api2 import LiveThread
 from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
@@ -56,7 +57,6 @@ class MyGui(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
         super(MyGui, self).__init__()
-
         self.initVars()
         self.initConfigFiles()
         self.readDB()
@@ -78,16 +78,25 @@ class MyGui(QtWidgets.QMainWindow):
             self.mvision = False
 
     def initConfigFiles(self):
-        self.config_file = tools.getConfigFile("config")
+        # self.config_file = tools.getConfigFile("config")
         self.version_file = tools.getConfigFile("version")
-        self.first_start = False
+        self.first_start = True
         if (tools.hasConfigDir()):  # this indicates that the program has been started earlier
-            pass
-        else:  # first time program start
+            ver = self.readVersionNumber()
+            print("valkka_live : loading config file for version number", ver)
+            if ver:
+                if (ver[0] == version.VERSION_MAJOR or ver[1] == version.VERSION_MINOR):
+                    self.first_start = False
+                else: # incorrect version number
+                    pass
+                    # .. or handle migration somehow
+                    
+        if self.first_start:  # first time program start
             # TODO: eula could be shown here
             print(pre, "initConfigFiles : first start")
             tools.makeConfigDir()
-            self.saveConfigFile()
+            self.saveVersionNumber()
+            # self.saveConfigFile()
             self.save_window_layout()
             self.first_start = True
 
@@ -100,8 +109,6 @@ class MyGui(QtWidgets.QMainWindow):
             print(pre, "readDB : first start")
             self.dm.clearAll()
             self.dm.saveAll()
-
-
 
         # If camera collection is corrupt
         if not self.dm.checkCameraCollection():
@@ -130,13 +137,23 @@ class MyGui(QtWidgets.QMainWindow):
 
             def __init__(self, blocking = False, parent = None):
                 super().__init__(parent)
+                self.propagate = True # send signals or not
+                self.setStyleSheet(style.main_gui)
                 if (blocking):
                     self.setWindowModality(QtCore.Qt.ApplicationModal)
                 self.signals = self.Signals()
 
             def closeEvent(self, e):
-                self.signals.close.emit()
+                if (self.propagate):
+                    self.signals.close.emit()
                 e.accept()
+                
+            def setPropagate(self):
+                self.propagate = True
+                
+            def unSetPropagate(self):
+                self.propagate = False
+                
 
         win = QuickWindow(blocking = blocking)
         win.setCentralWidget(widget)
@@ -146,7 +163,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def setupUi(self):
-        self.setStyleSheet(style.default)
+        self.setStyleSheet(style.main_gui)
         self.setWindowTitle("Valkka Live")
 
         self.setGeometry(QtCore.QRect(100, 100, 500, 500))
@@ -188,6 +205,7 @@ class MyGui(QtWidgets.QMainWindow):
             self.treelist, "Camera List")
 
         # self.camera_list_win.show()
+        # self.treelist.show()
 
 
     def makeCameraTree(self):
@@ -225,13 +243,16 @@ class MyGui(QtWidgets.QMainWindow):
                 )
 
         self.treelist.update()
+        self.treelist.expandAll()
 
 
     def makeLogic(self):
         # *** When camera list has been closed, re-create the cameralist tree and update filterchains ***
-        self.manage_cameras_win.signals.close.connect(self.updateCameraTree)
+        # self.manage_cameras_win.signals.close.connect(self.updateCameraTree) # now put into save_camera_config_slot
+        
         # self.manage_cameras_win.signals.close.connect(self.filterchain_group.update) # TODO: use this once fixed
-        self.manage_cameras_win.signals.close.connect(self.filterchain_group.read)
+        # self.manage_cameras_win.signals.close.connect(self.filterchain_group.read) # TODO: eh.. lets be sure of this .. (are we releasing slots in the LiveThread etc.)
+        self.manage_cameras_win.signals.close.connect(self.save_camera_config_slot)
         self.manage_memory_container.signals.save.connect(self.save_memory_conf_slot)
 
         # *** Menu bar connections ***
@@ -299,11 +320,18 @@ class MyGui(QtWidgets.QMainWindow):
             }
         """
         container_list = []
+        mvision_container_list = []
+        
         for container in self.containers:
             container_list.append(container.serialize())
-        return container_list
+        
+        for container in self.mvision_containers:
+            mvision_container_list.append(container.serialize())
+            
+        return {"container_list" : container_list, "mvision_container_list" : mvision_container_list}
 
 
+    """
     def saveConfigFile(self):
         configdump = json.dumps({
             "containers": self.serializeContainers()
@@ -316,8 +344,6 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def loadConfigFile(self):
-        ver = self.readVersionNumber()
-        print("valkka_live : loading config file for version number", ver)
         try:
             f = open(self.config_file, "r")
         except FileNotFoundError:
@@ -325,6 +351,7 @@ class MyGui(QtWidgets.QMainWindow):
         else:
             config = json.loads(f.read())
         return config
+    """
 
 
     def saveVersionNumber(self):
@@ -334,13 +361,18 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def readVersionNumber(self):
-        f = open(self.version_file, "r")
-        st = f.read()
-        f.close()
-        vs=[]
-        for s in st.split("."):
-            vs.append(int(s))
-        return vs
+        try:
+            f = open(self.version_file, "r")
+            st = f.read()
+            f.close()
+            vs = []
+            for s in st.split("."):
+                vs.append(int(s))
+        except:
+            print("valkka_live : could not read version number")
+            return None
+        else:
+            return vs
 
 
     def openValkka(self):
@@ -354,6 +386,11 @@ class MyGui(QtWidgets.QMainWindow):
             memory_config = default.memory_config
 
         n_frames = round(memory_config["msbuftime"] * default.fps / 1000.) # accumulated frames per buffering time = n_frames
+
+        if (memory_config["bind"]):
+            self.cpu_scheme = CPUScheme()
+        else:
+            self.cpu_scheme = CPUScheme(n_cores = -1)
 
         self.gpu_handler = GPUHandler(
             n_720p  = memory_config["n_720p"] * n_frames, # n_cameras * n_frames
@@ -406,12 +443,17 @@ class MyGui(QtWidgets.QMainWindow):
     def closeContainers(self):
         for container in self.containers:
             container.close()
+        for container in self.mvision_containers:
+            container.close()
+        self.containers = []
+        self.mvision_containers = []
 
 
     def closeEvent(self, e):
         print("gui : closeEvent!")
         self.closeContainers()
 
+        self.manage_cameras_win.unSetPropagate() # don't send signals .. if you don't do this: close => closeEvent => will trigger self.reOpen
         self.manage_cameras_win.close()
         self.camera_list_win.close()
 
@@ -443,40 +485,36 @@ class MyGui(QtWidgets.QMainWindow):
                 n_dim             = 1,
                 m_dim             = 1,
                 child_class       = container.MVisionContainer,
-                child_class_pars  = {"mvision_class": cl, "thread": self.thread}
+                child_class_pars  = {"mvision_class": cl}, # serializable parameters (for re-creating this container)
+                child_class_pars_ = {"thread" : self.thread} # non-serializable parameters
                 )
             )
         setattr(self, cl.name+"_slot", slot_func)
 
 
-
-
-
-
     def save_window_layout(self, filename = "layout"):
-        container_list = self.serializeContainers()
-        print(pre, "save_window_layout : container_list =",container_list)
-
-        f = open(tools.getConfigFile(filename), "w")
-        f.write(json.dumps(container_list))
+        container_dic = self.serializeContainers()
+        print(pre, "save_window_layout : container_dic =",container_dic)
+        # f = open(tools.getConfigFile(filename), "w")
+        # f.write(json.dumps(container_list))
+        f = open(tools.getConfigFile(filename), "wb")
+        f.write(pickle.dumps(container_dic))
         f.close()
 
 
     def load_window_layout(self, filename = "layout"):
-        for cont in self.containers:
-            cont.close()
-        self.containers = []
-
-        f = open(tools.getConfigFile(filename), "r")
-        container_list = json.loads(f.read())
+        self.closeContainers()
+        
+        # f = open(tools.getConfigFile(filename), "r")
+        # container_list = json.loads(f.read())
+        f = open(tools.getConfigFile(filename), "rb")
+        container_dic = pickle.loads(f.read())
         f.close()
-        print("load_window_layout_slot", container_list)
+        print("load_window_layout: container_dic: ", container_dic)
         namespace = container.__dict__
-
         devices_by_id = self.dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
 
-        for cont in container_list:
-
+        for cont in container_dic["container_list"]:
             classname = cont["classname"]
             kwargs = cont["kwargs"]
             kwargs["gpu_handler"] = self.gpu_handler
@@ -488,6 +526,9 @@ class MyGui(QtWidgets.QMainWindow):
             # move it to the right position
             container_instance.deSerialize(cont, devices_by_id)
             self.containers.append(container_instance)
+
+        for cont in container_dic["mvision_container_list"]:
+            print("\nload_window_layout: mvision:", cont)
 
 
 
@@ -507,6 +548,10 @@ class MyGui(QtWidgets.QMainWindow):
 
     def save_memory_conf_slot(self):
         self.manage_memory_win.close()
+        self.reOpenValkka()
+
+    def save_camera_config_slot(self):
+        self.updateCameraTree()
         self.reOpenValkka()
 
     def save_window_layout_slot(self):

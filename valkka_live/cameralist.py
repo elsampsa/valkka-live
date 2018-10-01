@@ -206,12 +206,19 @@ class BasicView(QtWidgets.QTreeView):
     def initTree(self):
         self.model = TreeModel(self.root)
         self.setModel(self.model)
+        self.setColumnWidth(0, 300)
+        # self.expandAll() # has no effect here..
     
     
     def reset_(self):
         # self.root.removeChildren()
         # self.model.removeSubRows(self.rootIndex())
         self.model.removeRows(0, self.root.childCount(), self.rootIndex())
+        
+        
+    def showEvent(self, e):
+        super().showEvent(e)
+        self.expandAll()
         
 
     """

@@ -22,6 +22,7 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
+import copy
 from valkka.api2.tools import parameterInitCheck
 from valkka_live import style
 from valkka_live.gpuhandler import GPUHandler
@@ -34,18 +35,13 @@ from valkka_live.container.video import VideoContainer
 class VideoContainerNxM(RootVideoContainer):
     """A RootVideoContainer with n x m (y x x) video grid
     """
-
     parameter_defs = {
-        "parent"            : None,
-        "gpu_handler"       : GPUHandler,
-        "filterchain_group" : FilterChainGroup, # this will be passed upstream to VideoContainer
-        "title"             : (str, "Video Grid"),
         "n_dim"             : (int, 1),  # y  3
-        "m_dim"             : (int, 1),  # x  2
-        "child_class"       : (type, VideoContainer),
-        "child_class_pars"  : (dict, {})
-    }
-
+        "m_dim"             : (int, 1)   # x  2
+        }
+    parameter_defs.update(RootVideoContainer.parameter_defs)
+    
+    
     def __init__(self, **kwargs):
         parameterInitCheck(VideoContainerNxM.parameter_defs, kwargs, self)
         kwargs.pop("n_dim"); kwargs.pop("m_dim")
@@ -53,11 +49,10 @@ class VideoContainerNxM(RootVideoContainer):
 
     def serialize(self):
         dic = super().serialize()
-        dic["kwargs"] = {
-            "title": self.title,
+        dic["kwargs"].update({ # add constructor parameters of this class
             "n_dim": self.n_dim,
             "m_dim": self.m_dim
-            }
+            })
         return dic
 
     def createChildren(self):
@@ -66,7 +61,8 @@ class VideoContainerNxM(RootVideoContainer):
                 "filterchain_group" : self.filterchain_group,
                 "n_xscreen"         : self.n_xscreen
                 }
-            pars.update(self.child_class_pars) # whatever extra parameters there might be ..
+            pars.update(self.child_class_pars)  # whatever extra parameters there might be ..
+            pars.update(self.child_class_pars_)
             vc = self.child_class(**pars)
             self.children.append(vc)
 

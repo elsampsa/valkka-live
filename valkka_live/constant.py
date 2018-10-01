@@ -75,3 +75,7 @@ shmem_n_buffer = 10
 shmem_image_dimensions = (1920 // 4, 1080 // 4)
 shmem_image_interval = 1000
 
+# minimum size for video root widget
+root_video_container_minsize = (300, 300)
+
+

@@ -150,7 +150,7 @@ class VideoContainer:
     parameter_defs = {
         "parent_container"  : None,                 # RootVideoContainer or child class
         "filterchain_group" : FilterChainGroup,     # Filterchain manager class
-        "n_xscreen"         : (int,0)               # x-screen index
+        "n_xscreen"         : (int, 0)              # x-screen index
     }
 
     def __init__(self, **kwargs):

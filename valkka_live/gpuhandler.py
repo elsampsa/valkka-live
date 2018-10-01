@@ -22,6 +22,7 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
+import copy
 # from valkka.valkka_core import *
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2 import OpenGLThread
@@ -31,12 +32,11 @@ pre = "gpuhandler :"
 class GPUHandler:
     """Handles an OpenGLThread for each separate GPU
     """
-
-    # copy parameter definitions from OpenGLThread, apply same parameters to each OpenGLThread
-    parameter_defs = OpenGLThread.parameter_defs
-    parameter_defs.update({
+    parameter_defs = {
         "cpu_scheme" : None
-        })
+        }
+    # copy parameter definitions from OpenGLThread, apply same parameters to each OpenGLThread
+    parameter_defs.update(OpenGLThread.parameter_defs)
     
     
     def __init__(self, **kwargs):

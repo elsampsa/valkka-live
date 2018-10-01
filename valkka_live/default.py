@@ -25,7 +25,8 @@ memory_config = {
     "n_720p"    : 20,
     "n_1080p"   : 20,
     "n_1440p"   : 10,
-    "n_4K"      : 5
+    "n_4K"      : 5,
+    "bind"      : True
     }
 
 fps = 25

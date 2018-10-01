@@ -27,7 +27,7 @@ import os
 from valkka.api2.tools import parameterInitCheck
 
 from cute_mongo_forms.db import SimpleCollection
-from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn
+from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
 
@@ -219,7 +219,12 @@ class DataModel:
                 label_name="Number of 4K cameras",
                 min_value=0,
                 max_value=1024,
-                def_value=default.memory_config["n_4K"])
+                def_value=default.memory_config["n_4K"]),
+            ColumnSpec(
+                CheckBoxColumn,
+                key_name="bind",
+                label_name="Bind Valkka threads to cores",
+                def_value=default.memory_config["bind"])
         ]
 
         def getNFrames(self, key):

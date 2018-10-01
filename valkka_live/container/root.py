@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
-from valkka_live import style
+from valkka_live import style, constant
 from valkka_live.gpuhandler import GPUHandler
 from valkka_live.quickmenu import QuickMenu, QuickMenuElement
 from valkka_live.filterchain import FilterChainGroup
@@ -46,7 +46,7 @@ class RootVideoContainer:
             self.signals = signals
             # self.setGeometry(QtCore.QRect(100,100,500,500))
             # self.setStyleSheet("QMainWindow {}")
-            self.setMinimumSize(500, 500)
+            self.setMinimumSize(constant.root_video_container_minsize[0], constant.root_video_container_minsize[1])
             self.setStyleSheet(style.root_container)
             self.setWindowTitle(title)
 
@@ -69,8 +69,10 @@ class RootVideoContainer:
         "gpu_handler"           : GPUHandler,
         "filterchain_group"     : FilterChainGroup, # this will be passed upstream to VideoContainer
         "title"                 : (str, "Video Grid"),
+        "n_xscreen"             : (int, 0),
         "child_class"           : (type, VideoContainer),
-        "child_class_pars"      : (dict, {})
+        "child_class_pars"      : (dict, {}), # seriazable parameters (that can be used to create this view automatically)
+        "child_class_pars_"     : (dict, {})  # non-seriazable parameters
     }
 
     def __init__(self, **kwargs):
@@ -82,8 +84,8 @@ class RootVideoContainer:
         self.signals = self.Signals()
         self.closed = False
         self.children = []
-        self.n_xscreen = 0  # x-screen number
         self.openglthread = self.gpu_handler.openglthreads[self.n_xscreen]
+        # TODO: check number of xscreens and correct self.n_xscreen if necessary
 
         self.signals.close.connect(self.close_slot)
 
@@ -179,6 +181,9 @@ class RootVideoContainer:
         self.closed = True
         self.window.close() 
 
+    def get_child_class_pars(self):
+        return self.child_class_pars
+
     def serialize(self):
         """Serialize information about the widget: coordinates, size, which cameras are selected.
         """
@@ -193,7 +198,12 @@ class RootVideoContainer:
         # gather all information to re-construct this RootVideoContainer
         dic = {  # these are used when re-instantiating the view
             "classname": self.__class__.__name__,
-            "kwargs": {},  # parameters that we're used to instantiate this class
+            "kwargs": { # parameters that we're used to instantiate this class
+                "title"                 : self.title,
+                "n_xscreen"             : self.n_xscreen,
+                "child_class"           : self.child_class,
+                "child_class_pars"      : self.get_child_class_pars() # serialize only relevant child class pars
+                },  
             # these parameters are used by deserialize
             "x": self.window.x(),
             "y": self.window.y(),

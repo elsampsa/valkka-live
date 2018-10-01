@@ -10,6 +10,8 @@ The underlying media engine (**valkka-core** library) is written in C++ and it h
 
 Valkka Live works with standard RTSP and OnVif compliant cameras and has been designed for massive video streaming and analysis.
 
+For hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
+
 For a quickstart, click :ref:`here <quickstart>`.
 
 The OpenSource version of Valkka Live demonstrates some basic capabilities of the **valkka-core** programming library together with Python3 and Qt.  

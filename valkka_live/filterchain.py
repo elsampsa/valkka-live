@@ -90,7 +90,7 @@ class FilterChainGroup:
                     _id         = device["_id"],
                     affinity    = affinity,
                     msreconnect = 10000,
-                    verbose = True,
+                    verbose     = True,
                     
                     # for managefilterchain2 only:
                     shmem_image_dimensions = constant.shmem_image_dimensions,

@@ -22,7 +22,61 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 
+# http://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qmenu
+
 main_gui="""
+QWidget {
+    font: 14px;
+}
+
+QPushButton {
+color: white;
+background-color: rgba(0, 0, 200, 255);
+}
+
+QPushButton::pressed{
+color: white;
+background-color: rgba(0, 0, 100, 255);
+}
+
+QMenuBar {
+    /* background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 lightgray, stop:1 darkgray); */
+    font: 14px;
+}
+
+QMenuBar::item {
+    /* spacing: 3px; */ /* spacing between menu bar items */
+    /* padding: 1px 4px; */
+    background: transparent;
+    /* border-radius: 4px; */
+}
+
+QMenuBar::item:selected { /* when selected using mouse or keyboard */
+    color: white;
+    background-color: blue;
+}
+
+QMenuBar::item:pressed {
+    color: white;
+    background-color: blue;
+}
+
+QMenu {
+    /* background-color: transparent; */ /* sets background of the menu */
+    border: 1px solid black;
+    font: 14px;
+    
+}
+
+QMenu::item {
+    /* sets background of menu item. set this to something non-transparent
+        if you want menu color and menu item color to be different */
+    background-color: transparent;
+}
+
+QMenu::item:selected { /* when user selects item using mouse or keyboard */
+    background-color: blue;
+}
 """
 
 root_container="""

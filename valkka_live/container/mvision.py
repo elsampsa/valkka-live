@@ -138,10 +138,7 @@ class MVisionContainer(VideoContainer):
         
         self.filterchain.delViewPort(self.viewport)
         self.filterchain.releaseShmem(self.shmem_name)
-        """
-        TODO:
-        - Stop the analyzer process and set it to None
-        """
+
         self.main_layout.removeWidget(self.mvision_widget)
         self.mvision_widget = None
         self.thread.delProcess(self.mvision_process)
