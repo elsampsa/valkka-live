@@ -61,8 +61,12 @@ class FilterChainGroup:
         
         
     def reset(self):
+        # start closing all threads simultaneously
         for chain in self.chains:
-            chain.close()
+            chain.requestClose()
+        # wait until all threads closed
+        for chain in self.chains:
+            chain.waitClose()
         self.chains = []
         
         

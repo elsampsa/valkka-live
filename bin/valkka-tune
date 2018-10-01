@@ -1,0 +1,23 @@
+#!/bin/bash
+fname="/etc/sysctl.conf"
+echo
+echo "Modding /etc/syctl.conf"
+
+if [ ! -f $fname.save ]; then
+    echo "Original saved into /etc/sysctl.conf.save"
+    echo
+    # save original
+    sudo cp -f $fname $fname.save
+fi
+
+# remove competing definitions
+sudo sed -i '/vm.swappiness/d' $fname
+sudo sed -i '/net.core.wmem_max/d' $fname
+sudo sed -i '/net.core.rmem_max/d' $fname
+# put our definitions
+sudo sed -i '$a vm.swappiness = 1 # modified by Valkka' $fname
+sudo sed -i '$a net.core.wmem_max=2097152 # modified by Valkka' $fname
+sudo sed -i '$a net.core.rmem_max=2097152 # modified by Valkka' $fname
+# run sysctl
+sudo sysctl -p
+echo

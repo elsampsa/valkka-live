@@ -134,8 +134,13 @@ class GPUHandler:
 
 
     def close(self):
+        # initiate closing of all openglthreads
         for openglthread in self.openglthreads:
-            openglthread.close()
+            openglthread.requestClose()
+        # wait them to be closed
+        for openglthread in self.openglthreads:
+            openglthread.waitClose()
+            
 
 
 class FakeGPUHandler:
