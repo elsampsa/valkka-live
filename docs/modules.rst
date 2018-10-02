@@ -6,7 +6,9 @@ Modules
 Machine Vision
 --------------
 
-*coming soon*
+
+
+
 
 Commercial Modules
 ------------------

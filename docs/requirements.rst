@@ -26,27 +26,34 @@ We'll be installing directly from github, so git is required:
 
     sudo apt-get install git
 
-After that, install with:
+After that, install (or update) with:
 
 ::
 
-    pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git 
+    pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git    
     install-valkka-core
-    
-*install-valkka-core* is a script that subscribes you to a PPA repository and installs valkka-core binary packages.
-    
-Run with
-    
-::
+    valkka-tune
 
-    valkka-live
-
+(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)
     
-In the case *install-valkka-core* and *valkka-live* don't work, you must fix your path with
+In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 
 ::
     
     export PATH=$PATH:$HOME/.local/bin
+
+Finally, run with
+    
+::
+
+    valkka-live
+    
+Before running, you might also want to move as many processes to core 0 as possible with
+
+::
+
+    valkka-move-ps
+    
     
     
 Development version

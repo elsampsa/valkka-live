@@ -16,7 +16,9 @@ setup(
     scripts=[
         "bin/valkka-live", # sets env variables, uses run-valkka-live entry point
         "bin/install-valkka-core",
-        "bin/update-valkka-core"
+        "bin/update-valkka-core",
+        "bin/valkka-move-ps",
+        "bin/valkka-tune"
     ],
 
     #

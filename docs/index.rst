@@ -51,21 +51,23 @@ After that, install with:
 
     pip3 install --user --upgrade git+git://github.com/elsampsa/valkka-live.git    
     install-valkka-core
-    
-Run with
-    
-::
+    valkka-tune
 
-    valkka-live
+(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)
     
-    
-In the case *install-valkka-core* and *valkka-live* don't work, you must fix your path with
+In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 
 ::
     
     export PATH=$PATH:$HOME/.local/bin
-  
-   
+
+Finally, run with
+    
+::
+
+    valkka-live
+
+
 Contents:
 
 .. toctree::
