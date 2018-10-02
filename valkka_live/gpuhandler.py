@@ -16,12 +16,13 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gpuhandler.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   GPU Handler class
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
+import copy
 # from valkka.valkka_core import *
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2 import OpenGLThread
@@ -31,14 +32,16 @@ pre = "gpuhandler :"
 class GPUHandler:
     """Handles an OpenGLThread for each separate GPU
     """
-
+    parameter_defs = {
+        "cpu_scheme" : None
+        }
     # copy parameter definitions from OpenGLThread, apply same parameters to each OpenGLThread
-    parameter_defs = OpenGLThread.parameter_defs 
+    parameter_defs.update(OpenGLThread.parameter_defs)
     
     
     def __init__(self, **kwargs):
         self.pre = self.__class__.__name__+" : " # auxiliary string for debugging output
-        parameterInitCheck(self.parameter_defs, kwargs, self) # check kwargs agains parameter_defs, attach ok'd parameters to this object as attributes
+        parameterInitCheck(GPUHandler.parameter_defs, kwargs, self) # check kwargs agains parameter_defs, attach ok'd parameters to this object as attributes
         self.kwargs = kwargs
         self.true_screens = []  # list of QtCore.QScreen
         self.openglthreads = [] # list of OpenGLThread instances
@@ -54,6 +57,10 @@ class GPUHandler:
 
             print(pre, "GPUHandler: starting OpenGLThread with", x_connection)
 
+            affinity = -1
+            if self.cpu_scheme:
+                affinity = self.cpu_scheme.getOpenGL()
+
             openglthread = OpenGLThread(
                 name="gpu_" + str(n_gpu),
                 # reserve stacks of YUV video frames for various resolutions
@@ -63,7 +70,7 @@ class GPUHandler:
                 n_4K    = self.n_4K,
                 verbose = False,
                 msbuftime    = self.msbuftime,
-                # affinity     = self.affinity,
+                affinity     = affinity,
                 x_connection = x_connection
             )
 
@@ -127,8 +134,13 @@ class GPUHandler:
 
 
     def close(self):
+        # initiate closing of all openglthreads
         for openglthread in self.openglthreads:
-            openglthread.close()
+            openglthread.requestClose()
+        # wait them to be closed
+        for openglthread in self.openglthreads:
+            openglthread.waitClose()
+            
 
 
 class FakeGPUHandler:

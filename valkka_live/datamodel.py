@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
@@ -27,7 +27,7 @@ import os
 from valkka.api2.tools import parameterInitCheck
 
 from cute_mongo_forms.db import SimpleCollection
-from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn
+from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
 
@@ -168,7 +168,7 @@ class DataModel:
             self.pre = self.__class__.__name__ + " : "
             # check for input parameters, attach them to this instance as
             # attributes
-            parameterInitCheck(self.parameter_defs, kwargs, self)
+            parameterInitCheck(DataModel.RTSPCameraDevice.parameter_defs, kwargs, self)
 
         def __eq__(self, other):
             return self._id == other._id
@@ -219,7 +219,12 @@ class DataModel:
                 label_name="Number of 4K cameras",
                 min_value=0,
                 max_value=1024,
-                def_value=default.memory_config["n_4K"])
+                def_value=default.memory_config["n_4K"]),
+            ColumnSpec(
+                CheckBoxColumn,
+                key_name="bind",
+                label_name="Bind Valkka threads to cores",
+                def_value=default.memory_config["bind"])
         ]
 
         def getNFrames(self, key):

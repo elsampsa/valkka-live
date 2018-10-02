@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    listitem.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   List item classes for the cameralist
 """
 
@@ -48,7 +48,7 @@ class ListItem(object):
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(ListItem.parameter_defs, kwargs, self)
         self.init()
 
     def init(self):
@@ -155,7 +155,7 @@ class ServerListItem(ListItem):
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(ServerListItem.parameter_defs, kwargs, self)
         self.init()
 
     def makeItemData(self):
@@ -179,7 +179,7 @@ class RTSPCameraListItem(ListItem):
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(RTSPCameraListItem.parameter_defs, kwargs, self)
         self.init()
 
     def makeItemData(self):

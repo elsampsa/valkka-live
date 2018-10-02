@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   Manage and group Valkka filterchains
 """
 
@@ -24,7 +24,8 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 from valkka_live.datamodel import DataModel
 from valkka_live.gpuhandler import GPUHandler
-from valkka.api2.chains import ManagedFilterchain
+from valkka_live import constant
+from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2
 from valkka.api2.threads import LiveThread
 from valkka.api2.tools import parameterInitCheck
 
@@ -37,12 +38,13 @@ class FilterChainGroup:
         "datamodel"        : DataModel,
         "livethread"       : LiveThread,
         "gpu_handler"      : GPUHandler,
-        "verbose"          : (bool, False)
+        "verbose"          : (bool, False),
+        "cpu_scheme"       : None
         }
     
     
     def __init__(self, **kwargs):
-        parameterInitCheck(self.parameter_defs, kwargs, self)
+        parameterInitCheck(FilterChainGroup.parameter_defs, kwargs, self)
         self.pre = self.__class__.__name__ + " : "
         self.chains = []
         self.closed = False
@@ -59,8 +61,12 @@ class FilterChainGroup:
         
         
     def reset(self):
+        # start closing all threads simultaneously
         for chain in self.chains:
-            chain.close()
+            chain.requestClose()
+        # wait until all threads closed
+        for chain in self.chains:
+            chain.waitClose()
         self.chains = []
         
         
@@ -73,16 +79,27 @@ class FilterChainGroup:
         for device in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
             if (self.verbose): print(self.pre, "read : device", device)
             if (device["classname"] == DataModel.RTSPCameraRow.__name__):
-                chain = ManagedFilterchain( # decoding and branching the stream happens here
+                
+                affinity = -1
+                if self.cpu_scheme:
+                    affinity = self.cpu_scheme.getAV()
+                
+                # chain = ManagedFilterchain( # decoding and branching the stream happens here
+                chain = ManagedFilterchain2( # decoding and branching the stream happens here
                     livethread  = self.livethread,
                     openglthreads
                                 = self.gpu_handler.openglthreads,
                     address     = DataModel.RTSPCameraRow.getAddressFromDict(device),
                     slot        = device["slot"],
                     _id         = device["_id"],
-                    # affinity    = a,
+                    affinity    = affinity,
                     msreconnect = 10000,
-                    verbose = True
+                    verbose     = True,
+                    
+                    # for managefilterchain2 only:
+                    shmem_image_dimensions = constant.shmem_image_dimensions,
+                    shmem_n_buffer = constant.shmem_n_buffer,
+                    shmem_image_interval = constant.shmem_image_interval
                 )
                 self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
 

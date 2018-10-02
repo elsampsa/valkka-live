@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    constant.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   Constant strings, etc.
 """
 
@@ -68,4 +68,14 @@ max_devices = 10
 config_skeleton={ # TODO: do we need this, really?
   "containers" : [],
   }
+
+
+# shared memory ring-buffer and image sizes
+shmem_n_buffer = 10
+shmem_image_dimensions = (1920 // 4, 1080 // 4)
+shmem_image_interval = 1000
+
+# minimum size for video root widget
+root_video_container_minsize = (300, 300)
+
 

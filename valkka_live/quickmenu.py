@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    NAME.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.1.1 
+@version 0.2.0 
 @brief   Menu creation helpers
 """
 
@@ -34,6 +34,9 @@ class QuickMenuElement(object):
 
     def getTitle(self):
         return self.title
+
+    def getMethodName(self):
+        return self.method_name
 
 
 class QuickMenuSection(object):
@@ -110,6 +113,10 @@ class QuickMenu(object):
     def connect(self, name, cb):
         method = getattr(self, name)
         method.triggered.connect(cb)
+
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     def popup(self, qp):
         self.menu.popup(qp)

@@ -25,6 +25,8 @@ Valkka Live is an OpenSource video surveillance and management program for Linux
 
 Valkka Live is based on the `valkka library <https://elsampsa.github.io/valkka-examples/>`_.
 
+For hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
+
 .. **TODO: screenshot here**
 
 .. _quickstart:
