@@ -11,6 +11,7 @@ System requirements
 - A modern Linux distro
 - Nvidia or Intel graphics card (ATI has not been tested)
 - A graphics card driver supporting OpenGL 3+
+- For up-to-date hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
 - An up-to-date valkka-core library
     
     - For Ubuntu-based distros, an automatic installation is provided

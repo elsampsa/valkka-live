@@ -37,7 +37,45 @@
 <h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="machine-vision">
 <h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
-<p><em>coming soon</em></p>
+<p>Install the machine vision plugin like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span>
+<span class="n">pip3</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Now you have an editable version of the machine vision plugin available.</p>
+<p>If you restart Valkka Live, there will be a new entry “Machine Vision” in the menu bar (Valkka Live scans the “valkka_mvision” namespace for submodules)</p>
+<p>A simple movement detector is provided as an example.</p>
+<div class="section" id="creating-your-own-module">
+<h3>Creating your own module<a class="headerlink" href="#creating-your-own-module" title="Permalink to this headline">¶</a></h3>
+<p>Proceed like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">/</span><span class="n">valkka_mvision</span>
+<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="n">movement</span> <span class="n">my_mvision_module</span>
+</pre></div>
+</div>
+<p>Edit file <em>valkka-mvision/valkka_mvision/__init__.py</em> and add the following line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_mvision.my_mvision_module</span> <span class="k">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>Edit file <em>valkka-mvision/valkka_mvision/my_mvision_module/base.py</em> and change line</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Simple Movement Detector&quot;</span>
+</pre></div>
+</div>
+<p>To</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;My Movement Detector&quot;</span>
+</pre></div>
+</div>
+<p>Restart Valkka Live and confirm that “My Movement Detector” is available at the “Machine Vision” submenu</p>
+</div>
+<div class="section" id="using-your-module">
+<h3>Using Your Module<a class="headerlink" href="#using-your-module" title="Permalink to this headline">¶</a></h3>
+<p>Drag’n’ drop cameras into the machine vision widget and your module starts doing its magic</p>
+</div>
+<div class="section" id="remarks">
+<h3>Remarks<a class="headerlink" href="#remarks" title="Permalink to this headline">¶</a></h3>
+<p>Your machine vision module runs as an independent python multiprocess that receives frames from the main Valkka Live program once in a second at a relatively low resolution, using POSIX shared memory and semaphores.</p>
+<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at the cpp level.  And only after that interface to Valkka (see the upcoming <strong>valkka-cpp-examples</strong> module for an example).</p>
+</div>
 </div>
 <div class="section" id="commercial-modules">
 <h2>Commercial Modules<a class="headerlink" href="#commercial-modules" title="Permalink to this headline">¶</a></h2>

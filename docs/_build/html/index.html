@@ -57,14 +57,16 @@
 <p>After that, install with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="o">--</span><span class="n">upgrade</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">.</span><span class="n">git</span>
 <span class="n">install</span><span class="o">-</span><span class="n">valkka</span><span class="o">-</span><span class="n">core</span>
+<span class="n">valkka</span><span class="o">-</span><span class="n">tune</span>
 </pre></div>
 </div>
-<p>Run with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span>
-</pre></div>
-</div>
-<p>In the case <em>install-valkka-core</em> and <em>valkka-live</em> don’t work, you must fix your path with</p>
+<p>(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)</p>
+<p>In the case that <em>install-valkka-core</em> etc. scripts refuse to work, you must fix your path with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/.local/bin
+</pre></div>
+</div>
+<p>Finally, run with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span>
 </pre></div>
 </div>
 <p>Contents:</p>
