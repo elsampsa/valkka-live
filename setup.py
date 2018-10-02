@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.1.1'
+version = '0.2.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -10,7 +10,7 @@ setup(
     version = version,
     install_requires = [
         'PySide2 >=5.11.1',
-        'cute_mongo_forms >=0.2.0',
+        'cute_mongo_forms >=0.2.1',
     ],
 
     scripts=[
