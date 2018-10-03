@@ -16,14 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    listitem.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   List item classes for the cameralist
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
-from valkka_live.datamodel import DataModel
+from valkka.live.datamodel import DataModel
 
 
 """

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    grid.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Classes implementing a N x M grid, based on the RootVideoContainer (see root.py)
 """
 
@@ -24,12 +24,12 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import copy
 from valkka.api2.tools import parameterInitCheck
-from valkka_live import style
-from valkka_live.gpuhandler import GPUHandler
-from valkka_live.quickmenu import QuickMenu, QuickMenuElement
-from valkka_live.filterchain import FilterChainGroup
-from valkka_live.container.root import RootVideoContainer
-from valkka_live.container.video import VideoContainer
+from valkka.live import style
+from valkka.live.gpuhandler import GPUHandler
+from valkka.live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live.filterchain import FilterChainGroup
+from valkka.live.container.root import RootVideoContainer
+from valkka.live.container.video import VideoContainer
 
 
 class VideoContainerNxM(RootVideoContainer):

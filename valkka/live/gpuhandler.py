@@ -16,14 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gpuhandler.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   GPU Handler class
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 import copy
-# from valkka.valkka_core import *
+# from valkka.core import *
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2 import OpenGLThread
 

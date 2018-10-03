@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    video.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   a container that manages widgets for video
 """
 
@@ -25,10 +25,10 @@ import sys
 import pickle
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2.chains import ViewPort
-from valkka_live import style
-from valkka_live.quickmenu import QuickMenu, QuickMenuElement, QuickMenuSection
-from valkka_live.filterchain import FilterChainGroup
-from valkka_live.mouse import MouseClickContext
+from valkka.live import style
+from valkka.live.quickmenu import QuickMenu, QuickMenuElement, QuickMenuSection
+from valkka.live.filterchain import FilterChainGroup
+from valkka.live.mouse import MouseClickContext
 
 
 class VideoContainer:

@@ -16,14 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 import os
-# from valkka.valkka_core import *
+# from valkka.core import *
 from valkka.api2.tools import parameterInitCheck
 
 from cute_mongo_forms.db import SimpleCollection
@@ -31,9 +31,9 @@ from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantInteg
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
 
-from valkka_live import default
-from valkka_live.form import SlotFormSet
-from valkka_live import constant
+from valkka.live import default
+from valkka.live.form import SlotFormSet
+from valkka.live import constant
 
 
 class ListAndForm:

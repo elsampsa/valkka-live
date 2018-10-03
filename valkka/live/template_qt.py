@@ -16,13 +16,13 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    NAME.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
-from valkka.valkka_core import *
+from valkka.core import *
 
 
 class MyGui(QtWidgets.QMainWindow):

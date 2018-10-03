@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.2.1'
+version = '0.3.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -24,11 +24,13 @@ setup(
     #
     entry_points={
         'console_scripts': [
-            'run-valkka-live = valkka_live.gui:main'
+            'run-valkka-live = valkka.live.gui:main'
     ]
     },
 
-    packages = find_packages(), # # includes python code from every directory that has an "__init__.py" file in it.  If no "__init__.py" is found, the directory is omitted.  Other directories / files to be included, are defined in the MANIFEST.in file
+    # packages = find_packages(), # # includes python code from every directory that has an "__init__.py" file in it.  If no "__init__.py" is found, the directory is omitted.  Other directories / files to be included, are defined in the MANIFEST.in file
+
+    packages=['valkka.live'], # this is needed for namespace packages
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed
     # # "package_data" keyword is a practical joke: use MANIFEST.in instead

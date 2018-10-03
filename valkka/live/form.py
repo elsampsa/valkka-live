@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    form.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Custom cute_mongo_forms
 """
 
@@ -25,7 +25,7 @@ import sys
 from cute_mongo_forms.row import Row
 from cute_mongo_forms.container import EditFormSet2
 
-pre = "valkka_live.form : "
+pre = "valkka.live.form : "
 verbose = True
 
 

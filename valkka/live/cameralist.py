@@ -16,14 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    cameralist.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   QTree abstraction for a drag'n'drop camera list
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 import pickle
-from valkka_live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem
+from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem
 from valkka.api2.tools import parameterInitCheck
 
 

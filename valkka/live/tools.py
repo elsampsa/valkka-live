@@ -16,13 +16,14 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    tools.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Helper routines
 """
 
 import sys
 import os
 import types
+import shutil
 
 home = os.path.expanduser("~")
 config_dir = os.path.join(home, ".valkka", "live")
@@ -33,12 +34,14 @@ def getConfigDir():
 
 
 def makeConfigDir():
+    if (hasConfigDir()):
+        clearConfigDir()
     os.makedirs(config_dir)
 
 
 def clearConfigDir():
-    os.rmdir(config_dir)
-
+    # os.rmdir(config_dir)
+    shutil.rmtree(config_dir)
 
 def hasConfigDir():
     return os.path.exists(config_dir)

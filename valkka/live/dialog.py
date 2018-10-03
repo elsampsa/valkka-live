@@ -16,13 +16,13 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    dialog.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Dialog, help and warning windows
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
-from valkka_live import constant
+from valkka.live import constant
 
 
 # TODO: text dialog

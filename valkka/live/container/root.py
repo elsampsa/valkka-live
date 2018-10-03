@@ -16,18 +16,18 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    root.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   A root level container class.  VideoContainer (see video.py) can be placed in a grid into the root level container.
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
-from valkka_live import style, constant
-from valkka_live.gpuhandler import GPUHandler
-from valkka_live.quickmenu import QuickMenu, QuickMenuElement
-from valkka_live.filterchain import FilterChainGroup
-from valkka_live.container.video import VideoContainer
+from valkka.live import style, constant
+from valkka.live.gpuhandler import GPUHandler
+from valkka.live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live.filterchain import FilterChainGroup
+from valkka.live.container.video import VideoContainer
 
 
 class RootVideoContainer:

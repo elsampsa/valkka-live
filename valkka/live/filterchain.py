@@ -16,15 +16,15 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Manage and group Valkka filterchains
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
-from valkka_live.datamodel import DataModel
-from valkka_live.gpuhandler import GPUHandler
-from valkka_live import constant
+from valkka.live.datamodel import DataModel
+from valkka.live.gpuhandler import GPUHandler
+from valkka.live import constant
 from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2
 from valkka.api2.threads import LiveThread
 from valkka.api2.tools import parameterInitCheck

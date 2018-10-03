@@ -16,13 +16,13 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    menu.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.1 
+@version 0.3.0 
 @brief   Menu definitions
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
-from valkka_live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 
 """
 File  View    Configuration   Plugins   About
