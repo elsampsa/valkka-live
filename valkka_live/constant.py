@@ -46,7 +46,7 @@ Valkka core module is not up to date
 Please update with
 
 sudo apt-get update
-sudo apt-get upgrade valkka
+sudo apt-get install --only-upgrade valkka
 
 Or alternatively, just use the following command:
 
@@ -63,7 +63,7 @@ Copyright Sampsa Riikonen 2018
 
 """
 
-max_devices = 10
+max_devices = 32
 
 config_skeleton={ # TODO: do we need this, really?
   "containers" : [],
