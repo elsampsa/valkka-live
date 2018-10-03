@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    grid.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.0 
+@version 0.2.1 
 @brief   Classes implementing a N x M grid, based on the RootVideoContainer (see root.py)
 """
 

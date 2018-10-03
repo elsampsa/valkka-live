@@ -5,6 +5,8 @@ Modules
 Machine Vision
 ==============
 
+This is a standalone plugin that you can use to create your own python-based machine vision modules.  The provided example uses OpenCV, so install it as instructed `here <https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#opencv>`_
+
 Install the machine vision plugin like this:
 
 ::

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    version.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.2.0 
+@version 0.2.1 
 @brief   Handle program version numbers
 """
 
@@ -29,7 +29,7 @@ from valkka_live import constant
 # the following three lines are modded by setver.bash:
 VERSION_MAJOR=0
 VERSION_MINOR=2
-VERSION_PATCH=0
+VERSION_PATCH=1
 
 # required valkka version
 MIN_VALKKA_VERSION_MAJOR = 0
