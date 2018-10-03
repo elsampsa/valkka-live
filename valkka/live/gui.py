@@ -415,7 +415,7 @@ class MyGui(QtWidgets.QMainWindow):
         # self.filterchain_group.update() # TODO: use this once fixed
         
         try:
-            from valkka_mvision import multiprocess
+            from valkka.mvision import multiprocess
         except ImportError:
             pass
         else:

@@ -55,14 +55,14 @@ def scanMVisionClasses():
     mvision_classes = []
     
     try:
-        import valkka_mvision
+        import valkka.mvision
     except ModuleNotFoundError:
         return mvision_classes
         
-    dic = valkka_mvision.__dict__
+    dic = valkka.mvision.__dict__
     
     # search for namespaces:
-    # valkka_mvision.*.base.MVisionProcess : should have class member "name"
+    # valkka.mvision.*.base.MVisionProcess : should have class member "name"
     for key in dic: # valkka_mvision.*
         obj = dic[key]
         if isinstance(obj, types.ModuleType):

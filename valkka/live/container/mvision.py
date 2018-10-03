@@ -25,7 +25,7 @@ from valkka.api2.tools import parameterInitCheck
 from valkka.live.container.video import VideoContainer
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
-from valkka_mvision import multiprocess
+from valkka.mvision import multiprocess
 
 
 

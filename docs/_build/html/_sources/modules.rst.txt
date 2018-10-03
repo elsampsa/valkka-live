@@ -28,16 +28,16 @@ Proceed like this:
 
 ::
 
-    cd valkka-mvision/valkka_mvision
-    cp -r movement my_mvision_module
+    cd valkka-mvision/valkka/mvision
+    cp -r movement my_module
     
-Edit file *valkka-mvision/valkka_mvision/__init__.py* and add the following line:
+Edit the file *valkka-mvision/valkka/mvision/__init__.py* and add the following line:
 
 ::
 
-    from valkka_mvision.my_mvision_module import *
+    from valkka.mvision.my_module import *
     
-Edit file *valkka-mvision/valkka_mvision/my_mvision_module/base.py* and change line
+Edit file *valkka-mvision/valkka/mvision/my_module/base.py* and change line
     
 ::
     
@@ -51,6 +51,17 @@ To
     
 
 Restart Valkka Live and confirm that "My Movement Detector" is available at the "Machine Vision" submenu
+    
+This is a namespace module, so if you want the packaging to work, modify *setup.py* like this:
+
+::
+
+    packages = [
+    ...
+
+    'valkka.mvision.my_module'
+    ]
+    
     
 Using Your Module
 -----------------

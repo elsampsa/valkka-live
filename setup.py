@@ -8,11 +8,20 @@ version = '0.3.0'
 setup(
     name = "valkka_live",
     version = version,
+    
+    # python packaging is in a state of mess, as usual (**)
+    # https://github.com/pypa/pip/issues/5384
+    
     install_requires = [
         'PySide2 >=5.11.1',
         'cute_mongo_forms >=0.2.1',
+        # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment
     ],
-
+    
+    #dependency_links = [ # install dependencies from git
+    #    'git+https://github.com/elsampsa/cute_mongo_forms.git' # (**) works, but is deprecated.  Must use --process-dependency_links with pip3
+    #],
+    
     scripts=[
         "bin/valkka-live", # sets env variables, uses run-valkka-live entry point
         "bin/install-valkka-core",
@@ -30,7 +39,11 @@ setup(
 
     # packages = find_packages(), # # includes python code from every directory that has an "__init__.py" file in it.  If no "__init__.py" is found, the directory is omitted.  Other directories / files to be included, are defined in the MANIFEST.in file
 
-    packages=['valkka.live'], # this is needed for namespace packages
+    # this is needed for namespace packages:
+    packages=[
+        'valkka.live',
+        'valkka.live.container'
+        ],
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed
     # # "package_data" keyword is a practical joke: use MANIFEST.in instead

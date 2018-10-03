@@ -50,15 +50,15 @@
 <div class="section" id="creating-your-own-module">
 <h3>Creating your own module<a class="headerlink" href="#creating-your-own-module" title="Permalink to this headline">¶</a></h3>
 <p>Proceed like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">/</span><span class="n">valkka_mvision</span>
-<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="n">movement</span> <span class="n">my_mvision_module</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span>
+<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="n">movement</span> <span class="n">my_module</span>
 </pre></div>
 </div>
-<p>Edit file <em>valkka-mvision/valkka_mvision/__init__.py</em> and add the following line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_mvision.my_mvision_module</span> <span class="k">import</span> <span class="o">*</span>
+<p>Edit the file <em>valkka-mvision/valkka/mvision/__init__.py</em> and add the following line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka.mvision.my_module</span> <span class="k">import</span> <span class="o">*</span>
 </pre></div>
 </div>
-<p>Edit file <em>valkka-mvision/valkka_mvision/my_mvision_module/base.py</em> and change line</p>
+<p>Edit file <em>valkka-mvision/valkka/mvision/my_module/base.py</em> and change line</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Simple Movement Detector&quot;</span>
 </pre></div>
 </div>
@@ -67,6 +67,14 @@
 </pre></div>
 </div>
 <p>Restart Valkka Live and confirm that “My Movement Detector” is available at the “Machine Vision” submenu</p>
+<p>This is a namespace module, so if you want the packaging to work, modify <em>setup.py</em> like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">packages</span> <span class="o">=</span> <span class="p">[</span>
+<span class="o">...</span>
+
+<span class="s1">&#39;valkka.mvision.my_module&#39;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="using-your-module">
 <h3>Using Your Module<a class="headerlink" href="#using-your-module" title="Permalink to this headline">¶</a></h3>
