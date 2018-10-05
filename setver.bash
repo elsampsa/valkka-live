@@ -13,7 +13,7 @@ do
   find $f -exec sed -i -r "s/release = '.*'/version = '$1.$2.$3'/g" {} \;
 done
 
-fs="git_tag.bash git_rm_tag.bash valkka_live/version.py"
+fs="git_tag.bash git_rm_tag.bash valkka/live/version.py"
 for f in $fs
 do
   # mod version numbers in git_tag.bash

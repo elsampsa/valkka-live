@@ -17,7 +17,7 @@ Install the machine vision plugin like this:
     
 Now you have an editable version of the machine vision plugin available.
     
-If you restart Valkka Live, there will be a new entry "Machine Vision" in the menu bar (Valkka Live scans the "valkka_mvision" namespace for submodules)
+If you restart Valkka Live, there will be a new entry "Machine Vision" in the menu bar (Valkka Live scans the "valkka.mvision" namespace for submodules)
 
 A simple movement detector is provided as an example.
 
