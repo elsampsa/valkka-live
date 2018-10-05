@@ -324,6 +324,7 @@ class MyGui(QtWidgets.QMainWindow):
         mvision_container_list = []
         
         for container in self.containers:
+            print("gui: serialize containers : container=", container)
             container_list.append(container.serialize())
         
         for container in self.mvision_containers:
@@ -462,23 +463,45 @@ class MyGui(QtWidgets.QMainWindow):
         self.dm.close()
         e.accept()
 
+
+    def rem_container_slot(self, cont):
+        print("gui: rem_container_slot: removing container:",cont)
+        print("gui: rem_container_slot: containers:",self.containers)
+        try:
+            self.containers.remove(cont)
+        except ValueError:
+            print("gui: could not remove container",cont)
+        print("gui: rem_container_slot: containers now:",self.containers)
+        
+        
+    def rem_mvision_container_slot(self, cont):
+        print("gui: rem_mvision_container_slot: removing mvision container:",cont)
+        print("gui: rem_mvision_container_slot: mvision containers:",self.mvision_containers)
+        try:
+            self.mvision_containers.remove(cont)
+        except ValueError:
+            print("gui: rem_mvision_container_slot: could not remove container",cont)
+        print("gui: rem_mvision_container_slot: mvision containers now:",self.mvision_containers)
+        
+        
     # slot function makers
 
     def make_grid_slot(self, n, m):
         """Create a n x m video grid, show it and add it to the list of video containers
         """
         def slot_func():
-            self.containers.append(
-                container.VideoContainerNxM(
-                    gpu_handler=self.gpu_handler, filterchain_group=self.filterchain_group, n_dim=n, m_dim=m)
-            )
+            cont = container.VideoContainerNxM(gpu_handler=self.gpu_handler, 
+                                                    filterchain_group=self.filterchain_group, 
+                                                    n_dim=n, 
+                                                    m_dim=m)
+            cont.signals.closing.connect(self.rem_container_slot)
+            self.containers.append(cont)
         setattr(self, "grid_%ix%i_slot" % (n, m), slot_func)
 
 
     def make_mvision_slot(self, cl):
         def slot_func():
-            self.mvision_containers.append(
-                container.VideoContainerNxM(
+            cont = container.VideoContainerNxM(
                 parent            = None,
                 gpu_handler       = self.gpu_handler,
                 filterchain_group = self.filterchain_group,
@@ -489,7 +512,8 @@ class MyGui(QtWidgets.QMainWindow):
                 child_class_pars  = {"mvision_class": cl}, # serializable parameters (for re-creating this container)
                 child_class_pars_ = {"thread" : self.thread} # non-serializable parameters
                 )
-            )
+            cont.signals.closing.connect(self.rem_mvision_container_slot)
+            self.mvision_containers.append(cont)
         setattr(self, cl.name+"_slot", slot_func)
 
 

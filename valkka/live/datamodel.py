@@ -115,17 +115,25 @@ class DataModel:
                 LineEditColumn,
                 key_name="password",
                 label_name="Password"),
-            ColumnSpec(LineEditColumn, key_name="tail", label_name="Tail")
+            ColumnSpec(
+                LineEditColumn,
+                key_name="port",
+                label_name="Port"),
+            ColumnSpec(
+                LineEditColumn, 
+                key_name="tail", 
+                label_name="Tail")
         ]
 
         @classmethod
         def getAddressFromDict(cls, dic):
-            st = "rtsp://"       \
-                + dic["username"] + ":" \
-                + dic["password"] + "@" \
-                + dic["address"] + "/"       \
-                + dic["tail"]
-            st = st.strip()
+            st = "rtsp://"
+            st += dic["username"] + ":"
+            st += dic["password"] + "@"
+            st += dic["address"]
+            if (dic["port"].strip() != ""):
+                st += ":" + dic["port"].strip()            
+            st += "/" + dic["tail"]
             return st
 
         def makeWidget(self):
@@ -160,6 +168,7 @@ class DataModel:
             "address"   : str,
             "username"  : str,
             "password"  : str,
+            "port"      : (str, ""),
             "tail"      : (str, "")
         }
 

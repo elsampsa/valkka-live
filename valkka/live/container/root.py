@@ -36,6 +36,7 @@ class RootVideoContainer:
 
     class Signals(QtCore.QObject):
         close = QtCore.Signal()
+        closing = QtCore.Signal(object) # carries itself in the signal .. used to inform the main program that this instance can be removed from a list
 
     class ContainerWindow(QtWidgets.QMainWindow):
         # TODO: connect close signal
@@ -179,6 +180,7 @@ class RootVideoContainer:
         self.openglthread = None
         self.gpu_handler = None
         self.closed = True
+        self.signals.closing.emit(self)
         self.window.close() 
 
     def get_child_class_pars(self):

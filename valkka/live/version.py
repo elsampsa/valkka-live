@@ -28,8 +28,8 @@ from valkka.live import constant
 
 # the following three lines are modded by setver.bash:
 VERSION_MAJOR=0
-VERSION_MINOR=2
-VERSION_PATCH=1
+VERSION_MINOR=3
+VERSION_PATCH=0
 
 # required valkka version
 MIN_VALKKA_VERSION_MAJOR = 0
