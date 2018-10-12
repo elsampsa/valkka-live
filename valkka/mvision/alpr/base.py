@@ -56,7 +56,7 @@ class LicensePlateDetector(Analyzer):
         "runtime_data" :
             (str, "/usr/share/openalpr/runtime_data"),
         "top_n" :                       # :param top_n:  How many top results are included in the list
-            (int, 10),
+            (int, 3),
         "at_movement" : 
             (bool, True)
     }
