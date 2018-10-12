@@ -21,9 +21,11 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 valkka_core_not_found="""
-Valkka core module is not installed
+Valkka core module is not installed 
 
-On Ubuntu you can install it with:
+(or your version of Valkka Live is _very_ old)
+
+On Ubuntu you can install valkka-core with:
 
 sudo apt-add-repository ppa:sampsa-riikonen/valkka
 sudo apt-get update
@@ -38,10 +40,12 @@ For more information, see https://elsampsa.github.io/valkka-examples
 
 
 valkka_core_old="""
-
 Valkka core module is not up to date
 
-(required version %i.%i.%i, valkka-core version %i.%i.%i)
+(or your version of Valkka Live is _very_ old)
+
+required valkka-core version %i.%i.%i
+your valkka-core version is %i.%i.%i
 
 Please update with
 
@@ -54,7 +58,6 @@ update-valkka-core
 """
 
 program_info="""
-
 Valkka Live version %s
 
 (Valkka core version %s)
@@ -64,8 +67,7 @@ Valkka uses the following OpenSource software:
 FFMpeg libraries (Lesser General Public License)
 Live555 library  (Lesser General Public License)
 
-Copyright Sampsa Riikonen 2018
-
+Valkka Live, Copyright Sampsa Riikonen 2018
 """
 
 max_devices = 32

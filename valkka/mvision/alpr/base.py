@@ -30,9 +30,6 @@ from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
 from valkka.mvision.movement.base import MovementDetector
-# from openalpr import Alpr
-
-import traceback
 
 def writePng(fname, img):
     import png # pip3 install --user pypng

@@ -74,7 +74,9 @@ If you want to install Valkka Live, hack it, add your own machine vision modules
     cd valkka-live
     pip3 install --user -e .
 
+Use that last command to update Valkka Live every now and then.
 
+    
 .. If the scripts don't run, remember that pip3 installs scripts (*install-valkka-core* and *valkka-live*) under *$HOME/local/bin*.  See that this directory is on your $PATH.
 
 

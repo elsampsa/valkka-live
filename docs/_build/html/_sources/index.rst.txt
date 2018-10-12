@@ -45,7 +45,7 @@ We'll be installing directly from github, so git is required:
 
     sudo apt-get install git python3-pip
 
-After that, install with:
+After that, install (and in the future, update) with:
 
 ::
 
@@ -71,7 +71,7 @@ Finally, run with
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
    requirements

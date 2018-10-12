@@ -120,6 +120,15 @@ That's it!  Now "License Plate Recognition" should appear under "Machine Vision"
 .. This way you will get instantly lots of goodies, say a state-of-the-art neural-network facial recognition.  Now, how cool is that..!?
 
 
+Creating Machine Vision Packages
+--------------------------------
+
+You can create your own packages with machine vision modules using namespaces starting with *valkka.mvision*.  
+
+If you create, a namespace package to, say, namespace *valkka.mvision_myown*, and use the same conventions (directories, classnames, etc.) explained above for *valkka.mvision*, they will appear automagically in Valkka Live's *Machine Vision* menus.
+
+For creating namespace modules under *valkka.*, refer `here <https://github.com/elsampsa/valkka-skeleton>`_
+
 More
 ----
 
