@@ -43,7 +43,7 @@ setup(
     # this is needed for namespace packages:
     packages=[
         'valkka.live',
-        'valkka.live.container'
+        'valkka.live.container',
         'valkka.mvision',
         'valkka.mvision.movement',
         'valkka.mvision.alpr',
