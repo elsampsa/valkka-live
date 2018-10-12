@@ -43,7 +43,7 @@ We'll be installing directly from github, so git is required:
 
 ::
 
-    sudo apt-get install git pip3
+    sudo apt-get install git python3-pip
 
 After that, install with:
 
