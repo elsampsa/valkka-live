@@ -59,7 +59,7 @@
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
 <p>We’ll be installing directly from github, so git is required:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span> <span class="n">pip3</span>
 </pre></div>
 </div>
 <p>After that, install (or update) with:</p>
@@ -81,13 +81,16 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">move</span><span class="o">-</span><span class="n">ps</span>
 </pre></div>
 </div>
+<p>If and when the program crashes (with “dangling” machine vision python multiprocesses), remember to clean the table with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">kill</span>
+</pre></div>
 </div>
-<div class="section" id="development-version">
-<h2>Development version<a class="headerlink" href="#development-version" title="Permalink to this headline">¶</a></h2>
-<p>Install development version like this:</p>
+</div>
+<div class="section" id="hacky-mode">
+<h2>Hacky mode<a class="headerlink" href="#hacky-mode" title="Permalink to this headline">¶</a></h2>
+<p>If you want to install Valkka Live, hack it, add your own machine vision modules, etc., install it in the development mode:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">.</span><span class="n">git</span>
 <span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">live</span>
-<span class="n">git</span> <span class="n">checkout</span> <span class="n">dev</span>
 <span class="n">pip3</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
 </pre></div>
 </div>
@@ -136,7 +139,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#system-requirements">System requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing">Installing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#development-version">Development version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hacky-mode">Hacky mode</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a></li>

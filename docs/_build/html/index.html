@@ -43,15 +43,15 @@
 <li>Create custom graphical interfaces with Python3 and Qt</li>
 <li>Works with stock OnVif compliant IP cameras</li>
 <li>Designed for massive video streaming - view and analyze simultaneously a large number of IP cameras</li>
+<li>Streams are decoded once and only once: same stream can be passed to several machine vision routines without extra overhead</li>
 <li>Create video streaming desktop programs with advanced features using our commercial modules</li>
 </ul>
 <p>Valkka Live is based on the <a class="reference external" href="https://elsampsa.github.io/valkka-examples/">valkka library</a>.</p>
 <p>For hardware and driver requirements, see <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/hardware.html">here</a>.</p>
 <div class="section" id="quickstart">
 <span id="id1"></span><h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
-<p>Install with</p>
 <p>We’ll be installing directly from github, so git is required:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span> <span class="n">pip3</span>
 </pre></div>
 </div>
 <p>After that, install with:</p>
@@ -60,7 +60,7 @@
 <span class="n">valkka</span><span class="o">-</span><span class="n">tune</span>
 </pre></div>
 </div>
-<p>(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)</p>
+<p>(the first script installs valkka-core modules, the second one tunes the maximum socket buffer sizes).</p>
 <p>In the case that <em>install-valkka-core</em> etc. scripts refuse to work, you must fix your path with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/.local/bin
 </pre></div>
@@ -76,7 +76,7 @@
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="requirements.html#system-requirements">System requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="requirements.html#installing">Installing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="requirements.html#development-version">Development version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#hacky-mode">Hacky mode</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a><ul>
@@ -84,11 +84,11 @@
 <li class="toctree-l2"><a class="reference internal" href="manual.html#viewing-cameras">2. Viewing Cameras</a></li>
 <li class="toctree-l2"><a class="reference internal" href="manual.html#removing-cameras">3. Removing Cameras</a></li>
 <li class="toctree-l2"><a class="reference internal" href="manual.html#saving-and-loading-the-layout">4. Saving and Loading the Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manual.html#machine-vision">5. Machine Vision</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#machine-vision">Machine Vision</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#commercial-modules">Commercial Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#machine-vision-examples">Machine Vision Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">Copyright and License</a></li>

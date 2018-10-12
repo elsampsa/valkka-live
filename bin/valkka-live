@@ -8,7 +8,12 @@ qdbus org.kde.KWin /Compositor suspend
 
 run-valkka-live
 if [[ $? -eq 139 ]]; then 
-    echo "Segfault when executing Valkka : are you running on tested hardware and drivers?  See: http://www.valkka.fi"
+    echo "****************************************************************************************************************************"
+    echo "**** Segfault when executing Valkka : are you running on tested hardware and drivers?  See: http://www.valkka.fi   *********"
+    echo "**** It could also be about your machine vision plugins                                                            *********"
+    echo "****************************************************************************************************************************"
+    # let's kill all hanging processes ..
+    valkka-kill
 fi
 
 # if we would like to resume compositor ..

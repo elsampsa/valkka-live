@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    root.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   A root level container class.  VideoContainer (see video.py) can be placed in a grid into the root level container.
 """
 
@@ -45,14 +45,22 @@ class RootVideoContainer:
             super().__init__(parent)
             assert(isinstance(signals, RootVideoContainer.Signals))
             self.signals = signals
+            self.setPropagate()
             # self.setGeometry(QtCore.QRect(100,100,500,500))
             # self.setStyleSheet("QMainWindow {}")
             self.setMinimumSize(constant.root_video_container_minsize[0], constant.root_video_container_minsize[1])
             self.setStyleSheet(style.root_container)
             self.setWindowTitle(title)
 
+        def setPropagate(self):
+            self.propagate = True
+                
+        def unSetPropagate(self):
+            self.propagate = False
+
         def closeEvent(self, e):
-            self.signals.close.emit()
+            if (self.propagate):
+                self.signals.close.emit()
             super().closeEvent(e)
 
     class ContainerWidget(QtWidgets.QWidget):
@@ -171,6 +179,10 @@ class RootVideoContainer:
 
     def close(self):
         """Called by the main gui to close the containers.  Called also when the container widget is closed
+        
+        Closed by clicking the window: goes through self.close_slot
+        Closed programmatically: use this method directly
+        
         """
         if (self.closed):
             return
@@ -180,7 +192,7 @@ class RootVideoContainer:
         self.openglthread = None
         self.gpu_handler = None
         self.closed = True
-        self.signals.closing.emit(self)
+        self.window.unSetPropagate() # we don't want the window to send the close signal .. which would call this *again* (through close_slot)
         self.window.close() 
 
     def get_child_class_pars(self):
@@ -242,6 +254,7 @@ class RootVideoContainer:
 
     def close_slot(self):
         print(self.pre, "close_slot")
+        self.signals.closing.emit(self)
         self.close()
 
 

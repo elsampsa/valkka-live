@@ -25,7 +25,7 @@ We'll be installing directly from github, so git is required:
 
 ::
 
-    sudo apt-get install git
+    sudo apt-get install git pip3
 
 After that, install (or update) with:
 
@@ -55,18 +55,23 @@ Before running, you might also want to move as many processes to core 0 as possi
 
     valkka-move-ps
     
-    
-    
-Development version
--------------------
+  
+If and when the program crashes (with "dangling" machine vision python multiprocesses), remember to clean the table with
+  
+::
 
-Install development version like this:
+    valkka-kill
+    
+    
+Hacky mode
+----------
+
+If you want to install Valkka Live, hack it, add your own machine vision modules, etc., install it in the development mode:
 
 ::
 
     git clone https://github.com/elsampsa/valkka-live.git
     cd valkka-live
-    git checkout dev
     pip3 install --user -e .
 
 

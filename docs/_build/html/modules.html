@@ -35,64 +35,94 @@
             
   <div class="section" id="modules">
 <h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="machine-vision">
-<h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
-<p>This is a standalone plugin that you can use to create your own python-based machine vision modules.  The provided example uses OpenCV, so install it as instructed <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#opencv">here</a></p>
-<p>Install the machine vision plugin like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span>
-<span class="n">pip3</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
-</pre></div>
-</div>
-<p>Now you have an editable version of the machine vision plugin available.</p>
-<p>If you restart Valkka Live, there will be a new entry “Machine Vision” in the menu bar (Valkka Live scans the “valkka.mvision” namespace for submodules)</p>
-<p>A simple movement detector is provided as an example.</p>
-<div class="section" id="creating-your-own-module">
-<h3>Creating your own module<a class="headerlink" href="#creating-your-own-module" title="Permalink to this headline">¶</a></h3>
-<p>Proceed like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">mvision</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span>
-<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="n">movement</span> <span class="n">my_module</span>
-</pre></div>
-</div>
-<p>Edit the file <em>valkka-mvision/valkka/mvision/__init__.py</em> and add the following line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka.mvision.my_module</span> <span class="k">import</span> <span class="o">*</span>
-</pre></div>
-</div>
-<p>Edit file <em>valkka-mvision/valkka/mvision/my_module/base.py</em> and change line</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Simple Movement Detector&quot;</span>
-</pre></div>
-</div>
-<p>To</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;My Movement Detector&quot;</span>
-</pre></div>
-</div>
-<p>Restart Valkka Live and confirm that “My Movement Detector” is available at the “Machine Vision” submenu</p>
-<p>This is a namespace module, so if you want the packaging to work, modify <em>setup.py</em> like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">packages</span> <span class="o">=</span> <span class="p">[</span>
-<span class="o">...</span>
-
-<span class="s1">&#39;valkka.mvision.my_module&#39;</span>
-<span class="p">]</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="using-your-module">
-<h3>Using Your Module<a class="headerlink" href="#using-your-module" title="Permalink to this headline">¶</a></h3>
-<p>Drag’n’ drop cameras into the machine vision widget and your module starts doing its magic</p>
-</div>
-<div class="section" id="remarks">
-<h3>Remarks<a class="headerlink" href="#remarks" title="Permalink to this headline">¶</a></h3>
-<p>Your machine vision module runs as an independent python multiprocess that receives frames from the main Valkka Live program once in a second at a relatively low resolution, using POSIX shared memory and semaphores.</p>
-<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at the cpp level.  And only after that interface to Valkka (see the upcoming <strong>valkka-cpp-examples</strong> module for an example).</p>
-</div>
-</div>
-<div class="section" id="commercial-modules">
-<h2>Commercial Modules<a class="headerlink" href="#commercial-modules" title="Permalink to this headline">¶</a></h2>
-<p><em>coming soon</em></p>
-<ul class="simple">
-<li>Simultaneous synchronized recording of several ip cameras</li>
-<li>Audio</li>
+<div class="section" id="machine-vision-examples">
+<h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Permalink to this headline">¶</a></h2>
+<p>Once Valkka has decoded a frame from a certain camera, that decoded frame can be dumped to screen (to hundred windows if necessary) and passed to machine vision routines.  There is no overhead, as the stream from a certain camera is decoded only once.</p>
+<p>Decoded frames can be pushed to machine vision routines that are programmed at the python level.  You can easily construct your own too.  At the moment, there are two schemes of plugging-in a python machine vision module.</p>
+<p><strong>1. Using a python multiprocess.</strong>  Communication with the python multiprocess is done by passing frames through shared memory from the Valkka main process.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Use this always when you can embed your routine as a python module</li>
+<li>Typical use-case: OpenCV</li>
 </ul>
+</div></blockquote>
+<p><strong>2. Using an external python program.</strong>  Frames are passed to the external program through the filesystem.  Other communication is done through stdin and stdout.</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Use when your program is impossible to embed as a python module</p>
+</li>
+<li><p class="first">Say, when using keras machine vision running in a docker</p>
+</li>
+<li><p class="first">Your program must conform to a certain base class, see:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka_live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span><span class="n">example_process1</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div></blockquote>
+<p>Each machine vision module appears as its own directory (the plugin scheme is indicated as well):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span>
+
+    <span class="n">movement</span><span class="o">/</span>           <span class="n">simple</span> <span class="n">movement</span> <span class="n">detector</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">nix</span><span class="o">/</span>                <span class="n">demo</span> <span class="n">detector</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">alpr</span><span class="o">/</span>               <span class="n">OpenALPR</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>You can create your own by copying any of the directories to a different name.  Then, study and edit the file <em>base.py</em> in that directory.  After that, you still have to register the module into:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>Before deploying your machine vision routine, you can test within the module file like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span><span class="n">movement</span>
+<span class="n">python3</span> <span class="n">base</span><span class="o">.</span><span class="n">py</span> <span class="n">N</span>
+</pre></div>
+</div>
+<p>where <em>N</em> is the test number.  Test number 5 lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
+<p>Before taking a detailed look into the provided modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second.</p>
+<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at the cpp level.  And only after that interface to Valkka (<a class="reference external" href="https://github.com/elsampsa/valkka-cpp-examples">this</a> could help).</p>
+<div class="section" id="movement-detector">
+<h3>Movement Detector<a class="headerlink" href="#movement-detector" title="Permalink to this headline">¶</a></h3>
+<p>This is an extremely simple demo, using OpenCV.  It reports when there is movement.  A good basis for using your own, OpenCV based module.</p>
+<p>This module needs OpenCV installed.  See <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#opencv">here</a>.</p>
+</div>
+<div class="section" id="nix">
+<h3>Nix<a class="headerlink" href="#nix" title="Permalink to this headline">¶</a></h3>
+<p>Demonstrates how to send frames to an external process.</p>
+<p>Files are sent to a file in the “/tmp” directory, reading and writing frames is synchronized using communication through stdin and stdout.</p>
+</div>
+<div class="section" id="openalpr">
+<h3>OpenALPR<a class="headerlink" href="#openalpr" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.openalpr.com">OpenALPR</a> is a popular OpenSource library for automatic license plate recognition.  We provide a bridge to it.</p>
+<p>First of all <strong>DO NOT</strong> install the freemium OpenSource version available at the <a class="reference external" href="https://github.com/openalpr/openalpr">github repository</a>, as its outdated and buggy.  Instead, install the commercial version as instructed <a class="reference external" href="http://doc.openalpr.com/sdk.html">here</a>, i.e. like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="o">&lt;</span><span class="p">(</span><span class="n">curl</span> <span class="o">-</span><span class="n">s</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">deb</span><span class="o">.</span><span class="n">openalpr</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">install</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You will also need a license key which you can get from here <a class="reference external" href="https://www.openalpr.com/on-premises.html">here</a>.  Place the key you obtain from the OpenALPR folks into</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">openalpr</span><span class="o">/</span><span class="n">license</span><span class="o">.</span><span class="n">conf</span>
+</pre></div>
+</div>
+<p>Confirm that OpenALPR works with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpr</span> <span class="o">-</span><span class="n">c</span> <span class="n">eu</span> <span class="n">photo_of_your_car</span><span class="o">.</span><span class="n">jpg</span>
+</pre></div>
+</div>
+<p>In order to make this work with python, you still have to do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s1">&#39;deb https://deb.openalpr.com/bionic/ bionic main&#39;</span> <span class="o">|</span> <span class="n">sudo</span> <span class="n">tee</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apt</span><span class="o">/</span><span class="n">sources</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">d</span><span class="o">/</span><span class="n">openalpr</span><span class="o">.</span><span class="n">list</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">openalpr</span>
+</pre></div>
+</div>
+<p>(as for some reason that script provided by openalpr unsubscribes your from their repository)</p>
+<p>Confirm that the python bindings work with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ipython3</span>
+<span class="kn">from</span> <span class="nn">openalpr</span> <span class="k">import</span> <span class="n">Alpr</span>
+</pre></div>
+</div>
+<p>That’s it!  Now “License Plate Recognition” should appear under “Machine Vision” in Valkka Live</p>
+</div>
+<div class="section" id="more">
+<h3>More<a class="headerlink" href="#more" title="Permalink to this headline">¶</a></h3>
+<p><em>coming soon</em></p>
+</div>
 </div>
 </div>
 
@@ -138,8 +168,7 @@
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Modules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#machine-vision">Machine Vision</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#commercial-modules">Commercial Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-vision-examples">Machine Vision Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">Copyright and License</a></li>

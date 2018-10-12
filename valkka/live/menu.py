@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    menu.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   Menu definitions
 """
 

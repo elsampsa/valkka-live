@@ -21,6 +21,7 @@ Valkka Live is an OpenSource video surveillance and management program for Linux
 - Create custom graphical interfaces with Python3 and Qt
 - Works with stock OnVif compliant IP cameras
 - Designed for massive video streaming - view and analyze simultaneously a large number of IP cameras
+- Streams are decoded once and only once: same stream can be passed to several machine vision routines without extra overhead
 - Create video streaming desktop programs with advanced features using our commercial modules
 
 Valkka Live is based on the `valkka library <https://elsampsa.github.io/valkka-examples/>`_.
@@ -34,8 +35,7 @@ For hardware and driver requirements, see `here <https://elsampsa.github.io/valk
 Quickstart
 ----------
 
-Install with
-
+.. Install with
 .. pypi sucks
 .. pip3 install --user --upgrade valkka-live
 
@@ -43,7 +43,7 @@ We'll be installing directly from github, so git is required:
 
 ::
 
-    sudo apt-get install git
+    sudo apt-get install git pip3
 
 After that, install with:
 
@@ -53,7 +53,7 @@ After that, install with:
     install-valkka-core
     valkka-tune
 
-(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)
+(the first script installs valkka-core modules, the second one tunes the maximum socket buffer sizes).
     
 In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 

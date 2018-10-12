@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   Manage and group Valkka filterchains
 """
 
@@ -94,7 +94,8 @@ class FilterChainGroup:
                     _id         = device["_id"],
                     affinity    = affinity,
                     msreconnect = 10000,
-                    verbose     = True,
+                    # verbose     = True,
+                    verbose     =False,
                     
                     # for managefilterchain2 only:
                     shmem_image_dimensions = constant.shmem_image_dimensions,

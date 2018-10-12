@@ -1,0 +1,4 @@
+#!/bin/bash
+ps -A -f | grep "valkka" | grep "python3" | awk ' { print $2 } ' | xargs kill 
+# when debugging, multiprocesses sometimes stay alive and keep on reading from shared mem ..!
+killall python3 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    constant.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   Constant strings, etc.
 """
 
@@ -59,6 +59,11 @@ Valkka Live version %s
 
 (Valkka core version %s)
 
+Valkka uses the following OpenSource software:
+
+FFMpeg libraries (Lesser General Public License)
+Live555 library  (Lesser General Public License)
+
 Copyright Sampsa Riikonen 2018
 
 """
@@ -72,7 +77,7 @@ config_skeleton={ # TODO: do we need this, really?
 
 # shared memory ring-buffer and image sizes
 shmem_n_buffer = 10
-shmem_image_dimensions = (1920 // 4, 1080 // 4)
+shmem_image_dimensions = (1920 // 2, 1080 // 2)
 shmem_image_interval = 1000
 
 # minimum size for video root widget

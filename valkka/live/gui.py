@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 
@@ -233,7 +233,7 @@ class MyGui(QtWidgets.QMainWindow):
         devices = []
 
         for row in self.dm.camera_collection.get():
-            print(pre, "makeCameraTree : row", row)
+            # print(pre, "makeCameraTree : row", row)
             if (row["classname"] == DataModel.RTSPCameraRow.__name__):
                 row.pop("classname")
                 devices.append(
@@ -443,10 +443,14 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def closeContainers(self):
+        print("gui: closeContainers: containers=", self.containers)
+        print("gui: closeContainers: mvision containers=", self.mvision_containers)
         for container in self.containers:
             container.close()
         for container in self.mvision_containers:
+            print("gui: closing mvision_container: ", container)
             container.close()
+            
         self.containers = []
         self.mvision_containers = []
 
@@ -593,7 +597,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
 def main():
-    app = QtWidgets.QApplication(["test_app"])
+    app = QtWidgets.QApplication(["Valkka Live"])
     mg = MyGui()
     mg.show()
     app.exec_()

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    tools.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   Helper routines
 """
 
@@ -24,6 +24,10 @@ import sys
 import os
 import types
 import shutil
+import pkgutil
+import importlib
+import types
+import re
 
 home = os.path.expanduser("~")
 config_dir = os.path.join(home, ".valkka", "live")
@@ -52,32 +56,59 @@ def getConfigFile(fname):
 
 
 def scanMVisionClasses():
+    mvision_modules = []
+
+    valkka = importlib.import_module("valkka")
+    for p in pkgutil.iter_modules(valkka.__path__, valkka.__name__ + "."):
+        if (p.name.find(".mvision")>-1):
+            # print("mvision scan: >",p)
+            try:
+                m = importlib.import_module(p.name)
+            except ModuleNotFoundError:
+                print("mvision scan: could not import", p.name)
+            else:
+                # print(m)
+                mvision_modules.append(m)
+            
     mvision_classes = []
-    
-    try:
-        import valkka.mvision
-    except ModuleNotFoundError:
-        return mvision_classes
-        
-    dic = valkka.mvision.__dict__
-    
-    # search for namespaces:
-    # valkka.mvision.*.base.MVisionProcess : should have class member "name"
-    for key in dic: # valkka_mvision.*
-        obj = dic[key]
-        if isinstance(obj, types.ModuleType):
-            # print(key)
-            # print(dir(obj), obj.__loader__)
-            # loader = obj.__loader__
-            # print(dir(loader))
-            if (hasattr(obj, "base")):
-                base = getattr(obj, "base")
-                if hasattr(base, "MVisionProcess"):
-                    mvisionclass = getattr(base, "MVisionProcess")
-                    if hasattr(mvisionclass, "name"):
-                        name = getattr(mvisionclass, "name")
-                        print("found machine vision class with name", name)
-                        mvision_classes.append(mvisionclass)
-    return mvision_classes                
+
+    for m in mvision_modules:
+        # print(m)
+        dic = m.__dict__
+        for key in dic:
+            # print("  ", key, dic[key])
+            obj = dic[key]
+            if isinstance(obj, types.ModuleType): # modules only
+                # print("mvision scan:", obj)
+                name = obj.__name__
+                # modules that have the following name pattern: "valkka.mvision*."
+                p = re.compile("valkka\.mvision\S*\.")
+                if p.match(name):
+                    # print("mvision scan: ", name)
+                    try:
+                        submodule = importlib.import_module(name)
+                    except ModuleNotFoundError:
+                        print("mvision scan: could not import", name)
+                        continue
+                    if (hasattr(submodule, "MVisionProcess")): # do we have a class valkka.mvision*.*.base.MVisionProcess ?
+                        mvisionclass = getattr(submodule, "MVisionProcess")
+                        if (hasattr(mvisionclass, "name")): # does that class has a member "name" ?
+                            name = getattr(mvisionclass, "name")
+                            print("mvision scan: found machine vision class with name", name)
+                            mvision_classes.append(mvisionclass)
+                        else:
+                            print("mvision scan: submodule",name,"missing member name")
+                    else:
+                        print("mvision scan: submodule",name,"missing MVisionProcess")
+                        
+    return mvision_classes
+
+
+if (__name__ == "__main__"):
+    mvision_classes = scanMVisionClasses()
+    for cl in mvision_classes:
+        print(cl)
+
+
     
 

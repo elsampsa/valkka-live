@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.3.0'
+version = '0.4.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -27,7 +27,8 @@ setup(
         "bin/install-valkka-core",
         "bin/update-valkka-core",
         "bin/valkka-move-ps",
-        "bin/valkka-tune"
+        "bin/valkka-tune",
+        "bin/valkka-kill"
     ],
 
     #
@@ -43,6 +44,10 @@ setup(
     packages=[
         'valkka.live',
         'valkka.live.container'
+        'valkka.mvision',
+        'valkka.mvision.movement',
+        'valkka.mvision.alpr',
+        'valkka.mvision.nix'
         ],
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed

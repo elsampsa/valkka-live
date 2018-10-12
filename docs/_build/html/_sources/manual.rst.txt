@@ -45,4 +45,9 @@ Camera views can be saved, and recovered for the next time when you use Valkka L
 - Navigate to *File / Save Window Layout*.  Now your view layout is saved
 - When starting the program again, navigate to *File / Load Window Layout*
 
+5. Machine Vision
+-----------------
+
+- Open a machine vision terminal from the *Machine Vision* menu
+- Drag'n drop a camera to that terminal
 

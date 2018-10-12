@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    mvision.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   a container class that manages Qt widgets for stream visualization and frame streaming to machine vision modules
 """
 
@@ -38,7 +38,8 @@ class MVisionContainer(VideoContainer):
         "filterchain_group" : FilterChainGroup,     # Filterchain manager class
         "n_xscreen"         : (int,0),              # x-screen index
         "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
-        "thread"            : None # thread that watches the multiprocesses communication pipes
+        "thread"            : None,                 # thread that watches the multiprocesses communication pipes
+        "verbose"           : (bool, False)
     }
 
     def __init__(self, **kwargs):
@@ -74,14 +75,14 @@ class MVisionContainer(VideoContainer):
         
         :param device:      A rather generic device class.  In this case DataModel.RTSPCameraDevice.
         """
-        print(self.pre, "setDevice :", device)
+        self.report("setDevice :", device)
         
         if (not device and not self.device): # None can be passed as an argument when the device has not been set yet
             return
             
         if (self.device):
             if self.device == device:
-                print(self.pre, "setDevice : same device")
+                self.report("setDevice : same device")
                 return
             
         if self.filterchain: # there's video already
@@ -126,13 +127,14 @@ class MVisionContainer(VideoContainer):
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
             
-            self.thread.addProcess(self.mvision_process) # process starts running .. thread (QValkkaThread) calls processes (QValkkaOpenCVProcess) start method
+            self.mvision_process.start() # process must be started before calling addProcess
+            self.thread.addProcess(self.mvision_process)
             
             
     def clearDevice(self):
         """Remove the current stream
         """
-        print(self.pre, "clearDevice")
+        self.report("clearDevice")
         if not self.device:
             return
         
@@ -141,7 +143,7 @@ class MVisionContainer(VideoContainer):
 
         self.main_layout.removeWidget(self.mvision_widget)
         self.mvision_widget = None
-        self.thread.delProcess(self.mvision_process)
+        self.thread.delProcess(self.mvision_process) # stops the multiprocess as well
         
         self.mvision_process = None
         self.filterchain = None

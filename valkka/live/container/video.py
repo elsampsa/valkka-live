@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    video.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.3.0 
+@version 0.4.0 
 @brief   a container that manages widgets for video
 """
 
@@ -150,7 +150,8 @@ class VideoContainer:
     parameter_defs = {
         "parent_container"  : None,                 # RootVideoContainer or child class
         "filterchain_group" : FilterChainGroup,     # Filterchain manager class
-        "n_xscreen"         : (int, 0)              # x-screen index
+        "n_xscreen"         : (int, 0),             # x-screen index
+        "verbose"           : (bool, False)
     }
 
     def __init__(self, **kwargs):
@@ -178,6 +179,11 @@ class VideoContainer:
         self.device = None
         self.filterchain = None
         self.viewport = ViewPort() # viewport instance is used by ManagedFilterChain(s)
+
+
+    def report(self, *args):
+        if (self.verbose):
+            print(self.pre, *args)
 
     def __del__(self):
         # self.close()
