@@ -24,12 +24,18 @@ import os
 import numpy
 import cv2
 import imutils
+import importlib
 from valkka.api2 import parameterInitCheck, typeCheck
 
 # local imports
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
 from valkka.mvision.movement.base import MovementDetector
+
+# external libraries
+# from openalpr import Alpr # lets load it in the multiprocess instead
+assert(importlib.find_loader('openalpr')) # test if module exists, without loading it
+
 
 def writePng(fname, img):
     import png # pip3 install --user pypng
@@ -71,7 +77,10 @@ class LicensePlateDetector(Analyzer):
         
         The LicensePlateDetector object gets instantiated in the multiprocess, so the library is imported in the multiprocess (i.e. "other side of the fork") as well
         """
-        from openalpr import Alpr
+        # some modules might need to be imported "on the other side of the fork"
+        # .. but the, when importing this module, the import is not tested
+        #
+        from openalpr import Alpr 
         self.movement = MovementDetector()
         self.alpr = Alpr(self.country, self.conf_file, self.runtime_data)
         self.alpr.set_top_n(self.top_n)
