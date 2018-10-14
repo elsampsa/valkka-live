@@ -22,7 +22,6 @@ import sys
 import time
 import os
 import numpy
-import cv2
 import imutils
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer

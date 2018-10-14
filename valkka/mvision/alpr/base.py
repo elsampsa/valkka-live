@@ -22,7 +22,6 @@ import sys
 import time
 import os
 import numpy
-import cv2
 import imutils
 import importlib
 from valkka.api2 import parameterInitCheck, typeCheck
@@ -80,7 +79,9 @@ class LicensePlateDetector(Analyzer):
         # some modules might need to be imported "on the other side of the fork"
         # .. but the, when importing this module, the import is not tested
         #
-        from openalpr import Alpr 
+        # 
+        # from openalpr import Alpr
+        from valkka.mvision.alpr.openalpr_fix import Alpr
         self.movement = MovementDetector()
         self.alpr = Alpr(self.country, self.conf_file, self.runtime_data)
         self.alpr.set_top_n(self.top_n)

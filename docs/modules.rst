@@ -2,8 +2,8 @@
 Modules
 *******
 
-Machine Vision Examples
-=======================
+Machine Vision
+==============
 
 Once Valkka has decoded a frame from a certain camera, that decoded frame can be dumped to screen (to hundred windows if necessary) and passed to machine vision routines.  There is no overhead, as the stream from a certain camera is decoded only once.
 
@@ -17,7 +17,7 @@ Decoded frames can be pushed to machine vision routines that are programmed at t
 **2. Using an external python program.**  Frames are passed to the external program through the filesystem.  Other communication is done through stdin and stdout.
 
     - Use when your program is impossible to embed as a python module
-    - Say, when using keras machine vision running in a docker
+    - Say, when using keras machine vision running in a docker container
     - Your program must conform to a certain base class, see:
     
       ::
@@ -49,11 +49,25 @@ Before deploying your machine vision routine, you can test within the module fil
     cd valkka-live/valkka/mvision/movement
     python3 base.py N
     
-where *N* is the test number.  Test number 5 lets you to test the machine vision module with video files (see each *base.py* for more information).
+where *N* is the test number.  Test number 5 in particular, lets you to test the machine vision module with video files (see each *base.py* for more information).
     
-Before taking a detailed look into the provided modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second. 
+Before taking a detailed look into the provided example modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second. 
 
-This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at the cpp level.  And only after that interface to Valkka (`this  <https://github.com/elsampsa/valkka-cpp-examples>`_ could help).
+This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at cpp level.  And only after that interface to Valkka (`this  <https://github.com/elsampsa/valkka-cpp-examples>`_ could help).
+
+
+Machine Vision Examples
+=======================
+
+Once you install the dependencies for each of the example modules listed below, they appear automagically in Valkka Live menu bar.
+
+If you're running Ubuntu 18 (bionic), you can use this command:
+
+::
+
+    valkka-bionic-install
+    
+to install all dependencies for all the examples
 
 Movement Detector
 -----------------
@@ -120,20 +134,14 @@ That's it!  Now "License Plate Recognition" should appear under "Machine Vision"
 .. This way you will get instantly lots of goodies, say a state-of-the-art neural-network facial recognition.  Now, how cool is that..!?
 
 
-Creating Machine Vision Packages
---------------------------------
+Creating Packages
+=================
 
 You can create your own packages with machine vision modules using namespaces starting with *valkka.mvision*.  
 
 If you create, a namespace package to, say, namespace *valkka.mvision_myown*, and use the same conventions (directories, classnames, etc.) explained above for *valkka.mvision*, they will appear automagically in Valkka Live's *Machine Vision* menus.
 
 For creating namespace modules under *valkka.*, refer `here <https://github.com/elsampsa/valkka-skeleton>`_
-
-More
-----
-
-*coming soon*
-
 
 .. Commercial Modules
 .. ==================

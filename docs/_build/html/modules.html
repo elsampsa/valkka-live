@@ -35,8 +35,8 @@
             
   <div class="section" id="modules">
 <h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="machine-vision-examples">
-<h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="machine-vision">
+<h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
 <p>Once Valkka has decoded a frame from a certain camera, that decoded frame can be dumped to screen (to hundred windows if necessary) and passed to machine vision routines.  There is no overhead, as the stream from a certain camera is decoded only once.</p>
 <p>Decoded frames can be pushed to machine vision routines that are programmed at the python level.  You can easily construct your own too.  At the moment, there are two schemes of plugging-in a python machine vision module.</p>
 <p><strong>1. Using a python multiprocess.</strong>  Communication with the python multiprocess is done by passing frames through shared memory from the Valkka main process.</p>
@@ -51,7 +51,7 @@
 <div><ul>
 <li><p class="first">Use when your program is impossible to embed as a python module</p>
 </li>
-<li><p class="first">Say, when using keras machine vision running in a docker</p>
+<li><p class="first">Say, when using keras machine vision running in a docker container</p>
 </li>
 <li><p class="first">Your program must conform to a certain base class, see:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka_live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span><span class="n">example_process1</span><span class="o">.</span><span class="n">py</span>
@@ -77,9 +77,18 @@
 <span class="n">python3</span> <span class="n">base</span><span class="o">.</span><span class="n">py</span> <span class="n">N</span>
 </pre></div>
 </div>
-<p>where <em>N</em> is the test number.  Test number 5 lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
-<p>Before taking a detailed look into the provided modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second.</p>
-<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at the cpp level.  And only after that interface to Valkka (<a class="reference external" href="https://github.com/elsampsa/valkka-cpp-examples">this</a> could help).</p>
+<p>where <em>N</em> is the test number.  Test number 5 in particular, lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
+<p>Before taking a detailed look into the provided example modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second.</p>
+<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at cpp level.  And only after that interface to Valkka (<a class="reference external" href="https://github.com/elsampsa/valkka-cpp-examples">this</a> could help).</p>
+</div>
+<div class="section" id="machine-vision-examples">
+<h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Permalink to this headline">¶</a></h2>
+<p>Once you install the dependencies for each of the example modules listed below, they appear automagically in Valkka Live menu bar.</p>
+<p>If you’re running Ubuntu 18 (bionic), you can use this command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">bionic</span><span class="o">-</span><span class="n">install</span>
+</pre></div>
+</div>
+<p>to install all dependencies for all the examples</p>
 <div class="section" id="movement-detector">
 <h3>Movement Detector<a class="headerlink" href="#movement-detector" title="Permalink to this headline">¶</a></h3>
 <p>This is an extremely simple demo, using OpenCV.  It reports when there is movement.  A good basis for using your own, OpenCV based module.</p>
@@ -119,16 +128,12 @@
 </div>
 <p>That’s it!  Now “License Plate Recognition” should appear under “Machine Vision” in Valkka Live</p>
 </div>
-<div class="section" id="creating-machine-vision-packages">
-<h3>Creating Machine Vision Packages<a class="headerlink" href="#creating-machine-vision-packages" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="creating-packages">
+<h2>Creating Packages<a class="headerlink" href="#creating-packages" title="Permalink to this headline">¶</a></h2>
 <p>You can create your own packages with machine vision modules using namespaces starting with <em>valkka.mvision</em>.</p>
 <p>If you create, a namespace package to, say, namespace <em>valkka.mvision_myown</em>, and use the same conventions (directories, classnames, etc.) explained above for <em>valkka.mvision</em>, they will appear automagically in Valkka Live’s <em>Machine Vision</em> menus.</p>
 <p>For creating namespace modules under <em>valkka.</em>, refer <a class="reference external" href="https://github.com/elsampsa/valkka-skeleton">here</a></p>
-</div>
-<div class="section" id="more">
-<h3>More<a class="headerlink" href="#more" title="Permalink to this headline">¶</a></h3>
-<p><em>coming soon</em></p>
-</div>
 </div>
 </div>
 
@@ -174,7 +179,14 @@
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Modules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#machine-vision-examples">Machine Vision Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-vision">Machine Vision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-vision-examples">Machine Vision Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#movement-detector">Movement Detector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nix">Nix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openalpr">OpenALPR</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-packages">Creating Packages</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">Copyright and License</a></li>

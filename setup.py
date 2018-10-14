@@ -30,7 +30,8 @@ setup(
         "bin/update-valkka-core",
         "bin/valkka-move-ps",
         "bin/valkka-tune",
-        "bin/valkka-kill"
+        "bin/valkka-kill",
+        "bin/valkka-bionic-install"
     ],
 
     #
