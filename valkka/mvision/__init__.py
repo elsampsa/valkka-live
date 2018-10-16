@@ -7,14 +7,19 @@ from valkka.mvision.multiprocess import *
 try:
     from .import movement
 except Exception as e:
-    print("valkka.mvision.__init__ : could not export some modules : '"+str(e)+"'")
+    print("valkka.mvision.__init__ : could not import module movement : '"+str(e)+"'")
 
 try: 
     from .import alpr
 except Exception as e:
-    print("valkka.mvision.__init__ : could not export some modules : '"+str(e)+"'")
+    print("valkka.mvision.__init__ : could not import module alpr : '"+str(e)+"'")
     
 try:
     from .import nix
 except Exception as e:
-    print("valkka.mvision.__init__ : could not export some modules : '"+str(e)+"'")
+    print("valkka.mvision.__init__ : could not import module nix : '"+str(e)+"'")
+
+try:
+    from .import dflpr
+except Exception as e:
+    print("valkka.mvision.__init__ : could not import module dflpr : '"+str(e)+"'")

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    default.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.0 
+@version 0.4.1 
 @brief   Default configuration values
 """
 

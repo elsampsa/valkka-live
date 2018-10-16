@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    base.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.0 
+@version 0.4.1 
 @brief   Plugin for the celebrated ALPR (Automatic License Plate Recognition) package, which is (not-that) OpenSource.
 """
 

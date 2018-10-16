@@ -1,5 +1,5 @@
 """
-nix.py : Communicate with your machine vision analyzer through stdout, stdin and the filesystem
+dflpr.py : Communicate with an external license plate recognition software using stdin, stdout and the filesystem
 
 Copyright 2018 Sampsa Riikonen
 
@@ -9,11 +9,11 @@ This file is part of the machine vision plugin for the Valkka Live program
 
 This plugin is free software: you can redistribute it and/or modify it under the terms of the MIT License.  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the MIT License for more details.
 
-@file    nix.py
+@file    dflpt.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.4.1 
-@brief   Communicate with your machine vision analyzer through stdout, stdin and the filesystem
+@brief   Communicate with an external license plate recognition software using stdin, stdout and the filesystem
 """
 
 # from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
@@ -22,137 +22,28 @@ import sys
 import time
 import os
 import numpy
-# import cv2
-import imutils
+import importlib
 from valkka.api2 import parameterInitCheck, typeCheck
 
 # local imports
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
 from valkka.mvision import tools, constant
+from valkka.mvision.nix.base import ExternalDetector
 
-pre = "valkka.mvision.movement.base : "
+assert(os.system("markus-lpr-check") < 1) # is this command installed ?
 
-class ExternalDetector(Analyzer):
-    """A demo analyzer, using an external program
-    """
-
-    parameter_defs = {
-        "verbose":          (bool, False),
-        "debug":            (bool, False),
-        "executable":       str,
-        "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
-        "tmpfile":          str
-    }
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # checks that kwargs is consistent with parameter_defs.  Attaches
-        # parameters as attributes to self
-        parameterInitCheck(self.parameter_defs, kwargs, self)
-        self.pre = self.__class__.__name__ + ":"
-        self.init()
-
-    def init(self):
-        """Start the process
-        """
-        import subprocess
-        import fcntl
-        
-        width = str(self.image_dimensions[0])
-        height = str(self.image_dimensions[1])
-        
-        try:
-            self.p = subprocess.Popen([self.executable, width, height, self.tmpfile], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        except Exception as e:
-            print(self.pre, "Could not open external process.  Failed with '"+str(e)+"'")
-            return
-        
-        """
-        fd = self.p.stdout.fileno()
-        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-        """
-        
-        self.reset()
-
-
-    def reset(self):
-        """Tell the external analyzer to reset itself
-        """
-        self.report("sending reset")
-        try:
-            self.p.stdin.write(bytes("T\n","utf-8"))
-            self.p.stdin.flush()
-        except IOError:
-            self.report("could not send reset command")
-
-
-    def close(self):
-        """Tell the process to exit
-        """
-        try:
-            self.p.stdin.write(bytes("X\n","utf-8"))
-            self.p.stdin.flush()
-        except IOError:
-            self.report("could not send exit command")
-        self.p.wait() # wait until the process is closed
-        os.remove(self.tmpfile) # clean up the temporary file
-
-    
-    def __call__(self, img):
-        self.report("got frame :",img.shape)
-        
-        # before sending the new frame, collect results the analyzer produced from the previous frame
-        self.report("waiting for external process")
-        st = str(self.p.stdout.readline(),"utf-8")
-        self.report("got >"+st+"<")
-        
-        if (st=="C\n"):
-            result=""
-        else:
-            result=st[0:-1]
-        
-        # write the new frame into a tmpfile
-        img.dump(self.tmpfile)
-        
-        # inform the external process that there is a new frame available
-        try:
-            self.p.stdin.write(bytes("R\n","utf-8"))
-            self.p.stdin.flush()
-        except IOError:
-            self.report("could not send data")
-            
-        # the data from the previous frame: format here the string into a data structure if you need to
-        return result
-
-
-    def readStdout(self):
-        """Not used
-        """
-        btt = bytes()
-        while True:
-            bt = self.p.stdout.read(1)
-            if bt:
-                btt += bt
-            else:
-                # print("!")
-                break
-            """
-            if (bt == "\n"):
-                break
-            """
-        return btt[0:-1].decode("utf-8")
+pre = "valkka.mvision.dflpr.base : "
         
         
 class MVisionProcess(QValkkaOpenCVProcess):
     """A multiprocess that uses stdin, stdout and the filesystem to communicate with an external machine vision program
     """
     
-    name = "Stdin, stdout and filesystem example" # NOTE: this class member is required, so that Valkka Live can find the class
+    name = "Markus LPR"
     
     # The (example) process that gets executed.  You can find it in the module directory
-    executable = os.path.join(tools.getModulePath(),"example_process1.py")
+    executable = os.path.join("markus-lpr-nix")
     
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         "stop_": []
@@ -174,9 +65,8 @@ class MVisionProcess(QValkkaOpenCVProcess):
         "n_buffer": (int, 10),
         "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
         "shmem_name": str,
-        "verbose": (bool, False),
-        "deadtime": (int, 1)
-    }
+        "verbose": (bool, False)
+        }
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
@@ -216,7 +106,7 @@ class MVisionProcess(QValkkaOpenCVProcess):
             
             if (result != ""):
                 self.sendSignal_(name="text", message=result)
-
+            
     def postRun_(self):
         self.analyzer.close()
         super().postRun_()
@@ -235,17 +125,27 @@ class MVisionProcess(QValkkaOpenCVProcess):
         self.sendSignal(name="stop_")
 
     # ** frontend methods handling outgoing signals ***
-    
     def text(self, message=""):
         self.report("At frontend: text got message", message)
-        self.signals.text.emit(message+"\n")
+        self.signals.text.emit(message)
 
-    # *** create a widget for this machine vision module ***
+    # *** This is used by the modules Qt Widget ***
+    def text_slot(self, message=""): # receives a license plate
+        self.recent_plates.append(message) # just take the plate, scrap confidence
+        if (len(self.recent_plates)>10): # show 10 latest recognized license plates
+            self.recent_plates.pop(0)
+        st=""
+        for plate in self.recent_plates:
+            st += plate + "\n"
+        self.widget.setText(st)
+    
+    # *** create a Qt widget for this machine vision module **
     def getWidget(self):
-        widget = QtWidgets.QLabel("NO TEXT YET")
-        self.signals.text.connect(lambda message: widget.setText(message))
-        return widget
-        
+        self.widget = QtWidgets.QTextEdit()
+        self.recent_plates = []
+        self.signals.text.connect(self.text_slot) 
+        return self.widget
+    
     
 def test1():
     """Dummy-testing the external detector
@@ -356,7 +256,6 @@ def test5():
     fg.show()
     app.exec_()
     print("bye from app!")
-    
     
     
 def main():

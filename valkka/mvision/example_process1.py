@@ -97,9 +97,9 @@ class StdProcess:
                 ok=False
             elif (ch=="R"): #   READ NEW FRAME
                 try:
-                    img = numpy.load(filename)
+                    img = numpy.load(self.filename)
                 except FileNotFoundError:
-                    self.report("could not read tmpfile "+filename)
+                    self.report("could not read tmpfile "+self.filename)
                     self.sendReceipt()
                 else:
                     result = self.run(img)
