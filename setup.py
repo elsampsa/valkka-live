@@ -50,7 +50,8 @@ setup(
         'valkka.mvision',
         'valkka.mvision.movement',
         'valkka.mvision.alpr',
-        'valkka.mvision.nix'
+        'valkka.mvision.nix',
+        'valkka.mvision.dflpr'
         ],
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed
