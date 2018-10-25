@@ -9,7 +9,7 @@ FAQ
 
 That commercial program is not streaming at 2K resolution!  Instead, it requests the so-called "substream" from those cameras which is typically 720p or less.
 
-If you want to benchmark agains Valkka, you must use the substream address instead.
+If you want to benchmark against Valkka, you must use the substream address instead.
 
 The substream address depends on the manufacturer.  For HIK, mainstream and substream addresses are typically (might vary, depending on the camera model):
 
