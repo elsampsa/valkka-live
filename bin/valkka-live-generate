@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+
+import argparse
+from valkka.live.datamodel import DataModel
+from valkka.live import tools
+
+
+def process_cl_args():
+  
+  def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+
+  parser = argparse.ArgumentParser(usage="""
+EXAMPLE: valkka-live-generate --base_address=192.168.1 --start=24 --n=3 --tail=substream --user=admin --password=12345
+
+This will generate addresses
+
+    rtsp://admin:12345@192.168.1.24/substream
+    rtsp://admin:12345@192.168.1.25/substream
+    rtsp://admin:12345@192.168.1.26/substream
+                        
+""")
+  parser.register('type','bool',str2bool)
+  
+  parser.add_argument("--base_address",   action="store", type=str, required=True,       help="Base ip address, for example 192.168.1")
+  parser.add_argument("--start",          action="store", type=int, required=True,        help="Start ip number, for example 24")
+  parser.add_argument("--n",              action="store", type=int, required=True,        help="Number of cameras to be added, for example 10")
+  parser.add_argument("--tail",           action="store", type=str, default="",           help="Address tail, for example substream")
+  parser.add_argument("--user",           action="store", type=str, required=True,        help="Username, for example admin")
+  parser.add_argument("--password",       action="store", type=str, required=True,        help="Password, for example 12345")
+  parsed_args, unparsed_args = parser.parse_known_args()
+  return parsed_args, unparsed_args
+
+
+if (__name__=="__main__"):
+    
+    parsed, unparsed = process_cl_args()
+    for u in unparsed:
+        print("WARNING: got unknown argument", u)
+        sys.exit(3)
+
+    
+
+    dm = DataModel(directory = tools.getConfigDir())
+    dm.autoGenerateCameraCollection(parsed.base_address, parsed.start, parsed.n, "", parsed.tail, parsed.user, parsed.password)
+    dm.saveAll()
+    dm.close()
+

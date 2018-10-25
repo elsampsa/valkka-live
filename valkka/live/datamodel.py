@@ -33,7 +33,7 @@ from cute_mongo_forms.container import List, SimpleForm
 
 from valkka.live import default
 from valkka.live.form import SlotFormSet
-from valkka.live import constant
+from valkka.live import constant, tools
 
 
 class ListAndForm:
@@ -124,6 +124,21 @@ class DataModel:
                 key_name="tail", 
                 label_name="Tail")
         ]
+        """
+        TODO: use "Mainstream tail" and "Substream tail"
+        
+        Could also add a dropdown menu called "Brand" that autofills the tail fields
+        
+        Brand : [drop-down]
+        Mainstream tail :
+        Substream tail  :
+        
+        -----
+        
+        Mainstream address :
+        Substream address  :
+        """
+        
 
         @classmethod
         def getAddressFromDict(cls, dic):
@@ -204,28 +219,28 @@ class DataModel:
             ColumnSpec(
                 IntegerColumn,
                 key_name="n_720p",
-                label_name="Number of 720p cameras",
+                label_name="Number of 720p streams",
                 min_value=0,
                 max_value=1024,
                 def_value=default.memory_config["n_720p"]),
             ColumnSpec(
                 IntegerColumn,
                 key_name="n_1080p",
-                label_name="Number of 1080p cameras",
+                label_name="Number of 1080p streams",
                 min_value=0,
                 max_value=1024,
                 def_value=default.memory_config["n_1080p"]),
             ColumnSpec(
                 IntegerColumn,
                 key_name="n_1440p",
-                label_name="Number of 1440p cameras",
+                label_name="Number of 2K streams",
                 min_value=0,
                 max_value=1024,
                 def_value=default.memory_config["n_1440p"]),
             ColumnSpec(
                 IntegerColumn,
                 key_name="n_4K",
-                label_name="Number of 4K cameras",
+                label_name="Number of 4K streams",
                 min_value=0,
                 max_value=1024,
                 def_value=default.memory_config["n_4K"]),
@@ -347,7 +362,8 @@ class DataModel:
         self.define()
 
     def __del__(self):
-        self.close()
+        # self.close()
+        pass
 
     def close(self):
         # print("close: ",self.area_rights_collection)
@@ -375,6 +391,44 @@ class DataModel:
             return False
         return True
 
+    def autoGenerateCameraCollection(self, base_address, nstart, n, port, tail, username, password):
+        """
+        :param:  base_address    str, e.g. "192.168.1"
+        :param:  nstart          int, e.g. 24
+        :param:  n               int, how many ips generated 
+        """
+        self.camera_collection.clear()
+        self.camera_collection.save()
+        cc = nstart
+        for i in range(1, min((n + 1, constant.max_devices + 1))):
+            print(i)
+            self.camera_collection.new(
+                self.RTSPCameraRow, 
+                {
+                    "slot":         i, 
+                    "address":      base_address+"."+str(cc),
+                    "username":     username,
+                    "password":     password,
+                    "port":         port,
+                    "tail":         tail
+                })
+            cc +=1
+        
+        print("Camera addesses now:")
+        for c, device in enumerate(self.camera_collection.get()):
+            print(c+1, self.RTSPCameraRow.getAddressFromDict(device))
+        
+        for i in range(n+1, constant.max_devices + 1):
+            self.camera_collection.new(self.EmptyRow, {"slot": i})
+
+        self.camera_collection.save()
+        
+        print("Camera collection now:")
+        for c, device in enumerate(self.camera_collection.get()):
+            print(c+1, device)
+        
+
+            
     def purge(self):
         """For migrations / cleanup.  Collections should be in correct order.
         """
@@ -511,9 +565,16 @@ def test2():
     devices_by_id = dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
     print(devices_by_id)
     
-
+    
+def test3():
+    dm = DataModel(directory = tools.getConfigDir())
+    dm.autoGenerateCameraCollection("192.168.1", 24, 100, "", "kokkelis/", "admin", "12345")
+    dm.saveAll()
+    dm.close()
+    
 
 if (__name__ == "__main__"):
-    # main()
-    # test1()
-    test2()
+    test3()
+    
+    
+    
