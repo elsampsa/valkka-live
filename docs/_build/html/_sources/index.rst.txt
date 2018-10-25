@@ -76,6 +76,7 @@ Contents:
    intro
    requirements
    manual
+   faq
    modules
    license
    authors
