@@ -123,6 +123,9 @@ class DataModel:
                 LineEditColumn, 
                 key_name="tail", 
                 label_name="Tail")
+                
+            
+            
         ]
         """
         TODO: use "Mainstream tail" and "Substream tail"
