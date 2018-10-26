@@ -9,6 +9,8 @@ class StdProcess:
     
     Synchronized reading from the controlling process is achieved by using stdin and stdout.  Individual bitmap frames are read from a temporary file.
     
+    Your process should not write anything to STDIN (i.e. with print()), because that will hose up the interprocess communication!  For printing, use STDERR instead.
+    
     Three arguments are needed:
 
     ::

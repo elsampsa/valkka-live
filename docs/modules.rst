@@ -23,7 +23,6 @@ Decoded frames can be pushed to machine vision routines that are programmed at t
       ::
       
         valkka_live/valkka/mvision/example_process1.py
-    
 
 Each machine vision module appears as its own directory (the plugin scheme is indicated as well):
 

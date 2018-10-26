@@ -129,7 +129,7 @@ class DataModel:
         
         Could also add a dropdown menu called "Brand" that autofills the tail fields
         
-        Brand : [drop-down]
+        (Brand : [drop-down])
         Mainstream tail :
         Substream tail  :
         
@@ -137,6 +137,12 @@ class DataModel:
         
         Mainstream address :
         Substream address  :
+        
+        ----
+        
+        Three slots per camera (main, sub, recorded)
+        
+        
         """
         
 
