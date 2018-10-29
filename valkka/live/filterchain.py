@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.1 
+@version 0.5.0 
 @brief   Manage and group Valkka filterchains
 """
 
@@ -76,22 +76,29 @@ class FilterChainGroup:
         TODO: we can, of course, just modify the added / removed cameras
         """
         self.reset()
-        for device in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
-            if (self.verbose): print(self.pre, "read : device", device)
-            if (device["classname"] == DataModel.RTSPCameraRow.__name__):
+        for dic in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
+            if (self.verbose): print(self.pre, "read : dic", dic)
+            if (dic["classname"] == DataModel.RTSPCameraRow.__name__):
                 
                 affinity = -1
                 if self.cpu_scheme:
                     affinity = self.cpu_scheme.getAV()
+                
+                dic.pop("classname")
+                device = DataModel.RTSPCameraDevice(**dic) # a neat object with useful methods
+                
+                print("FilterChainGroup : read : slot    =", device.getLiveMainSlot())
+                print("FilterChainGroup : read : address =", device.getMainAddress())
+                print("FilterChainGroup : read : _id     =", device._id)
                 
                 # chain = ManagedFilterchain( # decoding and branching the stream happens here
                 chain = ManagedFilterchain2( # decoding and branching the stream happens here
                     livethread  = self.livethread,
                     openglthreads
                                 = self.gpu_handler.openglthreads,
-                    address     = DataModel.RTSPCameraRow.getAddressFromDict(device),
-                    slot        = device["slot"],
-                    _id         = device["_id"],
+                    address     = device.getMainAddress(),
+                    slot        = device.getLiveMainSlot(),
+                    _id         = device._id,
                     affinity    = affinity,
                     msreconnect = 10000,
                     # verbose     = True,
@@ -102,6 +109,9 @@ class FilterChainGroup:
                     shmem_n_buffer = constant.shmem_n_buffer,
                     shmem_image_interval = constant.shmem_image_interval
                 )
+                
+                
+                
                 self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
 
 
@@ -111,6 +121,8 @@ class FilterChainGroup:
         
         TODO: currently this is broken: if user changes any other field than the ip address, the cameras don't get updated
         """
+        raise(AssertionError("out of date"))
+        
         new_ids = []
         old_ids = []
         
@@ -121,16 +133,16 @@ class FilterChainGroup:
             
         # collect devices
         devices = []
-        for device in self.datamodel.camera_collection.get():
-            if (self.verbose): print(self.pre, "update : device", device)
-            if (device["classname"] == DataModel.RTSPCameraRow.__name__):
-                devices.append(device)
+        for dic in self.datamodel.camera_collection.get():
+            if (self.verbose): print(self.pre, "update : dic", dic)
+            if (dic["classname"] == DataModel.RTSPCameraRow.__name__):
+                devices.append(dic)
             
         devices_by_id={}
-        for device in devices: # DataModel.RTSPCameraRow instances
-            _id = device["_id"]
+        for dic in devices: # DataModel.RTSPCameraRow instances
+            _id = dic["_id"]
             new_ids.append(_id)
-            devices_by_id[_id] = device
+            devices_by_id[_id] = dic
         
         if (self.verbose):
             print(self.pre, "update : new_ids =", new_ids)
@@ -152,14 +164,14 @@ class FilterChainGroup:
         
         # add new chains
         for new_address in add_list:
-            device = devices_by_id[new_address]
+            dic = devices_by_id[new_address]
             chain = ManagedFilterchain( # decoding and branching the stream happens here
                 livethread  = self.livethread,
                 openglthreads
                             = self.gpu_handler.openglthreads,
-                address     = DataModel.RTSPCameraRow.getAddressFromDict(device),
-                slot        = device["slot"],
-                _id         = device["_id"],
+                address     = DataModel.RTSPCameraRow.getMainAddressFromDict(dic),
+                slot        = dic["slot"],
+                _id         = dic["_id"],
                 # affinity    = a,
                 msreconnect = 10000,
                 verbose = True

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.1 
+@version 0.5.0 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
@@ -33,7 +33,7 @@ from cute_mongo_forms.container import List, SimpleForm
 
 from valkka.live import default
 from valkka.live.form import SlotFormSet
-from valkka.live import constant, tools
+from valkka.live import constant, tools, style
 
 
 class ListAndForm:
@@ -122,10 +122,37 @@ class DataModel:
             ColumnSpec(
                 LineEditColumn, 
                 key_name="tail", 
-                label_name="Tail")
-                
+                label_name="Tail"),
             
+            ColumnSpec(
+                LineEditColumn, 
+                key_name="subaddress_main", 
+                label_name="Subaddress"),
+            ColumnSpec(
+                CheckBoxColumn, 
+                key_name="live_main", 
+                label_name="Use stream",
+                def_value=True),
+            ColumnSpec(
+                CheckBoxColumn, 
+                key_name="rec_main", 
+                label_name="Record stream",
+                def_value=False),
             
+            ColumnSpec(
+                LineEditColumn, 
+                key_name="subaddress_sub", 
+                label_name="Subaddress"),
+            ColumnSpec(
+                CheckBoxColumn, 
+                key_name="live_sub", 
+                label_name="Use stream",
+                def_value=False),
+            ColumnSpec(
+                CheckBoxColumn, 
+                key_name="rec_sub", 
+                label_name="Record stream",
+                def_value=False)
         ]
         """
         TODO: use "Mainstream tail" and "Substream tail"
@@ -150,7 +177,7 @@ class DataModel:
         
 
         @classmethod
-        def getAddressFromDict(cls, dic):
+        def getMainAddressFromDict(cls, dic):
             st = "rtsp://"
             st += dic["username"] + ":"
             st += dic["password"] + "@"
@@ -158,29 +185,131 @@ class DataModel:
             if (dic["port"].strip() != ""):
                 st += ":" + dic["port"].strip()            
             st += "/" + dic["tail"]
+            st += "/" + dic["subaddress_main"]
+            return st
+    
+        @classmethod
+        def getSubAddressFromDict(cls, dic):
+            st = "rtsp://"
+            st += dic["username"] + ":"
+            st += dic["password"] + "@"
+            st += dic["address"]
+            if (dic["port"].strip() != ""):
+                st += ":" + dic["port"].strip()            
+            st += "/" + dic["tail"]
+            st += "/" + dic["subaddress_sub"]
             return st
 
+
         def makeWidget(self):
-            """Add a summary RTSP address in the end of the form
+            """Subclassed from Row : custom form.  Add a summary RTSP address in the end of the form, etc.
             """
-            super().makeWidget()
-
-            i = self.lay.rowCount()
-            self.label = QtWidgets.QLabel("RTSP address ", self.widget)
-            self.rtsp_address_label = QtWidgets.QLabel("", self.widget)
+            # super().makeWidget() # do all by hand
             
-            self.lay.addWidget(self.label, i, 0)
-            self.lay.addWidget(self.rtsp_address_label, i, 1)
-
-        def getAddress(self):
+            class FormWidget(QtWidgets.QWidget):
+                """Just a QWidget that sends a signal when its shown
+                """
+            
+                class Signals(QtCore.QObject):
+                    show = QtCore.Signal()
+            
+                def __init__(self, parent = None):
+                    super().__init__(parent)
+                    self.signals = self.Signals()
+            
+                def showEvent(self, e):
+                    self.signals.show.emit()
+                    e.accept()
+        
+            self.widget = FormWidget()
+            self.lay = QtWidgets.QGridLayout(self.widget)
+            
+            cc=0;
+            self.placeWidget(cc, "slot"); cc+=1
+            self.placeWidget(cc, "address"); cc+=1
+            self.placeWidget(cc, "username"); cc+=1
+            self.placeWidget(cc, "password"); cc+=1
+            self.placeWidget(cc, "port"); cc+=1
+            self.placeWidget(cc, "tail"); cc+=1
+            
+            # Mainstream
+            self.label_mainstream = QtWidgets.QLabel("Mainstream", self.widget)
+            self.label_mainstream.setStyleSheet(style.form_highlight)
+            self.placeWidgetPair(cc, (self.label_mainstream, None)); cc+=1
+            self.placeWidget(cc, "subaddress_main"); cc+=1
+            # complete RTSP address
+            self.label_mainstream_address = QtWidgets.QLabel("RTSP address", self.widget)
+            self.mainstream_address = QtWidgets.QLabel("", self.widget)
+            self.placeWidgetPair(cc, (self.label_mainstream_address, self.mainstream_address)); cc+=1
+            # live and rec
+            self.placeWidget(cc, "live_main"); cc+=1
+            self.placeWidget(cc, "rec_main"); cc+=1
+            
+            # Substream
+            self.label_substream = QtWidgets.QLabel("Substream", self.widget)
+            self.label_substream.setStyleSheet(style.form_highlight)
+            self.placeWidgetPair(cc, (self.label_substream, None)); cc+=1
+            self.placeWidget(cc, "subaddress_sub"); cc+=1
+            # complete RTSP address
+            self.label_substream_address = QtWidgets.QLabel("RTSP address", self.widget)
+            self.substream_address = QtWidgets.QLabel("", self.widget)
+            self.placeWidgetPair(cc, (self.label_substream_address, self.substream_address)); cc+=1
+            # live and rec
+            self.placeWidget(cc, "live_sub"); cc+=1
+            self.placeWidget(cc, "rec_sub"); cc+=1
+            
+            self.connectNotifications()
+        
+            def rec_main_clicked():
+                if not self["live_main"].widget.isChecked(): # rec requires live
+                    print("live_main is NOT checked")
+                    self["rec_main"].widget.setChecked(False)
+                if self["rec_main"].widget.isChecked(): # rec main excludes rec sub
+                    self["rec_sub"].widget.setChecked(False)
+            
+            def rec_sub_clicked():
+                if not self["live_sub"].widget.isChecked(): # rec requires live
+                    print("live_sub is NOT checked")
+                    self["rec_sub"].widget.setChecked(False)
+                if self["rec_sub"].widget.isChecked(): # rec sub excludes rec main
+                    self["rec_main"].widget.setChecked(False)
+                    
+            self["rec_main"].widget.clicked.connect(rec_main_clicked)
+            self["rec_sub"]. widget.clicked.connect(rec_sub_clicked)
+            self.widget.signals.show.connect(self.update_notify_slot)
+            
+            
+        """
+        def get(self, collection, _id):
+            #Subclassed from Row : Load one entry from db to QtWidgets
+            super().get(collection, _id)
+            self.update_notify_slot()
+        """
+           
+            
+        def getMainAddress(self):
             # e.g. : rtsp://admin:12345@192.168.1.4/tail
             dic = self.__collect__()  # returns a dictionary of column values
-            return DataModel.RTSPCameraRow.getAddressFromDict(dic)
+            return DataModel.RTSPCameraRow.getMainAddressFromDict(dic)
+
+        def getSubAddress(self):
+            # e.g. : rtsp://admin:12345@192.168.1.4/tail
+            dic = self.__collect__()  # returns a dictionary of column values
+            return DataModel.RTSPCameraRow.getSubAddressFromDict(dic)
 
         def update_notify_slot(self):
             """This slot gets pinged always when the form fields have been updated
             """
-            self.rtsp_address_label.setText(self.getAddress())
+            # pass
+            # print("RTSPCameraRow: value changed")
+            self.mainstream_address.setText(self.getMainAddress())
+            self.substream_address.setText(self.getSubAddress())
+            
+            # rec main and sub exclude each other
+            # rec requires live
+            
+            
+
 
     class RTSPCameraDevice:
         """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
@@ -193,7 +322,13 @@ class DataModel:
             "username"  : str,
             "password"  : str,
             "port"      : (str, ""),
-            "tail"      : (str, "")
+            "tail"      : (str, ""),
+            "subaddress_main" : (str, ""),
+            "live_main" : (bool, True),
+            "rec_main"  : (bool, False),
+            "subaddress_sub"  : (str, ""),
+            "live_sub" : (bool, False),
+            "rec_sub"  : (bool, False)
         }
 
         def __init__(self, **kwargs):
@@ -206,12 +341,40 @@ class DataModel:
         def __eq__(self, other):
             return self._id == other._id
                         
-        def getAddress(self):
-            return "rtsp://" + self.username + ":" + \
-                self.password + "@" + self.address + "/" + self.tail
+        def getMainAddress(self):
+            st = "rtsp://" + self.username + ":" + self.password + "@" + self.address 
+            if (len(self.tail)>0):
+                st += "/" + self.tail 
+            if (len(self.subaddress_main)>0):
+                st += "/" + self.subaddress_main
+            return st
+
+        def getSubAddress(self):
+            st = "rtsp://" + self.username + ":" + self.password + "@" + self.address
+            if (len(self.tail)>0):
+                st += "/" + self.tail 
+            if (len(self.subaddress_sub)>0):
+                st += "/" + self.subaddress_main
+            return st
 
         def getLabel(self):
-            return "rtsp://" + self.address + "/" + self.tail
+            st = "rtsp://" + self.address
+            if (len(self.tail)>0):
+                st += "/" + self.tail
+            return st
+        
+        # the following methods give the true slot numbers used by Valkka
+        # one slot for main, sub and recorded stream per camera
+        # 1..3, 4..6, 7..9, etc.
+        def getLiveMainSlot(self):
+            return (self.slot-1)*3+1
+        
+        def getLiveSubSlot(self):
+            return (self.slot-1)*3+2
+        
+        def getRecSlot(self):
+            return (self.slot-1)*3+3
+            
 
     # A general collection for misc. stuff: configuration, etc.
 
@@ -394,13 +557,14 @@ class DataModel:
             self.camera_collection.new(self.EmptyRow, {"slot": i})
 
     def checkCameraCollection(self):
+        c=0
         for c, device in enumerate(self.camera_collection.get()):
             pass
         if (c != constant.max_devices - 1):
             return False
         return True
 
-    def autoGenerateCameraCollection(self, base_address, nstart, n, port, tail, username, password):
+    def autoGenerateCameraCollection(self, base_address, nstart, n, port, tail, username, password): # TODO: rewrite!
         """
         :param:  base_address    str, e.g. "192.168.1"
         :param:  nstart          int, e.g. 24
@@ -425,7 +589,7 @@ class DataModel:
         
         print("Camera addesses now:")
         for c, device in enumerate(self.camera_collection.get()):
-            print(c+1, self.RTSPCameraRow.getAddressFromDict(device))
+            print(c+1, self.RTSPCameraRow.getMainAddressFromDict(device))
         
         for i in range(n+1, constant.max_devices + 1):
             self.camera_collection.new(self.EmptyRow, {"slot": i})
@@ -557,11 +721,36 @@ def test1():
     dm = DataModel()
     col = dm.camera_collection
     col.new(dm.RTSPCameraRow,
-            {"slot": 1,
-             "address": "192.168.1.41",
+            {"slot"    : 1,
+             "address" : "192.168.1.41",
              "username": "admin",
              "password": "1234",
-             "tail": ""})
+             "port"    : "",
+             "tail"    : "",
+             "subaddress_main" : "",
+             "live_main" : True,
+             "rec_main"  : False,
+             "subaddress_sub"  : "",
+             "live_sub" : False,
+             "rec_sub"  : False
+                 })
+            
+    """
+    "_id"       : int,
+    "slot"      : int,
+    "address"   : str,
+    "username"  : str,
+    "password"  : str,
+    "port"      : (str, ""),
+    "tail"      : (str, ""),
+    "subaddress_main" : (str, ""),
+    "live_main" : bool,
+    "rec_main"  : bool,
+    "subaddress_sub"  : (str, ""),
+    "live_sub" : bool,
+    "rec_sub"  : bool
+    """
+       
     for element in col.get():
         print(element)
 
@@ -583,7 +772,8 @@ def test3():
     
 
 if (__name__ == "__main__"):
-    test3()
+    test1()
+    # test3()
     
     
     

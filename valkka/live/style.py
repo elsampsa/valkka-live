@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    style.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.1 
+@version 0.5.0 
 @brief   Qt stylesheets for Valkka Live
 """
 
@@ -123,7 +123,16 @@ color: white;
 font-style: normal;
 }
 
-.QFrame{
+QFrame{
 border: 2px solid #36B2FE;
 }
+"""
+
+form_highlight="""
+QLabel {
+font: 16px;
+color: blue;
+}
+
+
 """

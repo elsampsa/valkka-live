@@ -1,5 +1,5 @@
 """
-NAME.py :
+formtest.py : Test Cute Mongo Forms forms
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,16 +13,17 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
 
-@file    NAME.py
+@file    formtest.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.5.0 
-@brief   
+@brief   Test Cute Mongo Forms forms
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
-from valkka.core import *
+import cute_mongo_forms
+from valkka.live.datamodel import DataModel
 
 
 class MyGui(QtWidgets.QMainWindow):
@@ -32,31 +33,26 @@ class MyGui(QtWidgets.QMainWindow):
     super(MyGui, self).__init__()
     self.initVars()
     self.setupUi()
-    self.openValkka()
     
 
   def initVars(self):
-    pass
+    self.dm = DataModel()
+    print(cute_mongo_forms.__file__)
 
 
   def setupUi(self):
-    self.setGeometry(QtCore.QRect(100,100,500,500))
+    # self.setGeometry(QtCore.QRect(100,100,500,500))
     
     self.w=QtWidgets.QWidget(self)
     self.setCentralWidget(self.w)
+    self.lay = QtWidgets.QVBoxLayout(self.w)
+    
+    self.container = self.dm.getDeviceListAndForm(self.w)
+    self.lay.addWidget(self.container.widget)
     
     
-  def openValkka(self):
-    pass
-    
-  
-  def closeValkka(self):
-    pass
-  
-  
   def closeEvent(self,e):
     print("closeEvent!")
-    self.closeValkka()
     e.accept()
 
 

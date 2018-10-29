@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.4.1 
+@version 0.5.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 
