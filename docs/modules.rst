@@ -33,6 +33,7 @@ Each machine vision module appears as its own directory (the plugin scheme is in
         movement/           simple movement detector [1]
         nix/                demo detector [2]
         alpr/               OpenALPR [1]
+        yolo3/              Yolo v3 object detection [1]
 
 You can create your own by copying any of the directories to a different name.  Then, study and edit the file *base.py* in that directory.  After that, you still have to register the module into:
 
@@ -66,7 +67,7 @@ If you're running Ubuntu 18 (bionic), you can use this command:
 
     valkka-bionic-install
     
-to install all dependencies for all the examples
+to install all dependencies for all the examples (excluding Yolo object detection)
 
 Movement Detector
 -----------------
@@ -126,6 +127,14 @@ Confirm that the python bindings work with
 
 That's it!  Now "License Plate Recognition" should appear under "Machine Vision" in Valkka Live
     
+
+Yolo Object Detection
+---------------------
+
+Once you have installed and tested `our Darknet python bindings <https://github.com/elsampsa/darknet-python>`_, the Yolo 3 object detector will appear in the Machine Vision plug-in menu.
+
+Remember, that in order to run `Yolo object detector <https://pjreddie.com/darknet/yolo/>`_ , you need a reasonable GPU.
+
 
 .. Matlab
 .. ------
