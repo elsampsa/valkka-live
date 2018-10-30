@@ -164,6 +164,22 @@ class MVisionProcess(QValkkaOpenCVProcess):
     
     name = "Simple Movement Detector" # NOTE: this class member is required, so that Valkka Live can find the class
     
+    instance_counter = 0
+    max_instances = 99 # If you want to restrict the number of this kind of detectors
+    
+    @classmethod
+    def can_instantiate(cls):
+        return cls.instance_counter < cls.max_instances
+    
+    @classmethod
+    def instance_add(cls):
+        cls.instance_counter += 1
+
+    @classmethod
+    def instance_dec(cls):
+        cls.instance_counter -= 1
+    
+    
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         "test_": {"test_int": int, "test_str": str},
         "stop_": [],
@@ -196,7 +212,7 @@ class MVisionProcess(QValkkaOpenCVProcess):
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name)
+        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
         self.pre = self.__class__.__name__ + ":" + self.name+ " : "
         # print(self.pre,"__init__")
         self.signals = self.Signals()

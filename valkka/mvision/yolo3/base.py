@@ -1,5 +1,5 @@
 """
-dflpr.py : Communicate with an external license plate recognition software using stdin, stdout and the filesystem
+base.py : A movement analyzer and the associated multiprocess
 
 Copyright 2018 Sampsa Riikonen
 
@@ -9,11 +9,11 @@ This file is part of the machine vision plugin for the Valkka Live program
 
 This plugin is free software: you can redistribute it and/or modify it under the terms of the MIT License.  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the MIT License for more details.
 
-@file    dflpt.py
+@file    base.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.5.0 
-@brief   Communicate with an external license plate recognition software using stdin, stdout and the filesystem
+@brief   A movement analyzer and the associated multiprocess
 """
 
 # from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
@@ -22,28 +22,72 @@ import sys
 import time
 import os
 import numpy
+import imutils
 import importlib
 from valkka.api2 import parameterInitCheck, typeCheck
-
-# local imports
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
-from valkka.mvision import tools, constant
-from valkka.mvision.nix.base import ExternalDetector
 
-assert(os.system("markus-lpr-check") < 1) # is this command installed ?
+pre = "valkka.mvision.movement.base : "
 
-pre = "valkka.mvision.dflpr.base : "
+darknet = importlib.import_module("darknet") # test if module exists
+
+class YoloV3Analyzer(Analyzer):
+    """A demo movement detector, written using OpenCV
+    """
+
+    parameter_defs = {
+        "verbose": (bool, False),   # :param verbose:  Verbose output or not?  Default: False.
+        "debug": (bool, False)     
+    }
+
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # checks that kwargs is consistent with parameter_defs.  Attaches
+        # parameters as attributes to self
+        parameterInitCheck(self.parameter_defs, kwargs, self)
+        self.pre = self.__class__.__name__ + " : "
+        self.init()
+            
+
+    def init(self):
+        from darknet.api2.predictor import get_YOLOv3_Predictor
+        self.predictor = get_YOLOv3_Predictor()
+        self.reset()
         
+    def reset(self):
+        pass
         
+    def __call__(self, img):
+        self.report("analyzing frame :",img.shape)    
+        lis = self.predictor(img)
+        """
+        lis = [ # debugging ..
+            ('dog', 99, 134, 313, 214, 542), 
+            ('truck', 91, 476, 684, 81, 168),
+            ('bicycle', 99, 99, 589, 124, 447)
+            ]
+        """
+        self.report("finished analyzing frame")
+        return lis
+
+
+
 class MVisionProcess(QValkkaOpenCVProcess):
-    """A multiprocess that uses stdin, stdout and the filesystem to communicate with an external machine vision program
+    """
+    YOLO v3 object detector
+    
+    See:
+    
+    https://github.com/elsampsa/darknet-python
+    
     """
     
-    name = "Markus LPR"
+    name = "YOLO v3 object detector"
     
     instance_counter = 0
-    max_instances = 99 # If you want to restrict the number of this kind of detectors
+    max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     
     @classmethod
     def can_instantiate(cls):
@@ -57,56 +101,51 @@ class MVisionProcess(QValkkaOpenCVProcess):
     def instance_dec(cls):
         cls.instance_counter -= 1
     
-    # The (example) process that gets executed.  You can find it in the module directory
-    executable = os.path.join("markus-lpr-nix")
     
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        "stop_": []
+        "stop_": {},
     }
 
     outgoing_signal_defs = {
-        "text": {"message": str},
+        "objects" : {"object_list" : list, "area_list" : list}
     }
 
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
-    #"""
     class Signals(QtCore.QObject):
-        text = QtCore.Signal(object)
-    #"""
+        objects = QtCore.Signal(object)
+        areas   = QtCore.Signal(object)
 
     parameter_defs = {
         "n_buffer": (int, 10),
         "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
         "shmem_name": str,
         "verbose": (bool, False)
-        }
+    }
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
-        self.pre = self.__class__.__name__ + " : " + self.name+ " : "
+        self.pre = self.__class__.__name__ + ":" + self.name+ " : "
+        # print(self.pre,"__init__")
         self.signals = self.Signals()
         typeCheck(self.image_dimensions[0], int)
         typeCheck(self.image_dimensions[1], int)
         
+        
     def preRun_(self):
         super().preRun_()
-        self.tmpfile = os.path.join(constant.tmpdir,"valkka-"+str(os.getpid())) # e.g. "/tmp/valkka-10968" 
         # its a good idea to instantiate the analyzer after the multiprocess has been spawned (like we do here)
-        self.analyzer = ExternalDetector(
-            executable = self.executable,
-            image_dimensions = self.image_dimensions,
-            tmpfile = self.tmpfile
-            )
-            
+        self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+        
+        
     def postRun_(self):
         self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
 
     def cycle_(self):
-        # NOTE: enable this to see if your multiprocess is alive
+        lis=[]
         self.report("cycle_ starts")
         index, isize = self.client.pull()
         if (index is None):
@@ -117,14 +156,21 @@ class MVisionProcess(QValkkaOpenCVProcess):
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
-            result = self.analyzer(img)
+            lis = self.analyzer(img)
+            """ # list looks like this:
+            [ ('dog', 99, 134, 313, 214, 542), 
+            ('truck', 91, 476, 684, 81, 168),
+            ('bicycle', 99, 99, 589, 124, 447)
+            ]
+            """
             
-            if (result != ""):
-                self.sendSignal_(name="text", message=result)
-            
-    def postRun_(self):
-        self.analyzer.close()
-        super().postRun_()
+        object_list=[]
+        area_list=[]
+        for l in lis:
+            object_list.append(l[0])
+            area_list.append((l[2],l[3],l[4],l[5]))
+        #if (len(lis)>0):
+        self.sendSignal_(name="objects", object_list=object_list, area_list=area_list)
 
 
     # *** backend methods corresponding to incoming signals ***
@@ -139,52 +185,54 @@ class MVisionProcess(QValkkaOpenCVProcess):
     def stop(self):
         self.sendSignal(name="stop_")
 
-    # ** frontend methods handling outgoing signals ***
-    def text(self, message=""):
-        self.report("At frontend: text got message", message)
-        self.signals.text.emit(message)
 
-    # *** This is used by the modules Qt Widget ***
-    def text_slot(self, message=""): # receives a license plate
-        self.recent_plates.append(message) # just take the plate, scrap confidence
-        if (len(self.recent_plates)>10): # show 10 latest recognized license plates
-            self.recent_plates.pop(0)
-        st=""
-        for plate in self.recent_plates:
-            st += plate + "\n"
-        self.widget.setText(st)
+    # ** frontend methods handling outgoing signals ***
     
-    # *** create a Qt widget for this machine vision module **
+    def objects(self, object_list, area_list):
+        self.signals.objects.emit(object_list)
+        self.signals.areas.emit(area_list)
+    
+
+    # *** create a widget for this machine vision module ***
     def getWidget(self):
+        """Some ideas for your widget:
+        - Textual information (alert, license place number)
+        - Check boxes : if checked, send e-mail to your mom when the analyzer spots something
+        - .. or send an sms to yourself
+        - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
+        """
         self.widget = QtWidgets.QTextEdit()
-        self.recent_plates = []
-        self.signals.text.connect(self.text_slot) 
+        self.signals.objects.connect(self.objects_slot)
         return self.widget
     
     
+    def objects_slot(self, object_list):
+        txt=""
+        for o in object_list:
+            txt += str(o) + "\n"
+        self.widget.setText(txt)
+        
+        
+    
+    
+    
 def test1():
-    """Dummy-testing the external detector
+    """Dummy-testing the movement analyzer
     """
-    width = 1920
-    height = 1080
-    
-    analyzer = ExternalDetector(
-        verbose=True, 
-        debug=True,
-        executable = os.path.join(tools.getModulePath(),"example_process1.py"),
-        image_dimensions = (width, height),
-        tmpfile = "/tmp/valkka-debug"
-        )
+    analyzer = YoloV3Analyzer(verbose=True, debug=True)
 
-    img = numpy.zeros((height, width, 3), dtype=numpy.uint8)
-    
-    for i in range(10):
-        img[:,:,:]=i
-        result = analyzer(img)
-        # time.sleep(1)
-        print("result =", result)
-    
-    analyzer.close()
+    img = numpy.zeros((1080 // 4, 1920 // 4, 3), dtype=numpy.uint8)
+    result = analyzer(img)
+    print("\nresult =", result, "\n")
+
+    img = numpy.zeros((1080 // 4, 1920 // 4, 3), dtype=numpy.uint8)
+    result = analyzer(img)
+    print("\nresult =", result, "\n")
+
+    img = numpy.ones((1080 // 4, 1920 // 4, 3), dtype=numpy.uint8) * 100
+    result = analyzer(img)
+    print("\nresult =", result, "\n")
+
 
 def test2():
     """Demo here the OpenCV highgui with valkka
@@ -197,14 +245,7 @@ def test3():
     """
     import time
     
-    width = 1920
-    height = 1080
-    
-    p = MVisionProcess(
-        shmem_name = "test3",
-        verbose=True, 
-        image_dimensions = (width, height)
-        )
+    p = MVisionProcess(shmem_name="test3")
     p.start()
     time.sleep(5)
     p.stop()
@@ -255,22 +296,37 @@ def test5():
     import time
     from valkka.mvision.file import FileGUI
 
+    # from valkka.mvision import QValkkaThread
+    
+    #t = QValkkaThread()
+    #t.start()
+    
     shmem_name="test_studio_file"
-    shmem_image_dimensions=(1920 // 4, 1080 // 4)
+    shmem_image_dimensions=(1920 // 2, 1080 // 2)
     shmem_image_interval=1000
     shmem_ringbuffer_size=5
     
+    # """
     ps = MVisionProcess(
             shmem_name = shmem_name, 
             image_dimensions = shmem_image_dimensions,
-            n_buffer = shmem_ringbuffer_size
+            n_buffer = shmem_ringbuffer_size,
+            verbose = True
         )
+    # """
        
+    #t.addProcess(ps)
+    #time.sleep(5)
+    #t.stop()
+    #return
+
     app = QtWidgets.QApplication(["mvision test"])
     fg = FileGUI(mvision_process = ps, shmem_image_interval = shmem_image_interval)
+    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
     fg.show()
     app.exec_()
     print("bye from app!")
+    
     
     
 def main():

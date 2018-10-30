@@ -127,8 +127,54 @@ class MyGui(QtWidgets.QMainWindow):
             self.make_mvision_slot(cl)
 
 
-    def QCapsulate(self, widget, name, blocking = False):
+    def QCapsulate(self, widget, name, blocking = False, nude = False):
         """Helper function that encapsulates QWidget into a QMainWindow
+        """
+
+        class QuickWindow(QtWidgets.QMainWindow):
+
+            class Signals(QtCore.QObject):
+                close = QtCore.Signal()
+
+            def __init__(self, blocking = False, parent = None, nude = False):
+                super().__init__(parent)
+                self.propagate = True # send signals or not
+                self.setStyleSheet(style.main_gui)
+                if (blocking):
+                    self.setWindowModality(QtCore.Qt.ApplicationModal)
+                if (nude):
+                    # http://doc.qt.io/qt-5/qt.html#WindowType-enum
+                    # TODO: create a widget for a proper splashscreen (omitting X11 and centering manually)
+                    # self.setWindowFlags(QtCore.Qt.Popup) # Qt 5.9+ : setFlags()
+                    # self.setWindowFlags(QtCore.Qt.SplashScreen | QtCore.Qt.WindowStaysOnTopHint)
+                    self.setWindowFlags(QtCore.Qt.Dialog)
+                self.signals = self.Signals()
+                
+
+            def closeEvent(self, e):
+                if (self.propagate):
+                    self.signals.close.emit()
+                e.accept()
+                
+            def setPropagate(self):
+                self.propagate = True
+                
+            def unSetPropagate(self):
+                self.propagate = False
+                
+
+        win = QuickWindow(blocking = blocking, nude = nude)
+        win.setCentralWidget(widget)
+        win.setLayout(QtWidgets.QHBoxLayout())
+        win.setWindowTitle(name)
+        return win
+    
+    
+    def QTabCapsulate(self, name, widget_list, blocking = False):
+        """Helper function that encapsulates QWidget into a QMainWindow
+        
+        :param widget_list:     List of tuples : [(widget,"name"), (widget,"name"), ..]
+        
         """
 
         class QuickWindow(QtWidgets.QMainWindow):
@@ -143,6 +189,9 @@ class MyGui(QtWidgets.QMainWindow):
                 if (blocking):
                     self.setWindowModality(QtCore.Qt.ApplicationModal)
                 self.signals = self.Signals()
+                self.tab = QtWidgets.QTabWidget()
+                self.setCentralWidget(self.tab)
+                self.setLayout(QtWidgets.QHBoxLayout())
 
             def closeEvent(self, e):
                 if (self.propagate):
@@ -157,10 +206,13 @@ class MyGui(QtWidgets.QMainWindow):
                 
 
         win = QuickWindow(blocking = blocking)
-        win.setCentralWidget(widget)
-        win.setLayout(QtWidgets.QHBoxLayout())
         win.setWindowTitle(name)
+        for w in widget_list:
+            win.tab.addTab(w[0], w[1])
+        
         return win
+    
+    
 
 
     def setupUi(self):
@@ -194,12 +246,28 @@ class MyGui(QtWidgets.QMainWindow):
 
         # create container and their windows
         self.manage_cameras_container = self.dm.getDeviceListAndForm(None)
-        self.manage_cameras_win = self.QCapsulate(
-            self.manage_cameras_container.widget, "Camera Configuration", blocking = True)
+        #self.manage_cameras_win = self.QCapsulate(
+        #   self.manage_cameras_container.widget, "Camera Configuration", blocking = True)
 
         self.manage_memory_container = self.dm.getConfigForm()
-        self.manage_memory_win = self.QCapsulate(
-            self.manage_memory_container.widget, "Memory Configuration", blocking = True)
+        #self.manage_memory_win = self.QCapsulate(
+        #   self.manage_memory_container.widget, "Memory Configuration", blocking = True)
+
+        # self.manage_memory_container.signals.save
+        # self.manage_cameras_container.getForm().signals.save_record # ListAndForm : has a list and a formset (SlotFormSet).  SlotFormSet has the signals
+
+        self.manage_memory_container.signals.save.connect(self.config_modified_slot)
+        self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
+
+        self.config_win = self.QTabCapsulate(
+                "Configuration",
+                [ 
+                    (self.manage_cameras_container.widget, "Camera Configuration"),
+                    (self.manage_memory_container. widget, "Memory Configuration")
+                ]
+            )
+
+        self.config_win.signals.close.connect(self.config_dialog_close_slot)
 
         self.makeCameraTree()
         self.camera_list_win = self.QCapsulate(
@@ -207,6 +275,16 @@ class MyGui(QtWidgets.QMainWindow):
 
         # self.camera_list_win.show()
         # self.treelist.show()
+
+        # self.wait_widget = QtWidgets.QWidget()
+        # self.wait_lay = QtWidgets.QHBoxLayout(self.wait_widget)
+        # self.wait_label = QtWidgets.QLabel("Restarting Valkka, please wait ..", self.wait_widget)
+        
+        self.wait_label = QtWidgets.QLabel("Restarting Valkka, please wait ..")
+        self.wait_window = self.QCapsulate(self.wait_label, "Wait", nude = True)
+        # self.wait_window.show()
+
+        # self.wait_window = QtWidgets.QMessageBox.information(None, "info","info")
 
 
     def makeCameraTree(self):
@@ -253,8 +331,9 @@ class MyGui(QtWidgets.QMainWindow):
         
         # self.manage_cameras_win.signals.close.connect(self.filterchain_group.update) # TODO: use this once fixed
         # self.manage_cameras_win.signals.close.connect(self.filterchain_group.read) # TODO: eh.. lets be sure of this .. (are we releasing slots in the LiveThread etc.)
-        self.manage_cameras_win.signals.close.connect(self.save_camera_config_slot)
-        self.manage_memory_container.signals.save.connect(self.save_memory_conf_slot)
+        
+        # self.manage_cameras_win.signals.close.connect(self.save_camera_config_slot)
+        # self.manage_memory_container.signals.save.connect(self.save_memory_conf_slot)
 
         # *** Menu bar connections ***
         # the self.filemenu.exit attribute was autogenerated
@@ -264,11 +343,15 @@ class MyGui(QtWidgets.QMainWindow):
         self.filemenu.load_window_layout. triggered.connect(
             self.load_window_layout_slot)
 
+        """
         self.configmenu.manage_cameras.   triggered.connect(
             self.manage_cameras_slot)
         self.configmenu.memory_usage.     triggered.connect(
             self.memory_usage_slot)
-
+        """
+        
+        self.configmenu.configuration_dialog.triggered.connect(self.config_dialog_slot)
+        
         self.viewmenu.camera_list.        triggered.connect(self.camera_list_slot)
         self.aboutmenu.about_valkka_live. triggered.connect(self.about_slot)
 
@@ -435,11 +518,14 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def reOpenValkka(self):
+        print("gui: valkka reinit")
+        self.wait_window.show()
         self.save_window_layout("tmplayout")
         self.closeContainers()
         self.closeValkka()
         self.openValkka()
         self.load_window_layout("tmplayout")
+        self.wait_window.hide()
 
 
     def closeContainers(self):
@@ -459,9 +545,14 @@ class MyGui(QtWidgets.QMainWindow):
         print("gui : closeEvent!")
         self.closeContainers()
 
-        self.manage_cameras_win.unSetPropagate() # don't send signals .. if you don't do this: close => closeEvent => will trigger self.reOpen
-        self.manage_cameras_win.close()
+        # self.manage_cameras_win.unSetPropagate() # don't send signals .. if you don't do this: close => closeEvent => will trigger self.reOpen
+        # self.manage_cameras_win.close()
+        
+        self.camera_list_win.unSetPropagate()
         self.camera_list_win.close()
+        
+        self.config_win.unSetPropagate()
+        self.config_win.close()
 
         self.closeValkka()
         self.dm.close()
@@ -485,6 +576,8 @@ class MyGui(QtWidgets.QMainWindow):
             self.mvision_containers.remove(cont)
         except ValueError:
             print("gui: rem_mvision_container_slot: could not remove container",cont)
+        else:
+            cont.child_class_pars["mvision_class"].instance_dec() # count instantiated objects
         print("gui: rem_mvision_container_slot: mvision containers now:",self.mvision_containers)
         
         
@@ -505,19 +598,24 @@ class MyGui(QtWidgets.QMainWindow):
 
     def make_mvision_slot(self, cl):
         def slot_func():
-            cont = container.VideoContainerNxM(
-                parent            = None,
-                gpu_handler       = self.gpu_handler,
-                filterchain_group = self.filterchain_group,
-                title             = cl.name,
-                n_dim             = 1,
-                m_dim             = 1,
-                child_class       = container.MVisionContainer,
-                child_class_pars  = {"mvision_class": cl}, # serializable parameters (for re-creating this container)
-                child_class_pars_ = {"thread" : self.thread} # non-serializable parameters
-                )
-            cont.signals.closing.connect(self.rem_mvision_container_slot)
-            self.mvision_containers.append(cont)
+            if cl.can_instantiate():
+                cl.instance_add() # count instances
+                cont = container.VideoContainerNxM(
+                    parent            = None,
+                    gpu_handler       = self.gpu_handler,
+                    filterchain_group = self.filterchain_group,
+                    title             = cl.name,
+                    n_dim             = 1,
+                    m_dim             = 1,
+                    child_class       = container.MVisionContainer,
+                    child_class_pars  = {"mvision_class": cl}, # serializable parameters (for re-creating this container)
+                    child_class_pars_ = {"thread" : self.thread} # non-serializable parameters
+                    )
+                cont.signals.closing.connect(self.rem_mvision_container_slot)
+                self.mvision_containers.append(cont)
+            else:
+                QtWidgets.QMessageBox.about(self,"Enough!","Can't instantiate more detectors of this type (max number is "+str(cl.max_instances)+")")
+                
         setattr(self, cl.name+"_slot", slot_func)
 
 
@@ -566,15 +664,25 @@ class MyGui(QtWidgets.QMainWindow):
     def exit_slot(self):
         self.close()
 
+    """
     def manage_cameras_slot(self):
         self.manage_cameras_win.show()
 
     def memory_usage_slot(self):
         self.manage_memory_win.show()
-
+    """
+    
+    def config_dialog_slot(self):
+        self.config_modified = False
+        self.config_win.show()
+        
+    def config_modified_slot(self):
+        self.config_modified = True
+        
     def camera_list_slot(self):
         self.camera_list_win.show()
 
+    """
     def save_memory_conf_slot(self):
         self.manage_memory_win.close()
         self.reOpenValkka()
@@ -582,6 +690,13 @@ class MyGui(QtWidgets.QMainWindow):
     def save_camera_config_slot(self):
         self.updateCameraTree()
         self.reOpenValkka()
+    """
+    
+    def config_dialog_close_slot(self):
+        if (self.config_modified):
+            self.updateCameraTree()
+            self.reOpenValkka()
+    
 
     def save_window_layout_slot(self):
         self.save_window_layout()

@@ -151,6 +151,22 @@ class MVisionProcess(QValkkaOpenCVProcess):
     
     name = "Stdin, stdout and filesystem example" # NOTE: this class member is required, so that Valkka Live can find the class
     
+    instance_counter = 0
+    max_instances = 99 # If you want to restrict the number of this kind of detectors
+    
+    @classmethod
+    def can_instantiate(cls):
+        return cls.instance_counter < cls.max_instances
+    
+    @classmethod
+    def instance_add(cls):
+        cls.instance_counter += 1
+
+    @classmethod
+    def instance_dec(cls):
+        cls.instance_counter -= 1
+    
+    
     # The (example) process that gets executed.  You can find it in the module directory
     executable = os.path.join(tools.getModulePath(),"example_process1.py")
     
@@ -174,13 +190,12 @@ class MVisionProcess(QValkkaOpenCVProcess):
         "n_buffer": (int, 10),
         "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
         "shmem_name": str,
-        "verbose": (bool, False),
-        "deadtime": (int, 1)
+        "verbose": (bool, False)
     }
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name)
+        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
         self.pre = self.__class__.__name__ + " : " + self.name+ " : "
         self.signals = self.Signals()
         typeCheck(self.image_dimensions[0], int)

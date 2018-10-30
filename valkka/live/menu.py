@@ -58,10 +58,16 @@ class ViewMenu(QuickMenu):
 
 class ConfigMenu(QuickMenu):
     title = "Configuration"
+    """
     elements = [
         QuickMenuElement(title="Manage Cameras"),
         QuickMenuElement(title="Memory Usage")
     ]
+    """
+    elements = [
+        QuickMenuElement(title="Configuration dialog")
+    ]
+    
 
     
 class PluginsMenu(QuickMenu):

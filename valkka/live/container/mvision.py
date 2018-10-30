@@ -129,6 +129,11 @@ class MVisionContainer(VideoContainer):
             
             self.mvision_process.start() # process must be started before calling addProcess
             self.thread.addProcess(self.mvision_process)
+            # TODO: could connect signals from mvision_process .. to show boxes in the windows for yolo
+            
+            if hasattr(self.mvision_process.signals, "areas"):
+                print(self.pre, "setDevice : this mvision class has area signals")
+            
             
             
     def clearDevice(self):

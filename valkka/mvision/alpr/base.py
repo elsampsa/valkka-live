@@ -133,6 +133,21 @@ class MVisionProcess(QValkkaOpenCVProcess):
     
     name = "License Plate Recognition"
     
+    instance_counter = 0
+    max_instances = 99 # If you want to restrict the number of this kind of detectors
+    
+    @classmethod
+    def can_instantiate(cls):
+        return cls.instance_counter < cls.max_instances
+    
+    @classmethod
+    def instance_add(cls):
+        cls.instance_counter += 1
+
+    @classmethod
+    def instance_dec(cls):
+        cls.instance_counter -= 1
+    
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         "stop_": []
     }
@@ -152,13 +167,12 @@ class MVisionProcess(QValkkaOpenCVProcess):
         "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
         "shmem_name": str,
         "verbose": (bool, False)
-        # "deadtime": (int, 1)
     }
     parameter_defs.update(LicensePlateDetector.parameter_defs)
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name)
+        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
         self.pre = self.__class__.__name__ + ":" + self.name+ " : "
         self.signals = self.Signals()
         typeCheck(self.image_dimensions[0], int)
