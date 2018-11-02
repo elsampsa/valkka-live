@@ -129,11 +129,15 @@ class MVisionContainer(VideoContainer):
             
             self.mvision_process.start() # process must be started before calling addProcess
             self.thread.addProcess(self.mvision_process)
-            # TODO: could connect signals from mvision_process .. to show boxes in the windows for yolo
             
-            if hasattr(self.mvision_process.signals, "areas"):
-                print(self.pre, "setDevice : this mvision class has area signals")
+            # is there a signal giving the bounding boxes..?  let's connect it
+            if hasattr(self.mvision_process.signals,"bboxes"):
+                print(self.pre, "setDevice : connecting bboxes signal")
+                self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
             
+            
+    def set_bounding_boxes_slot(self, bbox):
+        self.filterchain.setBoundingBoxes(self.viewport, bbox)
             
             
     def clearDevice(self):

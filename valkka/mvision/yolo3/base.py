@@ -61,7 +61,7 @@ class YoloV3Analyzer(Analyzer):
         
     def __call__(self, img):
         self.report("analyzing frame :",img.shape)    
-        lis = self.predictor(img)
+        # lis = self.predictor(img)
         """
         lis = [ # debugging ..
             ('dog', 99, 134, 313, 214, 542), 
@@ -69,6 +69,11 @@ class YoloV3Analyzer(Analyzer):
             ('bicycle', 99, 99, 589, 124, 447)
             ]
         """
+        # """
+        lis = [ # debugging ..
+            ('dog', 99, img.shape[0]*0.25, img.shape[0]*0.75, img.shape[1]*0.25, img.shape[1]*0.75)
+            ]
+        # """
         self.report("finished analyzing frame")
         return lis
 
@@ -107,7 +112,8 @@ class MVisionProcess(QValkkaOpenCVProcess):
     }
 
     outgoing_signal_defs = {
-        "objects" : {"object_list" : list, "area_list" : list}
+        "objects" : {"object_list" : list},
+        "bboxes"  : {"bbox_list"   : list}
     }
 
     # For each outgoing signal, create a Qt signal with the same name.  The
@@ -115,7 +121,7 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # signals.
     class Signals(QtCore.QObject):
         objects = QtCore.Signal(object)
-        areas   = QtCore.Signal(object)
+        bboxes  = QtCore.Signal(object)
 
     parameter_defs = {
         "n_buffer": (int, 10),
@@ -165,13 +171,18 @@ class MVisionProcess(QValkkaOpenCVProcess):
             """
             
         object_list=[]
-        area_list=[]
+        bbox_list=[]
         for l in lis:
             object_list.append(l[0])
-            area_list.append((l[2],l[3],l[4],l[5]))
+            bbox_list.append((
+                l[2]/img.shape[0],  # from pixels to fractional coordinates
+                l[3]/img.shape[0],
+                l[4]/img.shape[1],
+                l[5]/img.shape[1]
+            ))
         #if (len(lis)>0):
-        self.sendSignal_(name="objects", object_list=object_list, area_list=area_list)
-
+        self.sendSignal_(name="objects", object_list=object_list)
+        self.sendSignal_(name="bboxes",  bbox_list=bbox_list)
 
     # *** backend methods corresponding to incoming signals ***
     # *** i.e., how the signals are handled inside the running multiprocess
@@ -188,9 +199,11 @@ class MVisionProcess(QValkkaOpenCVProcess):
 
     # ** frontend methods handling outgoing signals ***
     
-    def objects(self, object_list, area_list):
+    def objects(self, object_list):
         self.signals.objects.emit(object_list)
-        self.signals.areas.emit(area_list)
+        
+    def bboxes(self, bbox_list):
+        self.signals.bboxes.emit(bbox_list)
     
 
     # *** create a widget for this machine vision module ***
@@ -322,7 +335,9 @@ def test5():
 
     app = QtWidgets.QApplication(["mvision test"])
     fg = FileGUI(mvision_process = ps, shmem_image_interval = shmem_image_interval)
-    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
+    
+    ps.signals.bboxes.connect(fg.set_bounding_boxes_slot)
+    
     fg.show()
     app.exec_()
     print("bye from app!")

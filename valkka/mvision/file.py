@@ -186,7 +186,8 @@ class FileGUI(QtWidgets.QMainWindow):
 
         self.mvision_process.start()
         self.thread.addProcess(self.mvision_process)
-    
+        
+        
     def closeValkka(self):
         # """
         self.livethread.close()
@@ -260,5 +261,12 @@ class FileGUI(QtWidgets.QMainWindow):
             self.filethread.stopStream(self.chain.file_ctx)
         else:
             pass
+
+    def set_bounding_boxes_slot(self, bbox_list):
+        self.openglthread.core.clearObjectsCall(self.token)
+        for bbox in bbox_list:
+            self.openglthread.core.addRectangleCall(self.token, bbox[0], bbox[1], bbox[2], bbox[3]) # left, right, top, bottom
+        
+
 
 
