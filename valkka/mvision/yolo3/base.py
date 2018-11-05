@@ -61,7 +61,7 @@ class YoloV3Analyzer(Analyzer):
         
     def __call__(self, img):
         self.report("analyzing frame :",img.shape)    
-        # lis = self.predictor(img)
+        lis = self.predictor(img)
         """
         lis = [ # debugging ..
             ('dog', 99, 134, 313, 214, 542), 
@@ -69,11 +69,11 @@ class YoloV3Analyzer(Analyzer):
             ('bicycle', 99, 99, 589, 124, 447)
             ]
         """
-        # """
+        """
         lis = [ # debugging ..
             ('dog', 99, img.shape[0]*0.25, img.shape[0]*0.75, img.shape[1]*0.25, img.shape[1]*0.75)
             ]
-        # """
+        """
         self.report("finished analyzing frame")
         return lis
 
