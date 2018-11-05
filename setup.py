@@ -14,7 +14,7 @@ setup(
     
     install_requires = [
         'PySide2 >=5.11.1',
-        'cute_mongo_forms >=0.2.1',
+        'cute_mongo_forms >=0.2.2',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18'
         # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment
