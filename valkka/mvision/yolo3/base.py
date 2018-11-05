@@ -24,6 +24,7 @@ import os
 import numpy
 import imutils
 import importlib
+from valkka.live import style
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
@@ -162,7 +163,14 @@ class MVisionProcess(QValkkaOpenCVProcess):
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
+            
             lis = self.analyzer(img)
+            """
+            print("img.shape=",img.shape)
+            for l in lis:
+                print(l)
+            """
+            
             """ # list looks like this:
             [ ('dog', 99, 134, 313, 214, 542), 
             ('truck', 91, 476, 684, 81, 168),
@@ -174,12 +182,17 @@ class MVisionProcess(QValkkaOpenCVProcess):
         bbox_list=[]
         for l in lis:
             object_list.append(l[0])
+            # """
             bbox_list.append((
-                l[2]/img.shape[0],  # from pixels to fractional coordinates
-                l[3]/img.shape[0],
-                l[4]/img.shape[1],
-                l[5]/img.shape[1]
+                l[2]/img.shape[1],  # from pixels to fractional coordinates
+                l[3]/img.shape[1],
+                l[4]/img.shape[0],
+                l[5]/img.shape[0]
             ))
+            # """
+            
+            
+        # print("YoloV3",bbox_list)
         #if (len(lis)>0):
         self.sendSignal_(name="objects", object_list=object_list)
         self.sendSignal_(name="bboxes",  bbox_list=bbox_list)
@@ -215,6 +228,8 @@ class MVisionProcess(QValkkaOpenCVProcess):
         - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
         """
         self.widget = QtWidgets.QTextEdit()
+        self.widget.setStyleSheet(style.detector_test)
+        self.widget.setReadOnly(True)
         self.signals.objects.connect(self.objects_slot)
         return self.widget
     

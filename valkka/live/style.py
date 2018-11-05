@@ -133,6 +133,17 @@ QLabel {
 font: 16px;
 color: blue;
 }
-
-
 """
+
+detector_test="""
+QTextEdit {
+font: 16px;
+color: blue;
+}
+QLabel {
+font: 16px;
+color: blue;
+}
+"""
+
+

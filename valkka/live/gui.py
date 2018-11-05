@@ -675,6 +675,7 @@ class MyGui(QtWidgets.QMainWindow):
     def config_dialog_slot(self):
         self.config_modified = False
         self.config_win.show()
+        self.manage_cameras_container.choose_first_slot()
         
     def config_modified_slot(self):
         self.config_modified = True

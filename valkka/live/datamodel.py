@@ -83,6 +83,10 @@ class ListAndForm:
     def getForm(self):
         return self.form
 
+    def choose_first_slot(self):
+        self.lis.widget.setCurrentItem(self.lis.widget.item(0))
+        
+        
 class DataModel:
 
     # Device collection: RTSP Cameras, SDP files, etc.
@@ -183,9 +187,11 @@ class DataModel:
             st += dic["password"] + "@"
             st += dic["address"]
             if (dic["port"].strip() != ""):
-                st += ":" + dic["port"].strip()            
-            st += "/" + dic["tail"]
-            st += "/" + dic["subaddress_main"]
+                st += ":" + dic["port"].strip()
+            if (len(dic["tail"]) > 0):
+                st += "/" + dic["tail"]
+            if (len(dic["subaddress_main"]) > 0):
+                st += "/" + dic["subaddress_main"]
             return st
     
         @classmethod
@@ -195,9 +201,11 @@ class DataModel:
             st += dic["password"] + "@"
             st += dic["address"]
             if (dic["port"].strip() != ""):
-                st += ":" + dic["port"].strip()            
-            st += "/" + dic["tail"]
-            st += "/" + dic["subaddress_sub"]
+                st += ":" + dic["port"].strip()
+            if (len(dic["tail"]) > 0):
+                st += "/" + dic["tail"]
+            if (len(dic["subaddress_main"]) > 0):
+                st += "/" + dic["subaddress_sub"]
             return st
 
 
@@ -277,6 +285,15 @@ class DataModel:
             self["rec_main"].widget.clicked.connect(rec_main_clicked)
             self["rec_sub"]. widget.clicked.connect(rec_sub_clicked)
             self.widget.signals.show.connect(self.update_notify_slot)
+            
+            # TODO: remove these restrictions once functional:
+            self["subaddress_main"].widget.setEnabled(False)
+            self["subaddress_sub"].widget.setEnabled(False)
+            self["live_main"].widget.setEnabled(False)
+            self["rec_main"].widget.setEnabled(False)
+            self["live_sub"].widget.setEnabled(False)
+            self["rec_sub"].widget.setEnabled(False)
+            
             
             
         """
@@ -583,7 +600,15 @@ class DataModel:
                     "username":     username,
                     "password":     password,
                     "port":         port,
-                    "tail":         tail
+                    "tail":         tail,
+                    
+                    "subaddress_main" : "",
+                    "live_main"       : True,
+                    "rec_main"        : False,
+                    
+                    "subaddress_sub"  : "",
+                    "live_sub"        : False,
+                    "rec_sub"         : False
                 })
             cc +=1
         

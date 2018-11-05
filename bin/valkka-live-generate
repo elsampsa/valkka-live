@@ -39,8 +39,6 @@ if (__name__=="__main__"):
         print("WARNING: got unknown argument", u)
         sys.exit(3)
 
-    
-
     dm = DataModel(directory = tools.getConfigDir())
     dm.autoGenerateCameraCollection(parsed.base_address, parsed.start, parsed.n, "", parsed.tail, parsed.user, parsed.password)
     dm.saveAll()

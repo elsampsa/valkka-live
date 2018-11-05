@@ -27,6 +27,7 @@ import imutils
 from valkka.api2 import parameterInitCheck, typeCheck
 
 # local imports
+from valkka.live import style
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
 from valkka.mvision import tools, constant
@@ -258,6 +259,7 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # *** create a widget for this machine vision module ***
     def getWidget(self):
         widget = QtWidgets.QLabel("NO TEXT YET")
+        widget.setStyleSheet(style.detector_test)
         self.signals.text.connect(lambda message: widget.setText(message))
         return widget
         

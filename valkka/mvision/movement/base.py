@@ -23,9 +23,12 @@ import time
 import os
 import numpy
 import imutils
+import importlib
+import cv2
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaOpenCVProcess
+from valkka.live import style
 
 pre = "valkka.mvision.movement.base : "
 
@@ -323,6 +326,7 @@ class MVisionProcess(QValkkaOpenCVProcess):
         - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
         """
         widget = QtWidgets.QLabel("NO MOVEMENT YET")
+        widget.setStyleSheet(style.detector_test)
         self.signals.start_move.connect(lambda : widget.setText("MOVEMENT START"))
         self.signals.stop_move. connect(lambda : widget.setText("MOVEMENT STOP"))
         return widget

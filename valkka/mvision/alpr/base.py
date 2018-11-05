@@ -25,6 +25,7 @@ import numpy
 import imutils
 import importlib
 from valkka.api2 import parameterInitCheck, typeCheck
+from valkka.live import style
 
 # local imports
 from valkka.mvision.base import Analyzer
@@ -255,6 +256,8 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # *** create a Qt widget for this machine vision module **
     def getWidget(self):
         self.widget = QtWidgets.QTextEdit()
+        self.widget.setStyleSheet(style.detector_test)
+        self.widget.setReadOnly(True)
         self.recent_plates = []
         self.signals.got_plates.connect(self.got_plates_slot) 
         return self.widget
