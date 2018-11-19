@@ -187,3 +187,31 @@ class RTSPCameraListItem(ListItem):
 
     def getMimeData(self):
         return self.camera
+    
+    
+class USBCameraListItem(ListItem):
+    """An example camera class for the tree list
+    """
+
+    parameter_defs = {
+        "parent": None,
+        "camera": DataModel.USBCameraDevice
+    }
+
+    def __init__(self, **kwargs):
+        # auxiliary string for debugging output
+        self.pre = self.__class__.__name__ + " : "
+        # check for input parameters, attach them to this instance as
+        # attributes
+        parameterInitCheck(USBCameraListItem.parameter_defs, kwargs, self)
+        self.init()
+
+    def makeItemData(self):
+        self.itemData = [self.camera.getLabel()]
+
+    def getMimeData(self):
+        return self.camera
+    
+    
+
+    

@@ -104,6 +104,45 @@ def scanMVisionClasses():
     return mvision_classes
 
 
+def getH264V4l2(verbose=False):
+    """Find all V4l2 cameras with H264 encoding, and returns a list of tuples with ..
+    
+    (device file, device name), e.g. ("/dev/video2", "HD Pro Webcam C920")
+    """
+    import glob
+    from subprocess import Popen, PIPE
+    
+    cams=[]
+
+    for device in glob.glob("/sys/class/video4linux/*"):
+        devname=device.split("/")[-1]
+        devfile=os.path.join("/dev",devname)
+        
+        lis=("v4l2-ctl --list-formats -d "+devfile).split()
+
+        p = Popen(lis, stdout=PIPE, stderr=PIPE)
+        # p.communicate()
+        # print(dir(p))
+        # print(p.returncode)
+        # print(p.stderr.read().decode("utf-8"))
+        st = p.stdout.read().decode("utf-8")
+        # print(st)
+        
+        if (st.lower().find("h264")>-1):
+            namefile=os.path.join(device, "name")
+            # print(namefile)
+            f=open(namefile, "r"); name=f.read(); f.close()
+            cams.append((devfile, name.strip()))
+
+    if (verbose):
+        for cam in cams:
+            print(cam)
+        
+    return cams
+
+
+
+
 if (__name__ == "__main__"):
     mvision_classes = scanMVisionClasses()
     for cl in mvision_classes:

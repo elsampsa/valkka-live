@@ -25,8 +25,8 @@ import sys
 from valkka.live.datamodel import DataModel
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import constant
-from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2
-from valkka.api2.threads import LiveThread
+from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, LiveManagedFilterchain, USBManagedFilterchain
+from valkka.api2.threads import LiveThread, USBDeviceThread
 from valkka.api2.tools import parameterInitCheck
 
 
@@ -37,6 +37,7 @@ class FilterChainGroup:
     parameter_defs = {
         "datamodel"        : DataModel,
         "livethread"       : LiveThread,
+        "usbthread"        : USBDeviceThread,
         "gpu_handler"      : GPUHandler,
         "verbose"          : (bool, False),
         "cpu_scheme"       : None
@@ -78,8 +79,8 @@ class FilterChainGroup:
         self.reset()
         for dic in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
             if (self.verbose): print(self.pre, "read : dic", dic)
+            
             if (dic["classname"] == DataModel.RTSPCameraRow.__name__):
-                
                 affinity = -1
                 if self.cpu_scheme:
                     affinity = self.cpu_scheme.getAV()
@@ -92,7 +93,8 @@ class FilterChainGroup:
                 print("FilterChainGroup : read : _id     =", device._id)
                 
                 # chain = ManagedFilterchain( # decoding and branching the stream happens here
-                chain = ManagedFilterchain2( # decoding and branching the stream happens here
+                # chain = ManagedFilterchain2( # decoding and branching the stream happens here
+                chain = LiveManagedFilterchain( # decoding and branching the stream happens here
                     livethread  = self.livethread,
                     openglthreads
                                 = self.gpu_handler.openglthreads,
@@ -104,15 +106,42 @@ class FilterChainGroup:
                     # verbose     = True,
                     verbose     =False,
                     
-                    # for managefilterchain2 only:
                     shmem_image_dimensions = constant.shmem_image_dimensions,
                     shmem_n_buffer = constant.shmem_n_buffer,
                     shmem_image_interval = constant.shmem_image_interval
                 )
-                
-                
-                
                 self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
+                
+            elif (dic["classname"] == DataModel.USBCameraRow.__name__):
+                affinity = -1
+                if self.cpu_scheme:
+                    affinity = self.cpu_scheme.getAV()
+                
+                dic.pop("classname")
+                device = DataModel.USBCameraDevice(**dic) # a neat object with useful methods
+                
+                print("FilterChainGroup : read : slot    =", device.getLiveMainSlot())
+                print("FilterChainGroup : read : address =", device.getMainAddress())
+                print("FilterChainGroup : read : _id     =", device._id)
+                
+                chain = USBManagedFilterchain( # decoding and branching the stream happens here
+                    usbthread   = self.usbthread,
+                    openglthreads
+                                = self.gpu_handler.openglthreads,
+                    address     = device.getMainAddress(),
+                    slot        = device.getLiveMainSlot(),
+                    _id         = device._id,
+                    affinity    = affinity,
+                    msreconnect = 10000,
+                    # verbose     = True,
+                    verbose     =False,
+                    
+                    shmem_image_dimensions = constant.shmem_image_dimensions,
+                    shmem_n_buffer = constant.shmem_n_buffer,
+                    shmem_image_interval = constant.shmem_image_interval
+                )
+                self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
+                
 
 
 

@@ -55,15 +55,18 @@ class CPUScheme:
     def reset(self):
         if (self.n_cores < 4): # 1-4 : no binding here ..
             self.livecore       = self.Ring(-1, -1)
+            self.usbcore        = self.Ring(-1, -1)
             self.openglcore     = self.Ring(-1, -1)
             self.avcore         = self.Ring(-1, -1)
         elif (self.n_cores <= 6): # 4-6
             self.livecore       = self.Ring(0, 2)
+            self.usbcore        = self.Ring(0, 2)
             self.openglcore     = self.Ring(0, 2)
             self.avcore         = self.Ring(1, self.max_index) 
         else: # 6+
-            self.livecore       = self.Ring(0,2)
-            self.openglcore     = self.Ring(1,3)
+            self.livecore       = self.Ring(0, 2)
+            self.usbcore        = self.Ring(0, 2)
+            self.openglcore     = self.Ring(1, 3)
             self.avcore         = self.Ring(2, self.max_index)
             
         
@@ -71,6 +74,12 @@ class CPUScheme:
         """Where the LiveThread is bound
         """
         return self.livecore.get()
+    
+    
+    def getUSB(self):
+        """Where the USBDeviceThread is bound
+        """
+        return self.usbcore.get()
         
     
     def getOpenGL(self):

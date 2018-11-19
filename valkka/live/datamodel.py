@@ -32,7 +32,7 @@ from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
 
 from valkka.live import default
-from valkka.live.form import SlotFormSet
+from valkka.live.form import SlotFormSet, USBCameraColumn
 from valkka.live import constant, tools, style
 
 
@@ -99,7 +99,16 @@ class DataModel:
                 key_name="slot",
                 label_name="Slot"),
         ]
-
+            
+            
+    class USBCameraRow(Row):
+        name = "H264 USB Camera"
+        columns = [
+            ColumnSpec(ConstantIntegerColumn, key_name="slot", label_name="Slot"),
+            ColumnSpec(USBCameraColumn, key_name ="address", label_name="Device")
+        ]
+    
+        
     class RTSPCameraRow(Row):
         name = "RTSP Camera"
         columns = [
@@ -158,28 +167,8 @@ class DataModel:
                 label_name="Record stream",
                 def_value=False)
         ]
-        """
-        TODO: use "Mainstream tail" and "Substream tail"
-        
-        Could also add a dropdown menu called "Brand" that autofills the tail fields
-        
-        (Brand : [drop-down])
-        Mainstream tail :
-        Substream tail  :
-        
-        -----
-        
-        Mainstream address :
-        Substream address  :
-        
-        ----
-        
-        Three slots per camera (main, sub, recorded)
         
         
-        """
-        
-
         @classmethod
         def getMainAddressFromDict(cls, dic):
             st = "rtsp://"
@@ -326,8 +315,6 @@ class DataModel:
             # rec requires live
             
             
-
-
     class RTSPCameraDevice:
         """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
         """
@@ -392,6 +379,50 @@ class DataModel:
         def getRecSlot(self):
             return (self.slot-1)*3+3
             
+
+    class USBCameraDevice:
+        """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
+        """
+
+        parameter_defs = {
+            "_id"       : int,
+            "slot"      : int,
+            "address"   : str
+        }
+
+        def __init__(self, **kwargs):
+            # auxiliary string for debugging output
+            self.pre = self.__class__.__name__ + " : "
+            # check for input parameters, attach them to this instance as
+            # attributes
+            parameterInitCheck(DataModel.USBCameraDevice.parameter_defs, kwargs, self)
+
+        def __eq__(self, other):
+            return self._id == other._id
+                        
+        def getMainAddress(self):
+            return self.address
+
+        def getSubAddress(self):
+            return self.address
+        
+        def getLabel(self):
+            return "usb:"+self.address
+            
+
+        # the following methods give the true slot numbers used by Valkka
+        # one slot for main, sub and recorded stream per camera
+        # 1..3, 4..6, 7..9, etc.
+        def getLiveMainSlot(self):
+            return (self.slot-1)*3+1
+        
+        def getLiveSubSlot(self):
+            return (self.slot-1)*3+2
+        
+        def getRecSlot(self):
+            return (self.slot-1)*3+3
+    
+
 
     # A general collection for misc. stuff: configuration, etc.
 
@@ -466,13 +497,33 @@ class DataModel:
 
             def __lt__(self, other):
                 try:
-                    return int(self.text()) < int(other.text())
+                    return int(self.slot) < int(other.slot)
                 except Exception:
                     return QListWidgetItem.__lt__(self, other)
 
         def makeWidget(self):
             super().makeWidget()
             # self.widget.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+
+
+        def update(self):
+            # Fills the root and subwidgets with data.
+            self.widget.clear()
+            self.items_by_id={}
+            for entry in self.collection.get():
+                item  =self.createItem()
+                label =self.makeLabel(entry)
+                item.setText(label)
+                item._id         =entry["_id"]
+                item.slot        =int(entry["slot"]) # add an extra attribute
+                try:
+                    item.classname =entry["classname"]
+                except KeyError:
+                    raise(KeyError("Your database contains crap.  Do a purge"))
+                self.items_by_id[item._id]=item
+                self.widget.addItem(item)
+            self.widget.sortItems()
+
 
         def createItem(self):
             """Overwrite in child classes to create custom items (say, sortable items, etc.)
@@ -482,6 +533,10 @@ class DataModel:
         def makeLabel(self, entry):
             # print("DataModel : makeLabel :", entry["classname"])
             st = str(entry["slot"])
+            if (entry["classname"] == "RTSPCameraRow"):
+                st += " RTSP"
+            elif (entry["classname"] == "USBCameraRow"):
+                st += " USB"
             return st
 
     # *** A stand-alone form for MemoryConfigRow ***
@@ -643,7 +698,8 @@ class DataModel:
             SimpleCollection(filename=os.path.join(self.directory, "devices.dat"),
                              row_classes=[
                 DataModel.EmptyRow,
-                DataModel.RTSPCameraRow
+                DataModel.RTSPCameraRow,
+                DataModel.USBCameraRow
             ]
             )
         self.collections.append(self.camera_collection)
@@ -679,16 +735,31 @@ class DataModel:
         return rows_by_id
     
     
-    def getDevicesById(self, query):
+    def getDevicesById(self): # , query):
+        """
         rows = self.camera_collection.get(query)
         devices_by_id = {}
         for row in rows:
             row.pop("classname")
             device = DataModel.RTSPCameraDevice(**row)
             devices_by_id[device._id] = device
-        
         return devices_by_id
-    
+        """
+        rows = self.camera_collection.get()
+        devices_by_id = {}
+        for row in rows:
+            classname=row.pop("classname")
+            if (classname == "RTSPCameraRow"):
+                device = DataModel.RTSPCameraDevice(**row)
+            elif (classname == "USBCameraRow"):
+                device = DataModel.USBCameraDevice(**row)
+            else:
+                device = None
+            if (device):
+                devices_by_id[device._id] = device
+        return devices_by_id
+        
+        
         
 
 

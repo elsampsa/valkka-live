@@ -22,8 +22,10 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
-from cute_mongo_forms.row import Row
+from cute_mongo_forms.row import Row, Column
 from cute_mongo_forms.container import EditFormSet2
+from valkka.live.tools import getH264V4l2
+from valkka.api2.tools import parameterInitCheck
 
 pre = "valkka.live.form : "
 verbose = True
@@ -125,4 +127,62 @@ class SlotFormSet(EditFormSet2):
                 print(self.pre, "clear_slot : can't clear None")
         else:
             self.current_row.clear()
+            
+            
+class USBCameraColumn(Column):
+    """Drop-down list of usb cameras
+    """
+
+    parameter_defs = {
+        "key_name": str,  # name of the database key in key(value)
+        "label_name": str   # used to create the forms
+    }
+
+    def __init__(self, **kwargs):
+        # auxiliary string for debugging output
+        self.pre = self.__class__.__name__ + " : "
+        # check kwargs agains parameter_defs, attach ok'd parameters to this
+        # object as attributes
+        parameterInitCheck(self.parameter_defs, kwargs, self)
+        self.makeWidget()
+        self.reset()
+
+    def makeWidget(self):
+        self.widget = QtWidgets.QComboBox()
+        self.updateWidget()
+
+    def makeDeviceList(self):
+        self.device_list = getH264V4l2()
+        self.device_dic  = {}
+        for device in self.device_list:
+            self.device_dic[device[0]]=device[1] # maps from "/dev/video2" => "HD Webcam Pro"
+
+    def updateWidget(self):
+        self.widget.clear()
+        self.makeDeviceList()
+        for i, item in enumerate(self.device_list):
+            devicefile = item[0] # e.g. "/dev/video2"
+            name = item[1] # e.g. "HD Webcam Pro"
+            self.widget.insertItem(i, name, devicefile) # index, text, data
+
+    def getValue(self):
+        # Get the value from QtWidget
+        # self.widget.currenText()
+        # self.widget.currentData()
+        return self.widget.currentData()  # returns devicefile (e.g. "/dev/video2")
+
+    def setValue(self, devicefile):
+        # Set the value of the QtWidget
+        # if foreign_key is not found (i.e. the row that's using this column has a database having incorrect foreign_key values),
+        # findData returns -1
+        # setCurrentIndex(-1) sets the selection to void
+        if (devicefile in self.device_dic):
+            i = self.widget.findData(devicefile)
+            self.widget.setCurrentIndex(i)
+        else:
+            self.widget.setCurrentIndex(-1)
+
+    def reset(self):
+        self.widget.setCurrentIndex(-1)
+
             

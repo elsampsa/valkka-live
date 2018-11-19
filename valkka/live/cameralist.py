@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 import pickle
-from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem
+from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
 from valkka.api2.tools import parameterInitCheck
 
 
@@ -273,8 +273,11 @@ class MyGui(QtWidgets.QMainWindow):
         pass
 
     def setupUi(self):
+        from valkka.live.datamodel import DataModel
+        
         self.setGeometry(QtCore.QRect(100, 100, 500, 500))
-        self.w = self.VideoWidget(self)
+        # self.w = self.VideoWidget(self)
+        self.w = QtWidgets.QWidget(self)
         self.setCentralWidget(self.w)
 
         self.root = HeaderListItem()
@@ -297,40 +300,23 @@ class MyGui(QtWidgets.QMainWindow):
             parent=self.root)
 
         self.camera1 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
+            
+            camera = DataModel.RTSPCameraDevice(
+                _id     =1,
+                slot    =1,
+                address ="192.168.1.4",
                 username="admin",
                 password="1234"),
+            
             parent=self.server1)
-        self.camera2 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
-                username="admin",
-                password="1234"),
-            parent=self.server1)
-        self.camera3 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
-                username="admin",
-                password="1234"),
-            parent=self.server2)
-        self.camera4 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
-                username="admin",
-                password="1234"),
-            parent=self.server2)
-        self.camera5 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
-                username="admin",
-                password="1234"),
-            parent=self.server3)
-        self.camera6 = RTSPCameraListItem(
-            camera=RTSPCameraDevice(
-                ip="192.168.1.4",
-                username="admin",
-                password="1234"),
+            
+        self.camera7 = USBCameraListItem(
+            
+            camera = DataModel.USBCameraDevice(
+                _id    =1,
+                slot   =2,
+                address ="/dev/video2"),
+            
             parent=self.server4)
 
         self.treelist = BasicView(parent=None, root=self.root)

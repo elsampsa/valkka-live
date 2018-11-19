@@ -98,7 +98,10 @@ class ExternalDetector(Analyzer):
         except IOError:
             self.report("could not send exit command")
         self.p.wait() # wait until the process is closed
-        os.remove(self.tmpfile) # clean up the temporary file
+        try:
+            os.remove(self.tmpfile) # clean up the temporary file
+        except FileNotFoundError:
+            pass
 
     
     def __call__(self, img):

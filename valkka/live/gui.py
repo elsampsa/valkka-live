@@ -35,7 +35,7 @@ version.check() # checks the valkka version
 import sys
 import json
 import pickle
-from valkka.api2 import LiveThread
+from valkka.api2 import LiveThread, USBDeviceThread
 from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
@@ -47,7 +47,7 @@ from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 
 from valkka.live.datamodel import DataModel
-from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem
+from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
 from valkka.live.cameralist import BasicView
 from valkka.live.filterchain import FilterChainGroup
 
@@ -320,7 +320,15 @@ class MyGui(QtWidgets.QMainWindow):
                         parent = self.server
                     )
                 )
-
+            elif (row["classname"] == DataModel.USBCameraRow.__name__):
+                row.pop("classname")
+                devices.append(
+                    USBCameraListItem(
+                        camera = DataModel.USBCameraDevice(**row),
+                        parent = self.server
+                    )
+                )
+                
         self.treelist.update()
         self.treelist.expandAll()
 
@@ -489,12 +497,21 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.livethread = LiveThread(
             name = "live_thread",
-            # verbose = True,
             verbose = False,
             affinity = self.cpu_scheme.getLive()
         )
+        
+        self.usbthread = USBDeviceThread(
+            name = "usb_thread",
+            verbose = False,
+            affinity = self.cpu_scheme.getUSB()
+        )
 
-        self.filterchain_group = FilterChainGroup(datamodel = self.dm, livethread = self.livethread, gpu_handler = self.gpu_handler, cpu_scheme = self.cpu_scheme)
+        self.filterchain_group = FilterChainGroup(datamodel     = self.dm, 
+                                                  livethread    = self.livethread, 
+                                                  usbthread     = self.usbthread,
+                                                  gpu_handler   = self.gpu_handler, 
+                                                  cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
         # self.filterchain_group.update() # TODO: use this once fixed
         
@@ -511,6 +528,7 @@ class MyGui(QtWidgets.QMainWindow):
     def closeValkka(self):
         # live => chain => opengl
         self.livethread.close()
+        self.usbthread.close()
         self.filterchain_group.close()
         self.gpu_handler.close()
         if self.thread:
@@ -639,7 +657,8 @@ class MyGui(QtWidgets.QMainWindow):
         f.close()
         print("load_window_layout: container_dic: ", container_dic)
         namespace = container.__dict__
-        devices_by_id = self.dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
+        # devices_by_id = self.dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
+        devices_by_id = self.dm.getDevicesById()
 
         for cont in container_dic["container_list"]:
             classname = cont["classname"]
