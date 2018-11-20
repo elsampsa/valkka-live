@@ -1,5 +1,5 @@
 """
-base.py : A movement analyzer and the associated multiprocess
+base.py : Yolo v3 object detector for Valkka Live
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,7 +13,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @author  Sampsa Riikonen
 @date    2018
 @version 0.5.0 
-@brief   A movement analyzer and the associated multiprocess
+@brief   Yolo v3 object detector for Valkka Live
 """
 
 # from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
@@ -22,26 +22,28 @@ import sys
 import time
 import os
 import numpy
-import imutils
+# import imutils
 import importlib
 from valkka.live import style
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
-from valkka.mvision.multiprocess import QValkkaOpenCVProcess
+from valkka.mvision.multiprocess import QValkkaShmemProcess2
 
-pre = "valkka.mvision.movement.base : "
+pre = "valkka.mvision.yolo3.base : "
 
-darknet = importlib.import_module("darknet") # test if module exists
+# if the following works, then darknet is available and the weights file has been downloaded ok
+from darknet.api2.constant import get_yolov2_weights_file, get_yolov3_weights_file, get_yolov3_tiny_weights_file
+fname = get_yolov3_weights_file()
+
 
 class YoloV3Analyzer(Analyzer):
-    """A demo movement detector, written using OpenCV
+    """The celebrated Yolo v3 object detector
     """
 
     parameter_defs = {
         "verbose": (bool, False),   # :param verbose:  Verbose output or not?  Default: False.
         "debug": (bool, False)     
     }
-
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -53,8 +55,11 @@ class YoloV3Analyzer(Analyzer):
             
 
     def init(self):
-        from darknet.api2.predictor import get_YOLOv3_Predictor
+        # from darknet.api2.error import WeightMissingError
+        from darknet.api2.predictor import get_YOLOv3_Predictor, get_YOLOv3_Tiny_Predictor, get_YOLOv2_Predictor
         self.predictor = get_YOLOv3_Predictor()
+        # self.predictor = get_YOLOv3_Tiny_Predictor()
+        # self.predictor = get_YOLOv2_Predictor()
         self.reset()
         
     def reset(self):
@@ -80,7 +85,7 @@ class YoloV3Analyzer(Analyzer):
 
 
 
-class MVisionProcess(QValkkaOpenCVProcess):
+class MVisionProcess(QValkkaShmemProcess2):
     """
     YOLO v3 object detector
     
@@ -91,25 +96,14 @@ class MVisionProcess(QValkkaOpenCVProcess):
     """
     
     name = "YOLO v3 object detector"
-    
-    instance_counter = 0
+    tag = "yolov3"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     
-    @classmethod
-    def can_instantiate(cls):
-        return cls.instance_counter < cls.max_instances
-    
-    @classmethod
-    def instance_add(cls):
-        cls.instance_counter += 1
-
-    @classmethod
-    def instance_dec(cls):
-        cls.instance_counter -= 1
-    
-    
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        "stop_": {},
+        # don't touch these three..
+        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
+        "deactivate_"   : [],
+        "stop_"         : [],
     }
 
     outgoing_signal_defs = {
@@ -125,31 +119,34 @@ class MVisionProcess(QValkkaOpenCVProcess):
         bboxes  = QtCore.Signal(object)
 
     parameter_defs = {
-        "n_buffer": (int, 10),
-        "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
-        "shmem_name": str,
         "verbose": (bool, False)
     }
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
+        super().__init__(self.__class__.name)
         self.pre = self.__class__.__name__ + ":" + self.name+ " : "
-        # print(self.pre,"__init__")
         self.signals = self.Signals()
-        typeCheck(self.image_dimensions[0], int)
-        typeCheck(self.image_dimensions[1], int)
-        
         
     def preRun_(self):
+        self.analyzer = None
         super().preRun_()
-        # its a good idea to instantiate the analyzer after the multiprocess has been spawned (like we do here)
-        self.analyzer = YoloV3Analyzer(verbose = self.verbose)
-        
         
     def postRun_(self):
-        self.analyzer.close() # release any resources acquired by the analyzer
+        if (self.analyzer): self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
+        
+    def postActivate_(self):
+        """Whatever you need to do after creating the shmem client
+        """
+        self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+        
+    def preDeactivate_(self):
+        """Whatever you need to do prior to deactivating the shmem client
+        """
+        if (self.analyzer): self.analyzer.close()
+        self.analyzer = None
+        
 
     def cycle_(self):
         lis=[]
@@ -191,7 +188,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
             ))
             # """
             
-            
         # print("YoloV3",bbox_list)
         #if (len(lis)>0):
         self.sendSignal_(name="objects", object_list=object_list)
@@ -200,15 +196,12 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # *** backend methods corresponding to incoming signals ***
     # *** i.e., how the signals are handled inside the running multiprocess
     
-    def stop_(self):
-        self.running = False
+    # nada
 
     # ** frontend methods launching incoming signals
     # *** you can call these after the multiprocess is started
     
-    def stop(self):
-        self.sendSignal(name="stop_")
-
+    # nada
 
     # ** frontend methods handling outgoing signals ***
     
@@ -217,7 +210,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
         
     def bboxes(self, bbox_list):
         self.signals.bboxes.emit(bbox_list)
-    
 
     # *** create a widget for this machine vision module ***
     def getWidget(self):
@@ -233,7 +225,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
         self.signals.objects.connect(self.objects_slot)
         return self.widget
     
-    
     def objects_slot(self, object_list):
         txt=""
         for o in object_list:
@@ -241,9 +232,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
         self.widget.setText(txt)
         
         
-    
-    
-    
 def test1():
     """Dummy-testing the movement analyzer
     """
@@ -273,7 +261,7 @@ def test3():
     """
     import time
     
-    p = MVisionProcess(shmem_name="test3")
+    p = MVisionProcess()
     p.start()
     time.sleep(5)
     p.stop()
@@ -291,13 +279,13 @@ def test4():
     # t.stop(); return
     
     print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess(shmem_name="test3.1")
+    p1 = MVisionProcess()
     p1.start()
     t.addProcess(p1)
     time.sleep(5)
     
     print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess(shmem_name="test3.2")
+    p2 = MVisionProcess()
     p2.start()
     t.addProcess(p2)
     time.sleep(5)
@@ -305,6 +293,9 @@ def test4():
     print("Remove multiprocesses")
     t.delProcess(p1)
     # t.delProcess(p2)
+    
+    p1.stop()
+    p2.stop()
     
     print("bye")
     
@@ -329,18 +320,8 @@ def test5():
     #t = QValkkaThread()
     #t.start()
     
-    shmem_name="test_studio_file"
-    shmem_image_dimensions=(1920 // 2, 1080 // 2)
-    shmem_image_interval=1000
-    shmem_ringbuffer_size=5
-    
     # """
-    ps = MVisionProcess(
-            shmem_name = shmem_name, 
-            image_dimensions = shmem_image_dimensions,
-            n_buffer = shmem_ringbuffer_size,
-            verbose = True
-        )
+    ps = MVisionProcess()
     # """
        
     #t.addProcess(ps)
@@ -349,12 +330,17 @@ def test5():
     #return
 
     app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(mvision_process = ps, shmem_image_interval = shmem_image_interval)
-    
-    ps.signals.bboxes.connect(fg.set_bounding_boxes_slot)
-    
+    fg = FileGUI(
+        mvision_process = ps, 
+        shmem_name              ="test_studio_file",
+        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
+        shmem_image_interval    =1000,
+        shmem_ringbuffer_size   =5
+        )
+    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
     fg.show()
     app.exec_()
+    ps.stop()
     print("bye from app!")
     
     

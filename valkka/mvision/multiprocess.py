@@ -258,12 +258,17 @@ class QValkkaShmemProcess2(ValkkaProcess):
 
     
     def preRun_(self):
-        """Create the shared memory client after fork
+        """Init shmem variables by calling deactivate_()
         """
         self.report("preRun_")
-        self.deactivate_()
+        self.deactivate_() # init variables
         super().preRun_()
         
+    def postRun_(self):
+        """Clear shmem variables
+        """
+        self.deactivate_()
+        super().postRun_()
         
     def run(self): # No "_" in the name, but nevertheless, running in the backed
         """After the fork. Now the process starts running
@@ -275,8 +280,8 @@ class QValkkaShmemProcess2(ValkkaProcess):
             if (self.active): # activated: shared mem client has been reserved
                 self.cycle_()
             else:
-                print(self.pre, "sleep")
-                time.sleep(1)
+                if (self.verbose): print(self.pre, "sleep")
+                time.sleep(0.2)
             self.handleSignal_()
             
         self.postRun_()
@@ -303,10 +308,11 @@ class QValkkaShmemProcess2(ValkkaProcess):
     # *** backend methods corresponding to incoming signals ***
 
     def stop_(self):
-        self.deactivate_()
         self.running = False
 
     def activate_(self, n_buffer, image_dimensions, shmem_name):
+        """Shared mem info is given.  Now we can create the shmem client
+        """
         self.active = True
         self.image_dimensions = image_dimensions
         self.client = ShmemRGBClient(
@@ -318,11 +324,26 @@ class QValkkaShmemProcess2(ValkkaProcess):
             mstimeout   =1000,
             verbose     =False
         )
+        self.postActivate_()
+        
+    def postActivate_(self):
+        """Whatever you need to do after creating the shmem client.  Overwrite in child classes
+        """
+        pass
         
     def deactivate_(self):
+        """Init shmem variables to None
+        """
+        self.preDeactivate_()
         self.active = False
         self.image_dimensions = None
         self.client = None # shared memory client created when activate is called
+
+    def preDeactivate_(self):
+        """Whatever you need to do prior to deactivating the shmem client.  Overwrite in child classes
+        """
+        pass
+    
 
     def test_(self, test_int=0, test_str="nada"):
         print(self.pre, "test_ signal received with", test_int, test_str)
@@ -468,8 +489,7 @@ class QValkkaThread(QtCore.QThread):
             else:
                 self.process_by_pipe.pop(p.getPipe())
                 self.rlis.remove(p.getPipe())
-                print(self.pre, "handleProcess: stopping", p)
-                p.stop()
+                
         self.del_list=[]
         self.mutex.unlock()
         #"""

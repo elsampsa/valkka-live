@@ -166,22 +166,8 @@ class MVisionProcess(QValkkaShmemProcess2):
     """
     
     name = "Simple Movement Detector" # NOTE: this class member is required, so that Valkka Live can find the class
-    
-    instance_counter = 0
-    max_instances = 99 # If you want to restrict the number of this kind of detectors
-    
-    @classmethod
-    def can_instantiate(cls):
-        return cls.instance_counter < cls.max_instances
-    
-    @classmethod
-    def instance_add(cls):
-        cls.instance_counter += 1
-
-    @classmethod
-    def instance_dec(cls):
-        cls.instance_counter -= 1
-    
+    tag  = "movement" # NOTE: name identifying the detector group
+    max_instances = 5 # NOTE: how many detectors belonging to the same group can be instantiated
     
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         
@@ -227,11 +213,24 @@ class MVisionProcess(QValkkaShmemProcess2):
         self.analyzer = MovementDetector(
             treshold    =0.0001,
             verbose     =self.verbose,
-            deadtime    =self.deadtime)
+            deadtime    =self.deadtime
+        )
         
     def postRun_(self):
         self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
+        
+    
+    def postActivate_(self):
+        """Whatever you need to do after creating the shmem client
+        """
+        pass
+        
+    def preDeactivate_(self):
+        """Whatever you need to do prior to deactivating the shmem client
+        """
+        pass
+        
 
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
@@ -348,7 +347,7 @@ def test3():
     """
     import time
     
-    p = MVisionProcess(shmem_name="test3")
+    p = MVisionProcess()
     p.start()
     time.sleep(5)
     p.stop()
@@ -366,13 +365,13 @@ def test4():
     # t.stop(); return
     
     print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess(shmem_name="test3.1")
+    p1 = MVisionProcess()
     p1.start()
     t.addProcess(p1)
     time.sleep(5)
     
     print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess(shmem_name="test3.2")
+    p2 = MVisionProcess()
     p2.start()
     t.addProcess(p2)
     time.sleep(5)
@@ -380,6 +379,9 @@ def test4():
     print("Remove multiprocesses")
     t.delProcess(p1)
     # t.delProcess(p2)
+    
+    p1.stop()
+    p2.stop()
     
     print("bye")
     
@@ -424,6 +426,7 @@ def test5():
     # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
     fg.show()
     app.exec_()
+    ps.stop()
     print("bye from app!")
     
     

@@ -39,6 +39,7 @@ class MVisionContainer(VideoContainer):
         "n_xscreen"         : (int,0),              # x-screen index
         "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
         "thread"            : None,                 # thread that watches the multiprocesses communication pipes
+        "process_map"       : (dict,{}),
         "verbose"           : (bool, False)
     }
 
@@ -48,10 +49,24 @@ class MVisionContainer(VideoContainer):
         # check for input parameters, attach them to this instance as
         # attributes
         parameterInitCheck(MVisionContainer.parameter_defs, kwargs, self)
-        assert(issubclass(self.mvision_class,multiprocess.QValkkaOpenCVProcess))
+        assert(issubclass(self.mvision_class,multiprocess.QValkkaShmemProcess2))
         super().__init__(parent_container = self.parent_container, filterchain_group = self.filterchain_group, n_xscreen = self.n_xscreen)
         
+        tag = self.mvision_class.tag # identifies a list of multiprocesses in self.process_map
+            
+        try:
+            queue = self.process_map[tag]
+        except KeyError:
+            self.mvision_process = None
+            return
         
+        try:
+            self.mvision_process = queue.pop()
+        except IndexError:
+            self.mvision_process = None
+            return
+    
+    
     def makeWidget(self, parent=None):
         self.main_widget = self.ContainerWidget(parent)
         # self.signals.close.connect(self.close_slot) # not closed by clicking
@@ -76,6 +91,9 @@ class MVisionContainer(VideoContainer):
         :param device:      A rather generic device class.  In this case DataModel.RTSPCameraDevice.
         """
         self.report("setDevice :", device)
+        
+        if (self.mvision_process == None):
+            return
         
         if (not device and not self.device): # None can be passed as an argument when the device has not been set yet
             return
@@ -117,17 +135,25 @@ class MVisionContainer(VideoContainer):
             self.main_layout.addWidget(self.mvision_widget)
             """
             # initiate mvision process
+            """
             self.mvision_process = self.mvision_class(
                 n_buffer         = constant.shmem_n_buffer,
                 image_dimensions = constant.shmem_image_dimensions,
                 shmem_name       = self.shmem_name
                 )
+            self.mvision_process.start() # all processes started in the main gui
+            """
             
             self.mvision_widget = self.mvision_process.getWidget()
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
             
-            self.mvision_process.start() # process must be started before calling addProcess
+            self.mvision_process.activate(
+                n_buffer         = constant.shmem_n_buffer,
+                image_dimensions = constant.shmem_image_dimensions,
+                shmem_name       = self.shmem_name
+                )
+                
             self.thread.addProcess(self.mvision_process)
             
             # is there a signal giving the bounding boxes..?  let's connect it
@@ -137,32 +163,44 @@ class MVisionContainer(VideoContainer):
             
             
     def set_bounding_boxes_slot(self, bbox):
-        self.filterchain.setBoundingBoxes(self.viewport, bbox)
+        if (self.device):
+            # device might have been cleared while the yolo object detector takes it time ..
+            # .. and then it still calls this
+            self.filterchain.setBoundingBoxes(self.viewport, bbox)
             
             
     def clearDevice(self):
         """Remove the current stream
         """
+        print(self.pre, "clearDevice: ")
+        
         self.report("clearDevice")
         if not self.device:
+            return
+        if (self.mvision_process==None):
             return
         
         self.filterchain.delViewPort(self.viewport)
         self.filterchain.releaseShmem(self.shmem_name)
 
-        self.main_layout.removeWidget(self.mvision_widget)
-        self.mvision_widget = None
-        self.thread.delProcess(self.mvision_process) # stops the multiprocess as well
+        self.mvision_process.deactivate() # put process back to sleep ..
         
-        self.mvision_process = None
+        self.main_layout.removeWidget(self.mvision_widget)
+        self.thread.delProcess(self.mvision_process)
+        
         self.filterchain = None
         self.device = None
         
         self.video.update()
-
-
-
-
+        
+        
+    def close(self):
+        super().close() # calls clearDevice
+        tag = self.mvision_class.tag
+        self.process_map[tag].append(self.mvision_process) # .. and recycle it
+        print(self.pre, "close: process_map=", self.process_map)
+        self.mvision_process = None
+        
 
 class MyGui(QtWidgets.QMainWindow):
 

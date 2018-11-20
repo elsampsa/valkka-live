@@ -62,7 +62,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.readDB()
         self.generateMethods()
         self.setupUi()
-        # TODO: start detector multiprocesses here
+        self.startProcesses()
         self.openValkka()
         self.makeLogic()
         self.post()
@@ -467,6 +467,37 @@ class MyGui(QtWidgets.QMainWindow):
             return vs
 
 
+    def startProcesses(self):
+        """Create and start python multiprocesses
+        
+        Starting a multiprocess creates a process fork.
+        
+        In theory, there should be no problem in first starting the multithreading environment and after that perform forks (only the thread requestin the fork is copied), but in practice, all kinds of weird behaviour arises.
+        
+        Read all about it in here : http://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them
+        """
+        self.process_map = {} # each key is a list of started multiprocesses
+        # self.process_avail = {} # count instances
+        
+        for mvision_class in self.mvision_classes:
+            name = mvision_class.name
+            tag  = mvision_class.tag
+            num  = mvision_class.max_instances        
+            if (tag not in self.process_map):
+                self.process_map[tag] = []
+                # self.process_avail[tag] = num
+                for n in range(0, num):
+                    p = mvision_class()
+                    p.start()
+                    self.process_map[tag].append(p)
+        
+        
+    def closeProcesses(self):
+        for key in self.process_map:
+            for p in self.process_map[key]:
+                p.stop()
+            
+        
     def openValkka(self):
         self.cpu_scheme = CPUScheme()
         
@@ -553,7 +584,6 @@ class MyGui(QtWidgets.QMainWindow):
         for container in self.mvision_containers:
             print("gui: closing mvision_container: ", container)
             container.close()
-            
         self.containers = []
         self.mvision_containers = []
 
@@ -573,6 +603,8 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.closeValkka()
         self.dm.close()
+        
+        self.closeProcesses()
         e.accept()
 
 
@@ -593,8 +625,6 @@ class MyGui(QtWidgets.QMainWindow):
             self.mvision_containers.remove(cont)
         except ValueError:
             print("gui: rem_mvision_container_slot: could not remove container",cont)
-        else:
-            cont.child_class_pars["mvision_class"].instance_dec() # count instantiated objects
         print("gui: rem_mvision_container_slot: mvision containers now:",self.mvision_containers)
         
         
@@ -615,8 +645,7 @@ class MyGui(QtWidgets.QMainWindow):
 
     def make_mvision_slot(self, cl):
         def slot_func():
-            if cl.can_instantiate():
-                cl.instance_add() # count instances
+            if ( (cl.tag in self.process_map) and (len(self.process_map[cl.tag])>0) ):
                 cont = container.VideoContainerNxM(
                     parent            = None,
                     gpu_handler       = self.gpu_handler,
@@ -625,8 +654,13 @@ class MyGui(QtWidgets.QMainWindow):
                     n_dim             = 1,
                     m_dim             = 1,
                     child_class       = container.MVisionContainer,
-                    child_class_pars  = {"mvision_class": cl}, # serializable parameters (for re-creating this container)
-                    child_class_pars_ = {"thread" : self.thread} # non-serializable parameters
+                    # serializable parameters (for re-creating this container):
+                    child_class_pars  = {"mvision_class": cl}, 
+                    # non-seriazable parameters:
+                    child_class_pars_ = {
+                        "thread"      : self.thread,
+                        "process_map" : self.process_map
+                        }
                     )
                 cont.signals.closing.connect(self.rem_mvision_container_slot)
                 self.mvision_containers.append(cont)

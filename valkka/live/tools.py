@@ -92,12 +92,14 @@ def scanMVisionClasses():
                         continue
                     if (hasattr(submodule, "MVisionProcess")): # do we have a class valkka.mvision*.*.base.MVisionProcess ?
                         mvisionclass = getattr(submodule, "MVisionProcess")
-                        if (hasattr(mvisionclass, "name")): # does that class has a member "name" ?
+                        if (hasattr(mvisionclass, "name") 
+                            and hasattr(mvisionclass, "tag")  
+                            and hasattr(mvisionclass, "max_instances")): # does that class has these members?
                             name = getattr(mvisionclass, "name")
-                            print("mvision scan: found machine vision class with name", name)
+                            print("mvision scan: found machine vision class with name, tag and max_instances")
                             mvision_classes.append(mvisionclass)
                         else:
-                            print("mvision scan: submodule",name,"missing member name")
+                            print("mvision scan: submodule",name,"missing members (name, tag or max_instances)")
                     else:
                         print("mvision scan: submodule",name,"missing MVisionProcess")
                         

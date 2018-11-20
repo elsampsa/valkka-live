@@ -19,14 +19,18 @@ try:
 except Exception as e:
     print("valkka.mvision.__init__ : could not import module nix : '"+str(e)+"'")
 
-"""
-try:
-    from .import dflpr
-except Exception as e:
-    print("valkka.mvision.__init__ : could not import module dflpr : '"+str(e)+"'")
-"""
-
 try:
     from .import yolo3
 except Exception as e:
-    print("valkka.mvision.__init__ : could not import module nix : '"+str(e)+"'")
+    print("valkka.mvision.__init__ : could not import module yolo3 : '"+str(e)+"'")
+
+try:
+    from .import yolo2
+except Exception as e:
+    print("valkka.mvision.__init__ : could not import module yolo2 : '"+str(e)+"'")
+
+try:
+    from .import yolo3tiny
+except Exception as e:
+    print("valkka.mvision.__init__ : could not import module yolo3tiny : '"+str(e)+"'")
+
