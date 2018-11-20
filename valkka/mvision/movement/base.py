@@ -27,7 +27,7 @@ import importlib
 import cv2
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
-from valkka.mvision.multiprocess import QValkkaOpenCVProcess
+from valkka.mvision.multiprocess import QValkkaShmemProcess2
 from valkka.live import style
 
 pre = "valkka.mvision.movement.base : "
@@ -139,7 +139,7 @@ class MovementDetector(Analyzer):
 
 
 
-class MVisionProcess(QValkkaOpenCVProcess):
+class MVisionProcess(QValkkaShmemProcess2):
     """ NOTE: the name of the class must always be MVisionProcess, so that Valkka Live can find the class
     
     This is a python multiprocess that runs on the background in its own isolated memory space.
@@ -184,15 +184,20 @@ class MVisionProcess(QValkkaOpenCVProcess):
     
     
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        "test_": {"test_int": int, "test_str": str},
-        "stop_": [],
-        "ping_": {"message": str}
+        
+        # don't touch these three..
+        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
+        "deactivate_"   : [],
+        "stop_"         : [],
+
+        "test_"         : {"test_int": int, "test_str": str},
+        "ping_"         : {"message": str}
     }
 
     outgoing_signal_defs = {
-        "pong_o": {"message": str},
-        "start_move": {},
-        "stop_move": {}
+        "pong_o"        : {"message": str},
+        "start_move"    : {},
+        "stop_move"     : {}
     }
 
     # For each outgoing signal, create a Qt signal with the same name.  The
@@ -206,36 +211,23 @@ class MVisionProcess(QValkkaOpenCVProcess):
     #"""
 
     parameter_defs = {
-        "n_buffer": (int, 10),
-        "image_dimensions": (tuple, (1920 // 4, 1080 // 4)),
-        "shmem_name": str,
         "verbose": (bool, False),
         "deadtime": (int, 1)
     }
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name, n_buffer = self.n_buffer, image_dimensions = self.image_dimensions, shmem_name = self.shmem_name, verbose = self.verbose)
+        super().__init__(self.__class__.name)
         self.pre = self.__class__.__name__ + ":" + self.name+ " : "
-        # print(self.pre,"__init__")
         self.signals = self.Signals()
-        typeCheck(self.image_dimensions[0], int)
-        typeCheck(self.image_dimensions[1], int)
-        """
-        self.analyzer = MovementDetector(
-            treshold=0.0001,
-            verbose=self.verbose,
-            deadtime=self.deadtime)
-        print(self.pre,"__init__ : bye")
-        """
-    
+        
     def preRun_(self):
         super().preRun_()
         # its a good idea to instantiate the analyzer after the multiprocess has been spawned (like we do here)
         self.analyzer = MovementDetector(
-            treshold=0.0001,
-            verbose=self.verbose,
-            deadtime=self.deadtime)
+            treshold    =0.0001,
+            verbose     =self.verbose,
+            deadtime    =self.deadtime)
         
     def postRun_(self):
         self.analyzer.close() # release any resources acquired by the analyzer
@@ -268,9 +260,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # *** backend methods corresponding to incoming signals ***
     # *** i.e., how the signals are handled inside the running multiprocess
     
-    def stop_(self):
-        self.running = False
-
     def test_(self, test_int=0, test_str="nada"):
         print(self.pre, "test_ signal received with", test_int, test_str)
 
@@ -286,9 +275,6 @@ class MVisionProcess(QValkkaOpenCVProcess):
     # ** frontend methods launching incoming signals
     # *** you can call these after the multiprocess is started
     
-    def stop(self):
-        self.sendSignal(name="stop_")
-
     def test(self, **kwargs):
         dictionaryCheck(self.incoming_signal_defs["test_"], kwargs)
         kwargs["name"] = "test_"
@@ -418,17 +404,8 @@ def test5():
     #t = QValkkaThread()
     #t.start()
     
-    shmem_name="test_studio_file"
-    shmem_image_dimensions=(1920 // 2, 1080 // 2)
-    shmem_image_interval=1000
-    shmem_ringbuffer_size=5
-    
     # """
-    ps = MVisionProcess(
-            shmem_name = shmem_name, 
-            image_dimensions = shmem_image_dimensions,
-            n_buffer = shmem_ringbuffer_size
-        )
+    ps = MVisionProcess()
     # """
        
     #t.addProcess(ps)
@@ -437,7 +414,13 @@ def test5():
     #return
 
     app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(mvision_process = ps, shmem_image_interval = shmem_image_interval)
+    fg = FileGUI(
+        mvision_process = ps, 
+        shmem_name              ="test_studio_file",
+        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
+        shmem_image_interval    =1000,
+        shmem_ringbuffer_size   =5
+        )
     # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
     fg.show()
     app.exec_()

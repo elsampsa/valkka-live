@@ -55,6 +55,18 @@ class QValkkaProcess(ValkkaProcess):
         time.sleep(0.5)
         # print(self.pre,"hello!")
 
+    def run(self): # No "_" in the name, but nevertheless, running in the backed
+        """After the fork. Now the process starts running
+        """
+        self.preRun_()
+        self.running=True
+        
+        while(self.running):
+            self.cycle_()
+            self.handleSignal_()
+        
+        self.postRun_()
+    
     # *** backend methods corresponding to incoming signals ***
 
     def stop_(self):
@@ -94,8 +106,8 @@ class QValkkaProcess(ValkkaProcess):
         self.signals.pong_o.emit(ns)
 
 
-class QValkkaOpenCVProcess(ValkkaProcess):
-    """A multiprocess with Qt signals, using OpenCV.  Reads RGB images from shared memory
+class QValkkaShmemProcess(ValkkaProcess):
+    """A multiprocess with Qt signals and reading RGB images from shared memory
     """
 
     incoming_signal_defs = {  # each key corresponds to a front- and backend methods
@@ -125,7 +137,7 @@ class QValkkaOpenCVProcess(ValkkaProcess):
     def __init__(self, name, affinity=-1, **kwargs):
         super().__init__(name, affinity, **kwargs)
         self.signals = self.Signals()
-        parameterInitCheck(QValkkaOpenCVProcess.parameter_defs, kwargs, self)
+        parameterInitCheck(QValkkaShmemProcess.parameter_defs, kwargs, self)
         typeCheck(self.image_dimensions[0], int)
         typeCheck(self.image_dimensions[1], int)
         
@@ -136,7 +148,7 @@ class QValkkaOpenCVProcess(ValkkaProcess):
 
     
     def preRun_(self):
-        """Create the shared memory client after fork
+        """Create the shared memory client immediately after fork
         """
         self.report("preRun_")
         super().preRun_()
@@ -188,6 +200,153 @@ class QValkkaOpenCVProcess(ValkkaProcess):
 
     def stop(self):
         self.sendSignal(name="stop_")
+
+    def test(self, **kwargs):
+        dictionaryCheck(self.incoming_signal_defs["test_"], kwargs)
+        kwargs["name"] = "test_"
+        self.sendSignal(**kwargs)
+
+    def ping(self, **kwargs):
+        dictionaryCheck(self.incoming_signal_defs["ping_"], kwargs)
+        kwargs["name"] = "ping_"
+        self.sendSignal(**kwargs)
+
+    # ** frontend methods handling received outgoing signals ***
+    def pong_o(self, message="nada"):
+        print(self.pre, "At frontend: pong got message", message)
+        ns = Namespace()
+        ns.message = message
+        self.signals.pong_o.emit(ns)
+
+
+class QValkkaShmemProcess2(ValkkaProcess):
+    """A multiprocess with Qt signals and reading RGB images from shared memory.  Shared memory client is instantiated on demand (by calling activate)
+    """
+
+    incoming_signal_defs = {  # each key corresponds to a front- and backend methods
+        "test_"         : {"test_int": int, "test_str": str},
+        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
+        "deactivate_"   : [],
+        "stop_"         : [],
+        "ping_"         : {"message": str}
+    }
+
+    outgoing_signal_defs = {
+        "pong_o": {"message": str}
+    }
+
+    # For each outgoing signal, create a Qt signal with the same name.  The
+    # frontend Qt thread will read processes communication pipe and emit these
+    # signals.
+    class Signals(QtCore.QObject):
+        # pong_o  =QtCore.pyqtSignal(object)
+        pong_o = QtCore.Signal(object)
+
+    parameter_defs = {
+        "verbose" : (bool, False)
+    }
+
+    def __init__(self, name, affinity=-1, **kwargs):
+        super().__init__(name, affinity, **kwargs)
+        self.signals = self.Signals()
+        parameterInitCheck(QValkkaShmemProcess2.parameter_defs, kwargs, self)
+        
+        
+    def report(self, *args):
+        if (self.verbose):
+            print(self.pre, *args)
+
+    
+    def preRun_(self):
+        """Create the shared memory client after fork
+        """
+        self.report("preRun_")
+        self.deactivate_()
+        super().preRun_()
+        
+        
+    def run(self): # No "_" in the name, but nevertheless, running in the backed
+        """After the fork. Now the process starts running
+        """
+        self.preRun_()
+        self.running=True
+        
+        while(self.running):
+            if (self.active): # activated: shared mem client has been reserved
+                self.cycle_()
+            else:
+                print(self.pre, "sleep")
+                time.sleep(1)
+            self.handleSignal_()
+            
+        self.postRun_()
+    
+
+    def cycle_(self):
+        index, isize = self.client.pull()
+        if (index is None):
+            print(self.pre, "Client timed out..")
+        else:
+            print(self.pre, "Client index, size =", index, isize)
+            data = self.client.shmem_list[index]
+            img = data.reshape(
+                (self.image_dimensions[1], self.image_dimensions[0], 3))
+            """ # WARNING: the x-server doesn't like this, i.e., we're creating a window from a separate python multiprocess, so the program will crash
+            print(self.pre,"Visualizing with OpenCV")
+            cv2.imshow("openCV_window",img)
+            cv2.waitKey(1)
+            """
+            print(self.pre, ">>>", data[0:10])
+
+            # res=self.analyzer(img) # does something .. returns something ..
+
+    # *** backend methods corresponding to incoming signals ***
+
+    def stop_(self):
+        self.deactivate_()
+        self.running = False
+
+    def activate_(self, n_buffer, image_dimensions, shmem_name):
+        self.active = True
+        self.image_dimensions = image_dimensions
+        self.client = ShmemRGBClient(
+            name            =shmem_name,
+            n_ringbuffer    =n_buffer,   # size of ring buffer
+            width           =image_dimensions[0],
+            height          =image_dimensions[1],
+            # client timeouts if nothing has been received in 1000 milliseconds
+            mstimeout   =1000,
+            verbose     =False
+        )
+        
+    def deactivate_(self):
+        self.active = False
+        self.image_dimensions = None
+        self.client = None # shared memory client created when activate is called
+
+    def test_(self, test_int=0, test_str="nada"):
+        print(self.pre, "test_ signal received with", test_int, test_str)
+
+    def ping_(self, message="nada"):
+        print(
+            self.pre,
+            "At backend: ping_ received",
+            message,
+            "sending it back to front")
+        self.sendSignal_(name="pong_o", message=message)
+
+    # ** frontend methods launching incoming signals
+
+    def stop(self):
+        self.sendSignal(name="stop_")
+        
+    def activate(self, **kwargs):
+        dictionaryCheck(self.incoming_signal_defs["activate_"], kwargs)
+        kwargs["name"]="activate_"
+        self.sendSignal(**kwargs)
+        
+    def deactivate(self):
+        self.sendSignal(name="deactivate_")
 
     def test(self, **kwargs):
         dictionaryCheck(self.incoming_signal_defs["test_"], kwargs)
@@ -394,6 +553,19 @@ class MyGui(QtWidgets.QMainWindow):
         super().closeEvent(e)
 
 
+def test1():
+    p = QValkkaShmemProcess2("test")
+    p.start()
+    time.sleep(5)
+    p.activate(n_buffer=10, image_dimensions=(1920//4, 1080//4), shmem_name="test123")
+    time.sleep(5)
+    p.deactivate()
+    time.sleep(5)
+    p.activate(n_buffer=10, image_dimensions=(1920//4, 1080//4), shmem_name="test123")
+    time.sleep(5)
+    p.stop()
+
+
 def main():
     app = QtWidgets.QApplication(["test_app"])
     mg = MyGui()
@@ -402,4 +574,5 @@ def main():
 
 
 if (__name__ == "__main__"):
-    main()
+    # main()
+    test1()

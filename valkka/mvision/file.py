@@ -27,8 +27,7 @@ import os
 from valkka.api2 import LiveThread, FileThread, OpenGLThread, ValkkaProcess, ShmemClient
 from valkka.api2 import ShmemFilterchain1
 from valkka.api2 import parameterInitCheck
-
-from valkka.mvision.multiprocess import QValkkaOpenCVProcess, QValkkaThread
+from valkka.mvision.multiprocess import QValkkaShmemProcess2, QValkkaThread
 
 pre = "mvision.file : "
 
@@ -40,14 +39,22 @@ class FileGUI(QtWidgets.QMainWindow):
     :param shmem_image_interval:     How often the image is interpolated into rgb and passed to the mvision_process (milliseconds)
     """
 
-    def __init__(self, mvision_process, shmem_image_interval = 1000):
-    # def __init__(self, mvision_process_class, shmem_image_interval = 1000):
-        super().__init__()
-        assert(issubclass(mvision_process.__class__, QValkkaOpenCVProcess))
-        self.mvision_process = mvision_process
+    def __init__(self, 
+                 mvision_process, 
+                 shmem_image_interval = 1000, 
+                 shmem_ringbuffer_size = 10, 
+                 shmem_image_dimensions = (1920 // 2, 1080 // 2),
+                 shmem_name="test"):
         
-        self.shmem_image_interval = shmem_image_interval
-    
+        super().__init__()
+        assert(issubclass(mvision_process.__class__, QValkkaShmemProcess2))
+        
+        self.mvision_process        = mvision_process
+        self.shmem_image_interval   = shmem_image_interval
+        self.shmem_ringbuffer_size  = shmem_ringbuffer_size
+        self.shmem_image_dimensions = shmem_image_dimensions
+        self.shmem_name             = shmem_name
+        
         self.initVars()
         self.setupUi()
         
@@ -55,14 +62,6 @@ class FileGUI(QtWidgets.QMainWindow):
         # self.mvision_widget = QtWidgets.QWidget()
         self.mvision_widget.setParent(self.widget)
         self.widget_lay.addWidget(self.mvision_widget)
-        
-        # let's steal some shmem parameters from the mvision_process
-        self.shmem_ringbuffer_size = self.mvision_process.n_buffer
-        self.shmem_image_dimensions = self.mvision_process.image_dimensions
-        self.shmem_name = self.mvision_process.shmem_name
-        self.verbose = self.mvision_process.verbose
-        
-        print("FileGUI: ringbuffer, image, shmem_name", self.shmem_ringbuffer_size, self.shmem_image_dimensions, self.shmem_name)
         
         self.openValkka()
 
@@ -139,6 +138,9 @@ class FileGUI(QtWidgets.QMainWindow):
         self.thread = QValkkaThread() # the thread that's watching the mvision_processes
         self.thread.start()
         
+        self.mvision_process.start()
+        self.thread.addProcess(self.mvision_process)
+        
         # """
         self.livethread = LiveThread(         # starts live stream services (using live555)
             name="live_thread",
@@ -180,12 +182,11 @@ class FileGUI(QtWidgets.QMainWindow):
 
         self.chain.decodingOn()  # tell the decoding thread to start its job
 
-        # WARNING!  its critical to start the self.mvision_process after ShmemFilterchain1
-        # ShmemFilterchain1 creates the SERVER side of the shared memory, while CLIENT side is created upon calling self.mvision_process.start()
-        # Server side must always be created before client side, otherwise something undefined (most likely a segfault) will occur
-
-        self.mvision_process.start()
-        self.thread.addProcess(self.mvision_process)
+        self.mvision_process.activate(
+            n_buffer                = self.shmem_ringbuffer_size, 
+            image_dimensions        = self.shmem_image_dimensions, 
+            shmem_name              = self.shmem_name  
+        )
         
         
     def closeValkka(self):

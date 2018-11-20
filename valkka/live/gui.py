@@ -62,6 +62,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.readDB()
         self.generateMethods()
         self.setupUi()
+        # TODO: start detector multiprocesses here
         self.openValkka()
         self.makeLogic()
         self.post()
@@ -213,8 +214,6 @@ class MyGui(QtWidgets.QMainWindow):
         return win
     
     
-
-
     def setupUi(self):
         self.setStyleSheet(style.main_gui)
         self.setWindowTitle("Valkka Live")
