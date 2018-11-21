@@ -34,7 +34,10 @@ Each machine vision module appears as its own directory (the plugin scheme is in
         nix/                demo detector [2]
         alpr/               OpenALPR [1]
         yolo3/              Yolo v3 object detection [1]
+        yolo3tiny/          Yolo v3 Tiny object detection [1]
+        yolo2/              Yolo v2 object detection [1]
 
+        
 You can create your own by copying any of the directories to a different name.  Then, study and edit the file *base.py* in that directory.  After that, you still have to register the module into:
 
 ::
@@ -67,7 +70,7 @@ If you're running Ubuntu 18 (bionic), you can use this command:
 
     valkka-bionic-install
     
-to install all dependencies for all the examples (excluding Yolo object detection)
+to install dependencies of the machine vision modules (excluding Yolo object detection)
 
 Movement Detector
 -----------------
@@ -133,8 +136,13 @@ Yolo Object Detection
 
 Once you have installed and tested `our Darknet python bindings <https://github.com/elsampsa/darknet-python>`_, the Yolo 3 object detector will appear in the Machine Vision plug-in menu.
 
-Remember, that in order to run `Yolo object detector <https://pjreddie.com/darknet/yolo/>`_ , you need a reasonable GPU.
+Several Yolo versions are provided:
 
+- Yolo v3 is the best, but a bit heavy, so it won't work on a "commodity" laptop.  You need a hefty GPU with 2.5+ GB memory.
+- Yolo v2 is almost as good as Yolo v3, but needs less memory on the GPU
+- Yolo v3 Tiny works on the CPU as well and on a regular i7 laptop
+
+.. Remember, that in order to run `Yolo object detector <https://pjreddie.com/darknet/yolo/>`_ , you need a reasonable GPU.
 
 .. Matlab
 .. ------
