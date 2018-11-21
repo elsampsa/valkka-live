@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gpuhandler.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.5.0 
+@version 0.6.0 
 @brief   GPU Handler class
 """
 

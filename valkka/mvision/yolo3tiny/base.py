@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    base.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.5.0 
+@version 0.6.0 
 @brief   Yolo v2 object detector for Valkka Live
 """
 
@@ -31,7 +31,7 @@ from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaShmemProcess2
 """
 
-pre = "valkka.mvision.yolo2.base : "
+pre = "valkka.mvision.yolo3tiny.base : "
 
 from valkka.mvision.yolo3 import YoloV3Analyzer
 from valkka.mvision.yolo3 import MVisionProcess as BaseProcess

@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.5.0'
+version = '0.6.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -52,8 +52,9 @@ setup(
         'valkka.mvision.movement',
         'valkka.mvision.alpr',
         'valkka.mvision.nix',
-        'valkka.mvision.dflpr',
-        'valkka.mvision.yolo3'
+        'valkka.mvision.yolo3',
+        'valkka.mvision.yolo2',
+        'valkka.mvision.yolo3tiny'
         ],
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed

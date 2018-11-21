@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    base.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.5.0 
+@version 0.6.0 
 @brief   A movement analyzer and the associated multiprocess
 """
 
