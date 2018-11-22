@@ -40,6 +40,12 @@ from valkka.mvision.yolo3 import MVisionProcess as BaseProcess
 from darknet.api2.constant import get_yolov2_weights_file, get_yolov3_weights_file, get_yolov3_tiny_weights_file
 fname = get_yolov2_weights_file()
 
+from valkka.live.version import MIN_DARKNET_VERSION_MAJOR, MIN_DARKNET_VERSION_MINOR, MIN_DARKNET_VERSION_PATCH
+from darknet.core import VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
+assert(VERSION_MAJOR >= MIN_DARKNET_VERSION_MAJOR)
+assert(VERSION_MINOR >= MIN_DARKNET_VERSION_MINOR)
+assert(VERSION_PATCH >= MIN_DARKNET_VERSION_PATCH)
+
 
 class YoloV2Analyzer(YoloV3Analyzer):
     
@@ -63,7 +69,12 @@ class MVisionProcess(BaseProcess):
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        self.analyzer = YoloV2Analyzer(verbose = self.verbose)
+        if (self.requiredGPU_MB(1)):
+            self.analyzer = YoloV2Analyzer(verbose = self.verbose)
+        else:
+            self.sendSignal_(name="objects", object_list=["WARNING: not enough GPU memory!"])
+            self.analyzer = None
+    
         
         
 def test1():

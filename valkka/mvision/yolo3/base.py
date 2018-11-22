@@ -35,6 +35,12 @@ pre = "valkka.mvision.yolo3.base : "
 from darknet.api2.constant import get_yolov2_weights_file, get_yolov3_weights_file, get_yolov3_tiny_weights_file
 fname = get_yolov3_weights_file()
 
+from valkka.live.version import MIN_DARKNET_VERSION_MAJOR, MIN_DARKNET_VERSION_MINOR, MIN_DARKNET_VERSION_PATCH
+from darknet.core import VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
+assert(VERSION_MAJOR >= MIN_DARKNET_VERSION_MAJOR)
+assert(VERSION_MINOR >= MIN_DARKNET_VERSION_MINOR)
+assert(VERSION_PATCH >= MIN_DARKNET_VERSION_PATCH)
+
 
 class YoloV3Analyzer(Analyzer):
     """The celebrated Yolo v3 object detector
@@ -53,7 +59,7 @@ class YoloV3Analyzer(Analyzer):
         self.pre = self.__class__.__name__ + " : "
         self.init()
             
-
+            
     def init(self):
         # from darknet.api2.error import WeightMissingError
         from darknet.api2.predictor import get_YOLOv3_Predictor, get_YOLOv3_Tiny_Predictor, get_YOLOv2_Predictor
@@ -136,10 +142,27 @@ class MVisionProcess(QValkkaShmemProcess2):
         if (self.analyzer): self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
         
+        
+    def requiredGPU_MB(self, n):
+        """Required GPU memory in MBytes
+        """
+        from darknet.core import darknet_with_cuda
+        if (darknet_with_cuda()):
+            # TODO: check avail gpu memory somehow
+            # nvidia-smi or glxinfo
+            return True
+        else:
+            return True
+        
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+        if (self.requiredGPU_MB(1)):
+            self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+        else:
+            self.sendSignal_(name="objects", object_list=["WARNING: not enough GPU memory!"])
+            self.analyzer = None
+            
         
     def preDeactivate_(self):
         """Whatever you need to do prior to deactivating the shmem client
@@ -161,7 +184,8 @@ class MVisionProcess(QValkkaShmemProcess2):
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
             
-            lis = self.analyzer(img)
+            if (self.analyzer!=None):
+                lis = self.analyzer(img)
             """
             print("img.shape=",img.shape)
             for l in lis:

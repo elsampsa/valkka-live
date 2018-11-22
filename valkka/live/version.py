@@ -36,6 +36,10 @@ MIN_VALKKA_VERSION_MAJOR = 0
 MIN_VALKKA_VERSION_MINOR = 9
 MIN_VALKKA_VERSION_PATCH = 0
 
+# required darknet_py version # https://github.com/elsampsa/darknet-python
+MIN_DARKNET_VERSION_MAJOR = 0
+MIN_DARKNET_VERSION_MINOR = 2
+MIN_DARKNET_VERSION_PATCH = 0
 
 def check():
     # check that the imported valkka is fresh enough
