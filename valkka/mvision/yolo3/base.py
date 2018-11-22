@@ -25,6 +25,7 @@ import numpy
 # import imutils
 import importlib
 from valkka.live import style
+from valkka.live.tools import getFreeGPU_MB
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.mvision.multiprocess import QValkkaShmemProcess2
@@ -105,6 +106,8 @@ class MVisionProcess(QValkkaShmemProcess2):
     tag = "yolov3"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     
+    required_mb = 2700      # required GPU memory in MB
+    
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         # don't touch these three..
         "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
@@ -147,20 +150,22 @@ class MVisionProcess(QValkkaShmemProcess2):
         """Required GPU memory in MBytes
         """
         from darknet.core import darknet_with_cuda
-        if (darknet_with_cuda()):
-            # TODO: check avail gpu memory somehow
-            # nvidia-smi or glxinfo
-            return True
+        if (darknet_with_cuda()): # its using cuda
+            free = getFreeGPU_MB()
+            print("Yolo: requiredGPU_MB: required, free", n, free)
+            if (free == -1): # could not detect ..
+                return True
+            return (free>=n)
         else:
             return True
         
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        if (self.requiredGPU_MB(1)):
+        if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3Analyzer(verbose = self.verbose)
         else:
-            self.sendSignal_(name="objects", object_list=["WARNING: not enough GPU memory!"])
+            self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
             
         
@@ -186,6 +191,7 @@ class MVisionProcess(QValkkaShmemProcess2):
             
             if (self.analyzer!=None):
                 lis = self.analyzer(img)
+            
             """
             print("img.shape=",img.shape)
             for l in lis:
@@ -212,6 +218,10 @@ class MVisionProcess(QValkkaShmemProcess2):
             ))
             # """
             
+            
+        if (hasattr(self, "warning_message")):
+            object_list.append(self.warning_message)
+  
         # print("YoloV3",bbox_list)
         #if (len(lis)>0):
         self.sendSignal_(name="objects", object_list=object_list)

@@ -59,20 +59,22 @@ class YoloV3TinyAnalyzer(YoloV3Analyzer):
         
 
 class MVisionProcess(BaseProcess):
-    """YOLO v2 object detector
+    """YOLO v3 tiny object detector
     """
     
     name = "YOLO v3 Tiny object detector"
     tag = "yolov3tiny"
-    max_instances = 1       # just one instance allowed .. this is kinda heavy detector
+    max_instances = 2       # just one instance allowed .. this is kinda heavy detector
+    
+    required_mb = 150      # required GPU memory in MB
     
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        if (self.requiredGPU_MB(1)):
+        if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3TinyAnalyzer(verbose = self.verbose)
         else:
-            self.sendSignal_(name="objects", object_list=["WARNING: not enough GPU memory!"])
+            self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
     
         

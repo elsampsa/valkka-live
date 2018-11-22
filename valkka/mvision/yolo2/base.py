@@ -66,13 +66,15 @@ class MVisionProcess(BaseProcess):
     tag = "yolov2"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     
+    required_mb = 1500      # required GPU memory in MB
+    
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        if (self.requiredGPU_MB(1)):
+        if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV2Analyzer(verbose = self.verbose)
         else:
-            self.sendSignal_(name="objects", object_list=["WARNING: not enough GPU memory!"])
+            self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
     
         

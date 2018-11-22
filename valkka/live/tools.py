@@ -144,13 +144,32 @@ def getH264V4l2(verbose=False):
     return cams
 
 
+def getFreeGPU_MB():
+    import re
+    from subprocess import Popen, PIPE
+    s=re.compile("available .* memory: (\d+) MB")
+    lis=("glxinfo").split()
+    p = Popen(lis, stdout=PIPE, stderr=PIPE)
+    st = p.stdout.read().decode("utf-8")
+    
+    try:
+        val=int(s.findall(st)[0])
+    except IndexError or ValueError:
+        return -1
 
+    return val
+    
 
 if (__name__ == "__main__"):
+    """
     mvision_classes = scanMVisionClasses()
     for cl in mvision_classes:
         print(cl)
-
+    """
+    print(getFreeGPU_MB())
+    
+    
+    
 
     
 

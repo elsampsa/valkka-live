@@ -148,6 +148,8 @@ class MVisionContainer(VideoContainer):
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
             
+            # self.thread.addProcess(self.mvision_process)
+            
             self.mvision_process.activate(
                 n_buffer         = constant.shmem_n_buffer,
                 image_dimensions = constant.shmem_image_dimensions,
