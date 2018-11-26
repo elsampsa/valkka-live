@@ -6,13 +6,27 @@
 Valkka Live
 ===========
 
-
+   
 .. meta::
    :description: A python video surveillance program
    :keywords: opensource, python, video surveillance, video management, video analysis, machine vision, qt
 
-.. **Currently under construction.  Please come back in few days**
+.. raw:: html
+
+    <style> .myright {font-size: 10pt; text-align: right;} </style>
+
+.. rst-class:: myright
+
+    *Screenshot : Valkka Live running on Ubuntu 18 with Yolo object detection*
    
+.. image:: images/screenshot_1.png
+    :width: 100 %
+
+.. https://www.labnol.org/internet/embed-google-photos-in-website/29194/
+.. raw: html
+.. <img src="demo1.png" lowsrc="demo1_lowres.png", width="200">
+.. <a href='https://photos.google.com/share/AF1QipMcrbBZ8R8isnglrqBUMWj7mtVQeU0ZA-kgfDO9WmAMu0BSArdPcej9ddgQ6IcYcA?key=R2tRRVA5ZTZ1THJWZFhBWE9MQ1d2SElJR0h0Z1hn&source=ctrlq.org'><img src='https://lh3.googleusercontent.com/fd9hK8vFgSnfkz1ZbBaMp5EJD2hdsd6-7j-Q8f1CyxAY3gidyPDTvnTasUNx3e9xOsJzVRx6MKyX2kyqhYhEVeU39XKCLbtTbuIKF_TwfRGGBW8sUtPNFG-U6QHhWIhiDqWDyGq3Lw=w2400' /></a>
+    
 Valkka Live is an OpenSource video surveillance and management program for Linux 
 
 *Some highlights of Valkka Live*
@@ -28,13 +42,13 @@ Valkka Live is based on the `valkka library <https://elsampsa.github.io/valkka-e
 
 For hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
 
-.. **TODO: screenshot here**
-
 .. _quickstart:
 
 Quickstart
 ----------
 
+.. TODO: install through pypi is a must .. people are not going to bother in writing long command lines
+.. move git installs into requirements.rst
 .. Install with
 .. pypi sucks
 .. pip3 install --user --upgrade valkka-live

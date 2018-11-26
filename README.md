@@ -2,6 +2,8 @@
 
 *A modular, hackable and customizable OpenSource approach to modern video surveillance and management solutions in local area networks*
 
+Now also with Yolo object detection.
+
 For installation instructions, manual, etc. go [here](https://elsampsa.github.io/valkka-live)
 
 ## Authors
