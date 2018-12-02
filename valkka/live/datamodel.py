@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
@@ -98,7 +98,12 @@ class DataModel:
                 ConstantIntegerColumn,
                 key_name="slot",
                 label_name="Slot"),
-        ]
+            ]
+            
+        def isActive(self):
+            """Is this row class visible in the form drop-down menu
+            """
+            return True
             
             
     class USBCameraRow(Row):
@@ -106,7 +111,13 @@ class DataModel:
         columns = [
             ColumnSpec(ConstantIntegerColumn, key_name="slot", label_name="Slot"),
             ColumnSpec(USBCameraColumn, key_name ="address", label_name="Device")
-        ]
+            ]
+        
+        def isActive(self):
+            """Show only if there are USB cams
+            """
+            return len(tools.getH264V4l2())>0
+        
     
         
     class RTSPCameraRow(Row):
@@ -166,7 +177,11 @@ class DataModel:
                 key_name="rec_sub", 
                 label_name="Record stream",
                 def_value=False)
-        ]
+            ]
+        
+        def isActive(self):
+            return True
+        
         
         
         @classmethod
@@ -255,6 +270,13 @@ class DataModel:
             self.placeWidget(cc, "live_sub"); cc+=1
             self.placeWidget(cc, "rec_sub"); cc+=1
             
+            """ # definitely NOT here!
+            # self.copy_label = QtWidgets.QLabel("Copy this camera", self.widget)
+            self.copy_button = QtWidgets.QPushButton("Copy", self.widget)
+            self.placeWidgetPair(cc, (self.copy_button, None))
+            self.copy_button.clicked.connect(self.copy_slot)
+            """
+            
             self.connectNotifications()
         
             def rec_main_clicked():
@@ -273,7 +295,7 @@ class DataModel:
                     
             self["rec_main"].widget.clicked.connect(rec_main_clicked)
             self["rec_sub"]. widget.clicked.connect(rec_sub_clicked)
-            self.widget.signals.show.connect(self.update_notify_slot)
+            self.widget.signals.show.connect(self.show_slot)
             
             # TODO: remove these restrictions once functional:
             self["subaddress_main"].widget.setEnabled(False)
@@ -310,11 +332,16 @@ class DataModel:
             # print("RTSPCameraRow: value changed")
             self.mainstream_address.setText(self.getMainAddress())
             self.substream_address.setText(self.getSubAddress())
+            # self.copy_button.setEnabled(False) # must save before can copy # nopes ..
             
             # rec main and sub exclude each other
             # rec requires live
             
-            
+        def show_slot(self):
+            self.mainstream_address.setText(self.getMainAddress())
+            self.substream_address.setText(self.getSubAddress())
+                
+                
     class RTSPCameraDevice:
         """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
         """
@@ -523,6 +550,7 @@ class DataModel:
                 self.items_by_id[item._id]=item
                 self.widget.addItem(item)
             self.widget.sortItems()
+            self.widget.setMinimumWidth(self.widget.sizeHintForColumn(0))
 
 
         def createItem(self):
@@ -534,9 +562,9 @@ class DataModel:
             # print("DataModel : makeLabel :", entry["classname"])
             st = str(entry["slot"])
             if (entry["classname"] == "RTSPCameraRow"):
-                st += " RTSP"
+                st += " RTSP ("+entry["address"]+")"
             elif (entry["classname"] == "USBCameraRow"):
-                st += " USB"
+                st += " USB ("+str(entry["address"])+")" # could be NoneType
             return st
 
     # *** A stand-alone form for MemoryConfigRow ***
@@ -636,7 +664,7 @@ class DataModel:
             return False
         return True
 
-    def autoGenerateCameraCollection(self, base_address, nstart, n, port, tail, username, password): # TODO: rewrite!
+    def autoGenerateCameraCollection(self, base_address, nstart, n, port, tail, username, password):
         """
         :param:  base_address    str, e.g. "192.168.1"
         :param:  nstart          int, e.g. 24

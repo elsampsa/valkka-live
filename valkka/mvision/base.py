@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    base.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   A base class for analyzer and a multiprocess that is using an analyzer
 """
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    form.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   Custom cute_mongo_forms
 """
 
@@ -26,6 +26,7 @@ from cute_mongo_forms.row import Row, Column
 from cute_mongo_forms.container import EditFormSet2
 from valkka.live.tools import getH264V4l2
 from valkka.api2.tools import parameterInitCheck
+from valkka.live import dialog, constant
 
 pre = "valkka.live.form : "
 verbose = True
@@ -38,6 +39,17 @@ class SlotFormSet(EditFormSet2):
 
     Changing from one form type to another maintains the value of the slot key.
     """
+    
+    class Signals(QtCore.QObject):
+        """Signals emitted by this class:
+        
+        - new_record(object) : emitted when a new record has been added.  Carries the record _id.
+        - save_record(object): emitted when a record has been saved.  Carries the record _id.
+        """
+        save_record  =QtCore.Signal(object) # emitted when a record has been saved
+        modified     =QtCore.Signal(object) # emitted when one of the above has been triggered
+        copy_request =QtCore.Signal(object) # emitted when user wants to copy a certain entry to other slots
+    
 
     def initVars(self):
         super().initVars()
@@ -49,6 +61,14 @@ class SlotFormSet(EditFormSet2):
         i = self.lay.count()
         self.info_label = QtWidgets.QLabel("Cameralists and services are reinitiated\n once you close this window", self.widget)
         self.lay.insertWidget(i,self.info_label)
+    
+    
+    def makeButtons(self):
+        super().makeButtons()
+        self.copyto_button =QtWidgets.QPushButton("COPY", self.buttons)
+        self.buttons_lay.addWidget(self.copyto_button)
+        # self.copyto_button.clicked.connect(self.signals.copy_request)
+        self.copyto_button.clicked.connect(self.copy_slot)
         
         
     def chooseForm_slot(self, element, element_old):
@@ -92,8 +112,12 @@ class SlotFormSet(EditFormSet2):
         self.showCurrent()
 
     def dropdown_changed_slot(self, i):
-        print(self.pre, "dropdown_changed_slot",
-              i, self.row_instance_by_index[i])
+        if (i<0): # nothing chosen by the user
+            return
+        if (self.current_slot==None): # if no list entry has been chosen yet ..
+            return
+        
+        print(self.pre, "dropdown_changed_slot",i, self.row_instance_by_index[i])
         for key in self.row_instance_by_name:
             self.row_instance_by_name[key].widget.hide()
 
@@ -127,6 +151,63 @@ class SlotFormSet(EditFormSet2):
                 print(self.pre, "clear_slot : can't clear None")
         else:
             self.current_row.clear()
+            
+    def copy_slot(self):
+        if (isinstance(self.element, type(None))):
+            if (verbose):
+                print(self.pre, "copy_slot : no document chosen yet")
+            return
+        print(self.element)
+        dic = next(self.collection.get({"_id" : self.element._id}))
+        if (dic["classname"] == "RTSPCameraRow"): # only for RTSP cameras for the moment ..        
+            # remove _id and classname (as collection adds these automatically)
+            dic.pop("_id")
+            dic.pop("classname")
+            print(self.pre, "copy_slot : dic now =", dic)
+            d = dialog.CopyToDialog(dic["address"], dic["slot"], constant.max_devices)
+            res = d.exec_()
+            for address, slot in res: # list of tuples: (address, slot)
+                # remove the old entry for this slot
+                old_dic = next(self.collection.get({"slot": slot}))
+                self.collection.delete(old_dic["_id"])
+            
+                # overwrite address, everything else stays the same as in the original
+                dic["address"] = address
+                dic["slot"] = slot
+                
+                # add new entry to the same slot
+                _id = self.collection.newByClassname(
+                    "RTSPCameraRow", 
+                    dic
+                    )
+            
+            self.collection.save()
+            self.signals.save_record.emit(_id)
+        else:
+            print(self.pre, "copy_slot : can only do that for RTSPCameraRow")
+        
+            
+    def update_dropdown_list_slot(self):
+        """Keep updating the dropdown list.  Say, don't let the user choose USB devices if none is available
+        """
+        self.dropdown_widget.clear() # this will trigger dropdown_changed_slot
+        self.row_instance_by_index = []
+        for i, key in enumerate(self.row_instance_by_name.keys()):
+            row_instance = self.row_instance_by_name[key]
+            if (row_instance.isActive()):
+                self.row_instance_by_index.append(row_instance)
+                display_name = row_instance.getName()
+                self.dropdown_widget.insertItem(i, display_name)
+
+            
+    def show_slot(self):
+        """Inform here when the visibility of the main containing widget (window, tab, etc.) changes.  Can update available devices etc.
+        """
+        print(self.pre, "show_slot")
+        self.update_dropdown_list_slot()
+        
+        
+            
             
             
 class USBCameraColumn(Column):
@@ -164,6 +245,8 @@ class USBCameraColumn(Column):
             devicefile = item[0] # e.g. "/dev/video2"
             name = item[1] # e.g. "HD Webcam Pro"
             self.widget.insertItem(i, name, devicefile) # index, text, data
+        self.widget.setCurrentIndex(0)
+
 
     def getValue(self):
         # Get the value from QtWidget
@@ -180,9 +263,10 @@ class USBCameraColumn(Column):
             i = self.widget.findData(devicefile)
             self.widget.setCurrentIndex(i)
         else:
-            self.widget.setCurrentIndex(-1)
+            # self.widget.setCurrentIndex(-1)
+            self.widget.setCurrentIndex(0)
 
     def reset(self):
-        self.widget.setCurrentIndex(-1)
-
+        # self.widget.setCurrentIndex(-1)
+        self.widget.setCurrentIndex(0)
             

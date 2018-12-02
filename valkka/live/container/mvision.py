@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    mvision.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   a container class that manages Qt widgets for stream visualization and frame streaming to machine vision modules
 """
 
@@ -116,39 +116,14 @@ class MVisionContainer(VideoContainer):
             self.viewport.setXScreenNum(self.n_xscreen)
             self.viewport.setWindowId  (int(self.video.winId()))
             self.filterchain.addViewPort(self.viewport)
+            
             # now the shared mem / semaphore part :
             self.shmem_name = self.filterchain.getShmem()
             print(self.pre, "setDevice : got shmem name", self.shmem_name)
-            """
-            TODO:
-            - Instantiate an analyzer class.  Give it the correct shmem name
-            - Get the custom widget from the analyzer.  Embed into the view.
-            - Start the analyzer multiprocess
-            """
-            """
-            # a simulation ..
-            self.mvision_widget = QtWidgets.QFrame()
-            self.mvision_widget.setAutoFillBackground(True)
-            self.mvision_widget.setMinimumSize(0, 200)
-            
-            self.mvision_widget.setParent(self.main_widget)
-            self.main_layout.addWidget(self.mvision_widget)
-            """
-            # initiate mvision process
-            """
-            self.mvision_process = self.mvision_class(
-                n_buffer         = constant.shmem_n_buffer,
-                image_dimensions = constant.shmem_image_dimensions,
-                shmem_name       = self.shmem_name
-                )
-            self.mvision_process.start() # all processes started in the main gui
-            """
             
             self.mvision_widget = self.mvision_process.getWidget()
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
-            
-            # self.thread.addProcess(self.mvision_process)
             
             self.mvision_process.activate(
                 n_buffer         = constant.shmem_n_buffer,
@@ -188,7 +163,6 @@ class MVisionContainer(VideoContainer):
         self.mvision_process.deactivate() # put process back to sleep ..
         
         self.main_layout.removeWidget(self.mvision_widget)
-        self.thread.delProcess(self.mvision_process)
         
         self.filterchain = None
         self.device = None

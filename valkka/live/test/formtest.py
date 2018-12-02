@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    formtest.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   Test Cute Mongo Forms forms
 """
 
@@ -24,6 +24,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import cute_mongo_forms
 from valkka.live.datamodel import DataModel
+from valkka.live import tools
 
 
 class MyGui(QtWidgets.QMainWindow):
@@ -36,7 +37,9 @@ class MyGui(QtWidgets.QMainWindow):
     
 
   def initVars(self):
-    self.dm = DataModel()
+    # self.dm = DataModel()
+    self.dm = DataModel(directory = tools.getConfigDir())
+    # self.dm.clearAll()
     print(cute_mongo_forms.__file__)
 
 

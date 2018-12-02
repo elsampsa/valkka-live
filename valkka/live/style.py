@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    style.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   Qt stylesheets for Valkka Live
 """
 

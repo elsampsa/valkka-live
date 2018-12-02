@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    multiprocess.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   multiprocess / Qt intercommunication through pipes and signals
 """
 
@@ -438,7 +438,7 @@ class QValkkaThread(QtCore.QThread):
             tlis = safe_select(self.rlis, self.wlis, self.elis, timeout=self.timeout)
             for pipe in tlis[0]:
                 # let's find the process that sent the message to the pipe
-                p = self.process_by_pipe[pipe]
+                p = self.process_by_pipe[pipe] # TODO?
                 # print("receiving from",p,"with pipe",pipe)
                 st = pipe.recv()  # get signal from the process
                 # print("got from  from",p,"with pipe",pipe,":",st)
@@ -470,16 +470,17 @@ class QValkkaThread(QtCore.QThread):
 
     def handleProcesses(self):
         self.mutex.lock()
+        
+        # if (len(self.add_list)>0): print(self.pre, "HandleProcesses: add_list:", self.add_list)
         for p in self.add_list:
             self.processes.append(p)
             self.process_by_pipe[p.getPipe()] = p
             self.rlis.append(p.getPipe())
             # print(self.pre, "handleProcess : starting multiprocess", p)
-            # p.start() # for some reason, this sucks
-            # p.run() # debugging
-            # print(self.pre, "handleProcess : started multiprocess", p)
+        # if (len(self.add_list)>0): print(self.pre, "HandleProcesses: after add: process_by_pipe:", self.process_by_pipe)
         self.add_list = []
             
+        # if (len(self.del_list)>0): print(self.pre, "HandleProcesses: del_list:", self.del_list)
         for p in self.del_list:
             # print(self.pre, "handleProcess : removing multiprocess", p)
             try:
@@ -489,6 +490,7 @@ class QValkkaThread(QtCore.QThread):
             else:
                 self.process_by_pipe.pop(p.getPipe())
                 self.rlis.remove(p.getPipe())
+        # if (len(self.del_list)>0): print(self.pre, "HandleProcesses: after del: process_by_pipe:", self.process_by_pipe)
                 
         self.del_list=[]
         self.mutex.unlock()

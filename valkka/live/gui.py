@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.6.0 
+@version 0.8.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 
@@ -136,6 +136,7 @@ class MyGui(QtWidgets.QMainWindow):
 
             class Signals(QtCore.QObject):
                 close = QtCore.Signal()
+                show  = QtCore.Signal()
 
             def __init__(self, blocking = False, parent = None, nude = False):
                 super().__init__(parent)
@@ -155,6 +156,11 @@ class MyGui(QtWidgets.QMainWindow):
             def closeEvent(self, e):
                 if (self.propagate):
                     self.signals.close.emit()
+                e.accept()
+                
+            def showEvent(self, e):
+                if (self.propagate):
+                    self.signals.show.emit()
                 e.accept()
                 
             def setPropagate(self):
@@ -182,6 +188,7 @@ class MyGui(QtWidgets.QMainWindow):
 
             class Signals(QtCore.QObject):
                 close = QtCore.Signal()
+                show  = QtCore.Signal()
 
             def __init__(self, blocking = False, parent = None):
                 super().__init__(parent)
@@ -197,6 +204,11 @@ class MyGui(QtWidgets.QMainWindow):
             def closeEvent(self, e):
                 if (self.propagate):
                     self.signals.close.emit()
+                e.accept()
+                
+            def showEvent(self, e):
+                if (self.propagate):
+                    self.signals.show.emit()
                 e.accept()
                 
             def setPropagate(self):
@@ -242,7 +254,6 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.aboutmenu = AboutMenu(parent=self)
 
-
         # create container and their windows
         self.manage_cameras_container = self.dm.getDeviceListAndForm(None)
         #self.manage_cameras_win = self.QCapsulate(
@@ -257,6 +268,7 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
+        
 
         self.config_win = self.QTabCapsulate(
                 "Configuration",
@@ -267,6 +279,8 @@ class MyGui(QtWidgets.QMainWindow):
             )
 
         self.config_win.signals.close.connect(self.config_dialog_close_slot)
+        # when the configuration dialog is reopened, inform the camera configuration form .. this way it can re-check if usb cams are available
+        self.config_win.signals.show.connect(self.manage_cameras_container.getForm().show_slot) 
 
         self.makeCameraTree()
         self.camera_list_win = self.QCapsulate(
