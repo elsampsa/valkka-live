@@ -64,8 +64,10 @@ class ExternalDetector(Analyzer):
         width = str(self.image_dimensions[0])
         height = str(self.image_dimensions[1])
         
+        comlist = self.executable.split() + [width, height, self.tmpfile] # e.g. "python3", "example_process1.py", etc.
+        
         try:
-            self.p = subprocess.Popen([self.executable, width, height, self.tmpfile], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            self.p = subprocess.Popen(comlist, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
         except Exception as e:
             print(self.pre, "Could not open external process.  Failed with '"+str(e)+"'")
             return
@@ -153,7 +155,7 @@ class MVisionProcess(QValkkaShmemProcess2):
     max_instances = 3
     
     # The (example) process that gets executed.  You can find it in the module directory
-    executable = os.path.join(tools.getModulePath(),"example_process1.py")
+    executable = "python3 "+os.path.join(tools.getModulePath(),"example_process1.py")
     
     incoming_signal_defs = {  # each key corresponds to a front- and backend method
         # don't touch these three..
