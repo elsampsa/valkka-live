@@ -198,6 +198,7 @@ class SlotFormSet(EditFormSet2):
                 self.row_instance_by_index.append(row_instance)
                 display_name = row_instance.getName()
                 self.dropdown_widget.insertItem(i, display_name)
+            row_instance.updateWidget() # updates columns internal drop-down list
 
             
     def show_slot(self):
@@ -205,8 +206,6 @@ class SlotFormSet(EditFormSet2):
         """
         print(self.pre, "show_slot")
         self.update_dropdown_list_slot()
-        
-        
             
             
             
@@ -252,7 +251,8 @@ class USBCameraColumn(Column):
         # Get the value from QtWidget
         # self.widget.currenText()
         # self.widget.currentData()
-        return self.widget.currentData()  # returns devicefile (e.g. "/dev/video2")
+        # if evreything goes wrong, currentData could be None, so cast to string
+        return str(self.widget.currentData())  # returns devicefile (e.g. "/dev/video2")
 
     def setValue(self, devicefile):
         # Set the value of the QtWidget
