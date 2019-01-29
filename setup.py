@@ -13,7 +13,8 @@ setup(
     # https://github.com/pypa/pip/issues/5384
     
     install_requires = [
-        'PySide2 >=5.11.1',
+        # 'PySide2 >=5.11.1', # woops.. in 5.12 there has been some API changes
+        'PySide2 == 5.11.1',
         'cute_mongo_forms >=0.2.3',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18'

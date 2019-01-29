@@ -66,7 +66,16 @@ class TreeModel(QtCore.QAbstractItemModel):
         # the only place where a child item is queried
         childItem = parentItem.getChild(row)
         if childItem:
+            # return self.createIndex(row, column)
             return self.createIndex(row, column, childItem)
+            """
+            # .. that one does not work for PySide 5.12+
+            TypeError: 'PySide2.QtCore.QAbstractItemModel.createIndex' called with wrong argument types:
+            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, ServerListItem)
+            Supported signatures:
+            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, quintptr = 0)
+            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, void = nullptr)
+            """
         else:
             return QtCore.QModelIndex()
 
