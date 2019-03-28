@@ -32,6 +32,13 @@ import re
 home = os.path.expanduser("~")
 config_dir = os.path.join(home, ".valkka", "live")
 
+assert(sys.version_info.major >= 3)
+
+if sys.version_info.minor < 6:
+    importerror = ImportError
+else:
+    importerror = ModuleNotFoundError
+
 
 def getConfigDir():
     return config_dir
@@ -65,7 +72,7 @@ def scanMVisionClasses():
         In Ubuntu 16, which uses python 3.5 : https://docs.python.org/3.5/library/pkgutil.html#pkgutil.iter_modules  : obj = (module_finder, name, ispkg) 
         """
         if obj.__class__ == tuple:
-            name = obj[1] # ubuntu 16
+            name = obj[1] # ubuntu 16 / python 3.5
         else:
             name = obj.name
     
@@ -73,7 +80,7 @@ def scanMVisionClasses():
             # print("mvision scan: >",p)
             try:
                 m = importlib.import_module(name)
-            except ModuleNotFoundError:
+            except importerror:
                 print("mvision scan: could not import", name)
             else:
                 # print(m)
