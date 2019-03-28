@@ -1,10 +1,10 @@
 #!/bin/bash
-# disable vsync for intel:
+# # disable vsync for intel:
 export vblank_mode=0
-# disable vsync for nvidia proprietary drivers:
+# # disable vsync for nvidia proprietary drivers:
 export __GL_SYNC_TO_VBLANK=0
-# turn off compositor
-qdbus org.kde.KWin /Compositor suspend
+# # turn off compositor # maybe no ..
+# qdbus org.kde.KWin /Compositor suspend
 
 run-valkka-live
 if [[ $? -eq 139 ]]; then 

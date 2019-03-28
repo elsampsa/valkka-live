@@ -59,13 +59,22 @@ def scanMVisionClasses():
     mvision_modules = []
 
     valkka = importlib.import_module("valkka")
-    for p in pkgutil.iter_modules(valkka.__path__, valkka.__name__ + "."):
-        if (p.name.find(".mvision")>-1):
+    for obj in pkgutil.iter_modules(valkka.__path__, valkka.__name__ + "."):
+        """
+        In Ubuntu 18, which uses python 3.6+ : https://docs.python.org/3.6/library/pkgutil.html#pkgutil.iter_modules : obj = ModuleInfo instance 
+        In Ubuntu 16, which uses python 3.5 : https://docs.python.org/3.5/library/pkgutil.html#pkgutil.iter_modules  : obj = (module_finder, name, ispkg) 
+        """
+        if obj.__class__ == tuple:
+            name = obj[1] # ubuntu 16
+        else:
+            name = obj.name
+    
+        if (name.find(".mvision")>-1): # AttributeError: 'tuple' object has no attribute 'name' ???
             # print("mvision scan: >",p)
             try:
-                m = importlib.import_module(p.name)
+                m = importlib.import_module(name)
             except ModuleNotFoundError:
-                print("mvision scan: could not import", p.name)
+                print("mvision scan: could not import", name)
             else:
                 # print(m)
                 mvision_modules.append(m)

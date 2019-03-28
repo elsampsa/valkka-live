@@ -23,9 +23,17 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from valkka.live import constant
 import imp
+import sys
+
+assert(sys.version_info.major >= 3)
+if sys.version_info.minor < 6:
+    importerror = ImportError
+else:
+    importerror = ModuleNotFoundError
+
 try:
     import valkka.core
-except ModuleNotFoundError:
+except importerror:
     print(constant.valkka_core_not_found)
     raise SystemExit()
 
