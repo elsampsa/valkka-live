@@ -21,9 +21,12 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 
-from valkka.live import constant
+
 import imp
 import sys
+import pydoc
+
+from valkka.live import constant
 from valkka.live.tools import importerror
 
 try:
@@ -73,7 +76,7 @@ class MyGui(QtWidgets.QMainWindow):
 
     def initVars(self):
         self.thread = None # a QThread that reads multiprocess pipes
-        self.containers = []
+        self.containers = [] # list of instances of classes in valkka.live.container, e.g. valkka.live.container.grid.VideoContainerNxM, etc.
         self.mvision_containers = []
         self.mvision_classes = tools.scanMVisionClasses()
         if (len(self.mvision_classes) > 0):
@@ -413,32 +416,72 @@ class MyGui(QtWidgets.QMainWindow):
 
     def serializeContainers(self):
         """Serializes the current view of open video grids (i.e. the view)
+        
+        returns a dictionary where the keys are complete classnames
+        each value corresponds to a list of containers of the class described by the key
+        
+        each serialized container looks like this:
+        
+        ::
+        
+            dic={
+                "kwargs"     : {}, # parameters that we're used to instantiate this class
+                }
         """
-
-        """ each serialized container looks like this:
-        dic={# these are used when re-instantiating the view
-            "classname"  : self.__class__.__name__,
-            "kwargs"     : {}, # parameters that we're used to instantiate this class
-            # these parameters are used by deserialize
-            "x"          : self.window.x(),
-            "y"          : self.window.y(),
-            "width"      : self.window.width(),
-            "height"     : self.window.height(),
-            "streams"    : streams
-            }
-        """
-        container_list = []
+        container_list = [] # list of instances of classes in valkka.live.container, e.g. valkka.live.container.grid.VideoContainerNxM, etc.
         mvision_container_list = []
         
         for container in self.containers:
+            # these are of the type valkka.live.container.grid.VideoContainerNxM
             print("gui: serialize containers : container=", container)
             container_list.append(container.serialize())
         
         for container in self.mvision_containers:
+            # these are of the type valkka.live.container.mvision.MVisionContainer
             mvision_container_list.append(container.serialize())
             
-        return {"container_list" : container_list, "mvision_container_list" : mvision_container_list}
+        # classnames compatible with local namespace
+        return {
+            "valkka.live.container.grid.VideoContainerNxM"   : container_list, 
+            "valkka.live.container.mvision.MVisionContainer" : mvision_container_list
+            }
 
+
+    def deSerializeContainers(self, dic):
+        """Re-creates containers, based on the input dictionary, as returned by self.serializeContainers
+        
+        This is the inverse of self.serializeContainers
+        
+        Containers must be closed & self.contiainers etc. list must be cleared before calling this
+        """
+        # glo = globals()
+        # print("glo>",glo)
+        for key, value in dic.items():
+            # class_instance = glo[key] # retrieve the class instance from the global namespace
+            class_instance = pydoc.locate(key)
+            for container_kwargs in value: # value is a list of containers of type key, each list element is a dictionary of serialized parameters
+                # non-serialized parameters:
+                dic = {
+                    "parent"            : None, # TODO
+                    "gpu_handler"       : self.gpu_handler,
+                    "filterchain_group" : self.filterchain_group
+                    }
+                dic.update(container_kwargs)
+                
+                # container specific parameters
+                if key == "valkka.live.container.grid.VideoContainerNxM":
+                    lis = self.containers
+                    
+                elif key == "valkka.live.container.mvision.MVisionContainer":
+                    lis = self.mvision_containers
+                    dic.update({
+                        "thread"        : None, # TODO
+                        "process_map"   : None
+                        })
+                    
+                container = class_instance(**dic) # instantiate container
+                lis.append(container)
+                
 
     """
     def saveConfigFile(self):
@@ -651,10 +694,11 @@ class MyGui(QtWidgets.QMainWindow):
         """Create a n x m video grid, show it and add it to the list of video containers
         """
         def slot_func():
-            cont = container.VideoContainerNxM(gpu_handler=self.gpu_handler, 
-                                                    filterchain_group=self.filterchain_group, 
-                                                    n_dim=n, 
-                                                    m_dim=m)
+            cont = container.VideoContainerNxM(
+                gpu_handler=self.gpu_handler, 
+                filterchain_group=self.filterchain_group, 
+                n_dim=n, 
+                m_dim=m)
             cont.signals.closing.connect(self.rem_container_slot)
             self.containers.append(cont)
         setattr(self, "grid_%ix%i_slot" % (n, m), slot_func)
@@ -690,8 +734,7 @@ class MyGui(QtWidgets.QMainWindow):
     def save_window_layout(self, filename = "layout"):
         container_dic = self.serializeContainers()
         print(pre, "save_window_layout : container_dic =",container_dic)
-        # f = open(tools.getConfigFile(filename), "w")
-        # f.write(json.dumps(container_list))
+        
         f = open(tools.getConfigFile(filename), "wb")
         f.write(pickle.dumps(container_dic))
         f.close()
@@ -699,33 +742,13 @@ class MyGui(QtWidgets.QMainWindow):
 
     def load_window_layout(self, filename = "layout"):
         self.closeContainers()
-        
-        # f = open(tools.getConfigFile(filename), "r")
-        # container_list = json.loads(f.read())
         f = open(tools.getConfigFile(filename), "rb")
         container_dic = pickle.loads(f.read())
         f.close()
+        
         print("load_window_layout: container_dic: ", container_dic)
-        namespace = container.__dict__
-        # devices_by_id = self.dm.getDevicesById({"classname" : DataModel.RTSPCameraRow.__name__})
-        devices_by_id = self.dm.getDevicesById()
-
-        for cont in container_dic["container_list"]:
-            classname = cont["classname"]
-            kwargs = cont["kwargs"]
-            kwargs["gpu_handler"] = self.gpu_handler
-            kwargs["filterchain_group"] = self.filterchain_group
-            class_instance = namespace[classname]
-
-            container_instance = class_instance(
-                **kwargs)  # create the container
-            # move it to the right position
-            container_instance.deSerialize(cont, devices_by_id)
-            self.containers.append(container_instance)
-
-        for cont in container_dic["mvision_container_list"]:
-            print("\nload_window_layout: mvision:", cont)
-
+        self.deSerializeContainers(container_dic)
+        
 
 
     # explictly defined slot functions

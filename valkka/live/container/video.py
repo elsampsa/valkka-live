@@ -32,9 +32,42 @@ from valkka.live.mouse import MouseClickContext
 
 
 class VideoContainer:
-    """A Container handling a master QWidget that encloses a video QWidget, and if required other widgets as well (buttons, alerts, etc.)
+    """
+    This class is not a QWidget itself.  It's used to organize / encapsulate QWidgets and QSignals.
+    
+    This is a Container handling a master QWidget that encloses a video QWidget, and if required, other widgets as well (buttons, alerts, etc.)
 
-    Does not handle x-screen change (this should be done by the parent widget)
+    Does not handle X-screen hop / change (this should be done by the parent widget)
+    
+    Internal QWidgets:
+    
+    ::    
+         
+        ContainerWidget
+             |
+             +-- VideoWidget (handles drag'n'drop)
+                    - Drag'n'drop receives objects of the type DataModel.RTSPCameraDevice (has member _id to define uniquely a stream)
+                      into VideoContainer.setDevice (i.e. into the main container object method)
+                
+
+    Important parameter members:
+    
+    - self.filterchain_group : an instance of FilterChainGroup: filterchains can be instantiated / get'ted by a unique _id
+    - self.viewport : an instance of ViewPort: several ViewPort instances can be added to a filterchain; they represent endpoints of the video on the screen (OpenGL windows)
+
+    Important QWidget members:
+    
+    - self.main_widget: instance of self.ContainerWidget
+
+    QWidgets are instantiated like this:
+    
+    ::
+    
+        makeWidget()
+            # this is called by the parent container object in its placeChildren method (see for example root.RootVideoContainer)
+            self.main_widget = self.ContainerWidget
+            self.video = self.VideoWidget(parent = self.main_widget)
+
     """
 
     class Signals(QtCore.QObject):
@@ -151,7 +184,8 @@ class VideoContainer:
         "parent_container"  : None,                 # RootVideoContainer or child class
         "filterchain_group" : FilterChainGroup,     # Filterchain manager class
         "n_xscreen"         : (int, 0),             # x-screen index
-        "verbose"           : (bool, False)
+        "verbose"           : (bool, False),
+        "device_id"         : (int, -1)             # optional: the unique id of this video stream
     }
 
     def __init__(self, **kwargs):
@@ -181,6 +215,13 @@ class VideoContainer:
         self.viewport = ViewPort() # viewport instance is used by ManagedFilterChain(s)
 
 
+    def serialize(self):
+        """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
+        """
+        return {
+            "device_id" : self.getDeviceId()
+            }
+        
     def report(self, *args):
         if (self.verbose):
             print(self.pre, *args)
@@ -213,7 +254,11 @@ class VideoContainer:
             QtWidgets.QSizePolicy.Expanding)
         
         self.video.signals.drop.connect(self.setDevice)
-
+        
+        # this VideoContainer was initialized with a device id, so we stream the video now
+        if self.device_id > -1:
+            self.setDeviceById(self.device_id)
+            
 
     def hide(self):
         """Hide the widget.  Stream is not required while hidden.
@@ -254,7 +299,17 @@ class VideoContainer:
         
         # ManagedFilterChain.addViewPort accepts ViewPort instance
         self.filterchain = self.filterchain_group.get(_id = self.device._id)
-        
+        if self.filterchain:
+            self.viewport.setXScreenNum(self.n_xscreen)
+            self.viewport.setWindowId  (int(self.video.winId()))
+            self.filterchain.addViewPort(self.viewport)
+
+
+    def setDeviceById(self, _id):
+        """Set the video to this VideoContainer by stream id only
+        """
+        self.device = None # TODO: set self.device as well
+        self.filterchain = self.filterchain_group.get(_id = self.device._id)
         if self.filterchain:
             self.viewport.setXScreenNum(self.n_xscreen)
             self.viewport.setWindowId  (int(self.video.winId()))
@@ -278,6 +333,13 @@ class VideoContainer:
 
     def getDevice(self): # e.g. DataModel.RTSPCameraDevice
         return self.device
+    
+    
+    def getDeviceId(self):
+        if self.device is None:
+            return -1
+        else:
+            return self.device._id # e.g. DataModel.RTSPCameraDevice
     
 
     def mouseGestureHandler(self, info):

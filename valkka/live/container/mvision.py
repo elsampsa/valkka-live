@@ -38,6 +38,7 @@ class MVisionContainer(VideoContainer):
         "filterchain_group" : FilterChainGroup,     # Filterchain manager class
         "n_xscreen"         : (int,0),              # x-screen index
         "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
+        # non-seriazable parameters:
         "thread"            : None,                 # thread that watches the multiprocesses communication pipes
         "process_map"       : (dict,{}),
         "verbose"           : (bool, False)

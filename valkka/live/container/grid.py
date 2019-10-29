@@ -34,6 +34,42 @@ from valkka.live.container.video import VideoContainer
 
 class VideoContainerNxM(RootVideoContainer):
     """A RootVideoContainer with n x m (y x x) video grid
+    
+    
+    ::
+    
+    
+        VideoContainerNxM
+            |
+            +- VideoContainer
+            |
+            +- VideoContainer
+            |
+            +- VideoContainer
+        
+        Each VideoContainer initialized with:
+        
+            "parent_container"  : None,                 # RootVideoContainer or child class
+            "filterchain_group" : FilterChainGroup,     # Filterchain manager class
+            "n_xscreen"         : (int, 0),             # x-screen index
+            "verbose"           : (bool, False)
+            
+        
+    
+    Deserialization process:
+    
+    - Read class name VideoContainerNxM
+    - Read kwargs
+    - Instantiate VideoContainerNxM(**kwargs)
+        => empty VideoContainerNxM, with VideoContainers, with correct parent, FilterChainGroup, xscreen, etc.
+        
+        
+    TODO: VideoContainerNxM.deSerialize (class method)
+    VideoContainerNxM ctor should take a list of child objects .. that can be used to ctruct the children (in fact, RootVideoContainer should have this)
+    VideoContainer ctor should take as an optional argument a device object
+    
+    
+    
     """
     parameter_defs = {
         "n_dim"             : (int, 1),  # y  3
@@ -44,27 +80,42 @@ class VideoContainerNxM(RootVideoContainer):
     
     def __init__(self, **kwargs):
         parameterInitCheck(VideoContainerNxM.parameter_defs, kwargs, self)
-        kwargs.pop("n_dim"); kwargs.pop("m_dim")
+        kwargs.pop("n_dim")
+        kwargs.pop("m_dim")
         super().__init__(**kwargs)
+
 
     def serialize(self):
         dic = super().serialize()
-        dic["kwargs"].update({ # add constructor parameters of this class
+        dic.update({ # add constructor parameters of this class
             "n_dim": self.n_dim,
             "m_dim": self.m_dim
             })
         return dic
 
-    def createChildren(self):
+
+    def createChildren(self, child_class_pars = {}, child_pars = []):
+        """
+        :param child_class_pars:    common parameters needed for instantiating this kind of child object
+        :param child_pars:          individual parameters for instantiating each child object (typically from de-serialization)
+        """
         for i in range(self.n_dim * self.m_dim):
             pars = {
                 "filterchain_group" : self.filterchain_group,
                 "n_xscreen"         : self.n_xscreen
                 }
-            pars.update(self.child_class_pars)  # whatever extra parameters there might be ..
-            pars.update(self.child_class_pars_)
+            
+            # set per-child object parameters
+            if len(child_pars) > i:
+                pars_ = child_pars[i] # typically from the de-serialization
+                pars.update(pars_)
+                
+            # set common parameters for this kind of class:
+            pars.update(child_class_pars)
+            # instantiate the object:
             vc = self.child_class(**pars)
             self.children.append(vc)
+
 
     def placeChildren(self):
         # print(self.pre, "placeChildren :", self.n_dim, self.m_dim)

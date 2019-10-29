@@ -31,7 +31,47 @@ from valkka.live.container.video import VideoContainer
 
 
 class RootVideoContainer:
-    """A container handling hierarchical QWidgets.  QWidgets can be send to a desired x screen.
+    """A container for handling hierarchical QWidgets.  QWidgets can be send to a desired x screen.
+    
+    This class is not a QWidget itself.  It's used to organize / encapsulate QWidgets and QSignals.
+    
+    QWidgets owned by this class are filled with qwidgets from container child classes.
+    
+    Internal QWidgets:
+    
+    ::
+    
+    ContainerWindow: the (floating) QWindow
+         |
+         +-- ContainerWidget: main level QWidget.  Place here the grid, or anything else needed
+                      |  
+                      +-- GridWidget: place child containers QWidget's here
+                      
+                      
+    Important QWidget members:
+    
+    - self.window: instance of self.ContainerWindow
+    - self.main_widget: instance of self.ContainerWidget
+    - self.grid_widget: instance of self.GridWidget
+    
+    These are instantiated at self.makeWidget
+                      
+    All QWidgets are instantiated like this:
+    
+    ::
+    
+        __init__()
+            createChildren() 
+            # virtual method : instantiates child Container objects.  Does not instantiate the child container's internal QWidgets
+
+            makeWidget()
+                self.window = self.ContainerWindow
+                self.main_widget = self.ContainerWidget
+                self.grid_widget = self.GridWidget
+                    
+                placeChildren() 
+                # virtual method : calls child Container's makeWidget() => instantiates child Container's QWidgets
+                # places child Container's QWidgets to correct place (main QWidget & layout)
     """
 
     class Signals(QtCore.QObject):
@@ -73,15 +113,30 @@ class RootVideoContainer:
         """
         pass
 
+    """
+    @classmethod
+    def deSerialize(cls, parent = None, gpu_handler: GPUhandler, filterchain_group: filterchain_group, dic = {}):
+        # Construct an instance of this class, according to serialized data in dic.  This is the counterparts of the self.serialize method
+        # add unseriasizable parameters:
+        dic.update({
+            "parent" : parent,
+            "gpu_handler" : gpu_handler,
+            "filterchain_group" : filterchain_group
+            })
+        return cls(**dic)
+    """
+       
     parameter_defs = {
         "parent"                : None,
         "gpu_handler"           : GPUHandler,
         "filterchain_group"     : FilterChainGroup, # this will be passed upstream to VideoContainer
+        # seriazable parameters:
         "title"                 : (str, "Video Grid"),
         "n_xscreen"             : (int, 0),
         "child_class"           : (type, VideoContainer),
-        "child_class_pars"      : (dict, {}), # seriazable parameters (that can be used to create this view automatically)
-        "child_class_pars_"     : (dict, {})  # non-seriazable parameters
+        "child_class_pars"      : (dict, {}), # common init parameters for child_class ctor
+        "child_pars"            : (list, []), # list of kwarg dictionaries for each children
+        "geom"                  : (tuple, ()) # a predefined geometry for the ContainerWindow
     }
 
     def __init__(self, **kwargs):
@@ -100,11 +155,12 @@ class RootVideoContainer:
 
         # this creates the container objects .. their widgets are created in
         # makeWidget
-        self.createChildren()
+        self.createChildren(child_class_pars = self.child_class_pars, child_pars = self.child_pars)
         # create widget into a certain xscreen
-        self.makeWidget(self.gpu_handler.true_screens[self.n_xscreen])
+        self.makeWidget(self.gpu_handler.true_screens[self.n_xscreen], geom = self.geom)
 
-    def makeWidget(self, qscreen: QtGui.QScreen):
+
+    def makeWidget(self, qscreen: QtGui.QScreen, geom: tuple = ()):
         # (re)create the widget, do the same for children
         # how children are placed on the parent widget, depends on the subclass
         self.window = self.ContainerWindow(
@@ -120,6 +176,14 @@ class RootVideoContainer:
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.window.setCentralWidget(self.main_widget)
 
+        if len(geom) >= 4:
+            self.window.setGeometry(
+                geom[0],
+                geom[1],
+                geom[2],
+                geom[3]
+                )
+        
         # add here any extra turf to the widget you want in addition to the
         # grid
 
@@ -159,10 +223,16 @@ class RootVideoContainer:
 
         self.placeChildren()
 
-    def createChildren(self, child_class = VideoContainer):
-        """Create child objects, say VideoContainer(s)
+
+    def createChildren(self, child_class_pars = {}, child_pars = []):
+        """
+        Instantiates objects of the class self.child_class
+        
+        :param child_class_pars:    common parameters needed for instantiating this kind of child object
+        :param child_pars:          individual parameters for instantiating each child object (typically from de-serialization)
         """
         raise(AttributeError("virtual method"))
+
 
     def placeChildren(self):
         """Create child object(s) main_widget instances.  Place them to the layout.
@@ -172,8 +242,9 @@ class RootVideoContainer:
         ::
 
             for child in self.children:
-              child.makeWidget(self.grid_widget) # re-create widgets in the child objects .. their parent is the grid
-              child.main_widget.setParent(self.grid_widget) # set widget parent/child relation
+                child.makeWidget(self.grid_widget) # re-create widgets in the child objects .. their parent is the grid
+                child.main_widget.setParent(self.grid_widget) # set widget parent/child relation
+
         """
         raise(AttributeError("virtual method"))
 
@@ -195,47 +266,41 @@ class RootVideoContainer:
         self.window.unSetPropagate() # we don't want the window to send the close signal .. which would call this *again* (through close_slot)
         self.window.close() 
 
-    def get_child_class_pars(self):
-        return self.child_class_pars
 
     def serialize(self):
         """Serialize information about the widget: coordinates, size, which cameras are selected.
         """
-        ids = []
-        for child in self.children:
-            device = child.getDevice()
-            if device:
-                ids.append(device._id) # e.g. DataModel.RTSPCameraDevice._id
-            else:
-                ids.append(None)
-
         # gather all information to re-construct this RootVideoContainer
-        dic = {  # these are used when re-instantiating the view
-            "classname": self.__class__.__name__,
-            "kwargs": { # parameters that we're used to instantiate this class
-                "title"                 : self.title,
-                "n_xscreen"             : self.n_xscreen,
-                "child_class"           : self.child_class,
-                "child_class_pars"      : self.get_child_class_pars() # serialize only relevant child class pars
-                },  
-            # these parameters are used by deserialize
-            "x": self.window.x(),
-            "y": self.window.y(),
-            "width": self.window.width(),
-            "height": self.window.height(),
-            "ids": ids
-        }
-
+        dic = {  # parameters that will be used by self.deSerialize to instantiate this class
+                "title"       : self.title,
+                "n_xscreen"   : self.n_xscreen,
+                "child_class" : self.child_class,
+                "child_pars"  : [child.serialize() for child in self.children],
+                "geom"        : self.getGeom()
+                }
+        
         return dic
+
+
+    def getGeom(self):
+        return (
+            self.window.x(),
+            self.window.y(),
+            self.window.width(),
+            self.window.height()
+            )
+
 
     def deSerialize(self, dic, devices_by_id):
         print(self.pre, "deSerialize : dic", dic)
         print(self.pre, "deSerialize : devices_by_id", devices_by_id)
+        
         self.window.setGeometry(
             dic["x"],
             dic["y"],
             dic["width"],
-            dic["height"])
+            dic["height"]
+            )
         childiter = iter(self.children)
         
         for _id in dic["ids"]:

@@ -23,7 +23,7 @@ def getDataPath():
 
 
 def getDataFile(fname):
-    """Return complete path to datafile fname.  Data files are in the directory vainu_aux/vainu_aux/data
+    """Return complete path to datafile fname.  Data files are in the directory aux/aux/data
     """
     return os.path.join(getDataPath(), fname)
 
