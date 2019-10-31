@@ -25,23 +25,12 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 
 from valkka.live import singleton
 from valkka.api2.tools import parameterInitCheck
-# from valkka.live.tools import parameterInitCheck
+from valkka.live.tools import filter_keys
 from valkka.live.container.video import VideoContainer
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
 from valkka.mvision import multiprocess
 
-
-def filter_keys(keys, dic):
-    """
-    :param keys: allowed keys
-    :param dic : dictionary to be filtered
-    """
-    out = {}
-    for key in dic.keys():
-        if (key in keys): # key is in allowed keys
-            out[key] = dic[key]
-    return out
 
 
 class MVisionContainer(VideoContainer):

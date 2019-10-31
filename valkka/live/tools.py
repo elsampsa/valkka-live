@@ -270,6 +270,20 @@ def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
 
     # setattr(obj,"kwargs", parameters2)
     return definitions
+
+
+def filter_keys(keys, dic):
+    """
+    :param keys: allowed keys
+    :param dic : dictionary to be filtered
+    """
+    out = {}
+    for key in dic.keys():
+        if (key in keys): # key is in allowed keys
+            out[key] = dic[key]
+    return out
+
+
     
 
 if (__name__ == "__main__"):
