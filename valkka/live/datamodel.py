@@ -627,9 +627,11 @@ class DataModel:
 
             self.signals.save.emit()
             
-            
-
+    
+    # ** phew, internal classes end.  DataModel methods follow **
     def __init__(self, directory="."):
+        """DataModel ctor
+        """
         self.directory = directory
         self.define()
 
@@ -786,8 +788,6 @@ class DataModel:
             if (device):
                 devices_by_id[device._id] = device
         return devices_by_id
-        
-        
         
 
 

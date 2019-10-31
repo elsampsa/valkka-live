@@ -174,6 +174,102 @@ def getFreeGPU_MB():
         return -1
 
     return val
+
+
+
+def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
+    """ Checks that parameters are consistent with a definition
+
+    :param definitions: Dictionary defining the parameters, their default values, etc.
+    :param parameters:  Dictionary having the parameters to be checked
+    :param obj:         Checked parameters are attached as attributes to this object
+
+    An example definitions dictionary:
+
+    |{
+    |"age"     : (int,0),                 # parameter age defaults to 0 if not specified
+    |"height"  : int,                     # parameter height **must** be defined by the user
+    |"indexer" : some_module.Indexer,     # parameter indexer must of some user-defined class some_module.Indexer
+    |"cleaner" : checkAttribute_cleaner,  # parameter cleaner is check by a custom function named "checkAttribute_cleaner" (that's been defined before)
+    |"weird"   : None                     # parameter weird is passed without any checking - this means that your API is broken  :)
+    | }
+
+    """
+    definitions = copy.copy(definitions)
+    # parameters =getattr(obj,"kwargs")
+    # parameters2=copy.copy(parameters)
+    #print("parameterInitCheck: definitions=",definitions)
+    for key in parameters:
+        try:
+            definition = definitions.pop(key)
+        except KeyError:
+            if (undefined_ok):
+                continue
+            else:
+                raise AttributeError("Unknown parameter " + str(key))
+
+        parameter = parameters[key]
+        if (definition.__class__ ==
+                tuple):   # a tuple defining (parameter_class, default value)
+            #print("parameterInitCheck: tuple")
+            required_type = definition[0]
+            if (parameter.__class__ != required_type):
+                raise(
+                    AttributeError(
+                        "Wrong type of parameter " +
+                        key +
+                        " : should be " +
+                        required_type.__name__))
+            else:
+                setattr(obj, key, parameter)  # parameters2.pop(key)
+        elif isinstance(definition, types.FunctionType):
+            # object is checked by a custom function
+            #print("parameterInitCheck: callable")
+            ok = definition(parameter)
+            if (ok):
+                setattr(obj, key, parameter)  # parameters2.pop(key)
+            else:
+                raise(
+                    AttributeError(
+                        "Checking of parameter " +
+                        key +
+                        " failed"))
+        elif (definition is None):            # this is a generic object - no checking whatsoever
+            #print("parameterInitCheck: None")
+            setattr(obj, key, parameter)  # parameters2.pop(key)
+        elif (definition.__class__ == type):  # Check the type
+            #print("parameterInitCheck: type")
+            required_type = definition
+            if (parameter.__class__ != required_type):
+                raise(
+                    AttributeError(
+                        "Wrong type of parameter " +
+                        key +
+                        " : should be " +
+                        required_type.__name__))
+            else:
+                setattr(obj, key, parameter)  # parameters2.pop(key)
+        else:
+            raise(AttributeError("Check your definitions syntax"))
+
+    # in definitions, there might still some leftover parameters the user did
+    # not bother to give
+    for key in definitions.keys():
+        definition = definitions[key]
+        if (definition.__class__ ==
+                tuple):   # a tuple defining (parameter_class, default value)
+            setattr(obj, key, definition[1])  # parameters2.pop(key)
+        elif (definition is None):            # parameter that can be void
+            # parameters2.pop(key)
+            # pass
+            setattr(obj, key, None)
+        else:
+            raise(AttributeError("Missing a mandatory parameter " + key))
+
+        definitions.pop(key)
+
+    # setattr(obj,"kwargs", parameters2)
+    return definitions
     
 
 if (__name__ == "__main__"):
@@ -188,4 +284,5 @@ if (__name__ == "__main__"):
     
 
     
+
 

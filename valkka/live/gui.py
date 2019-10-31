@@ -19,9 +19,6 @@ You should have received a copy of the GNU Affero General Public License along w
 @version 0.8.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
-
-
-
 import imp
 import sys
 import pydoc
@@ -41,16 +38,22 @@ version.check() # checks the valkka version
 import sys
 import json
 import pickle
+from pprint import pprint, pformat
+
 from valkka.api2 import LiveThread, USBDeviceThread
 from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
+
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+
+from valkka.live import singleton
 from valkka.live.menu import FileMenu, ViewMenu, ConfigMenu, AboutMenu
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import style, container, tools, constant
 from valkka.live import default
 from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live.qt.tools import QCapsulate, QTabCapsulate
 
 from valkka.live.datamodel import DataModel
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
@@ -62,6 +65,8 @@ pre = "valkka.live :"
 class MyGui(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
+        """ctor
+        """
         super(MyGui, self).__init__()
         self.initVars()
         self.initConfigFiles()
@@ -72,21 +77,49 @@ class MyGui(QtWidgets.QMainWindow):
         self.openValkka()
         self.makeLogic()
         self.post()
+        
+        
+    # *** redefined Qt member functions ***
+    
+    def closeEvent(self, e):
+        """Triggered when the main qt program exits
+        """
+        print("gui : closeEvent!")
+        self.closeContainers()
 
+        # self.manage_cameras_win.unSetPropagate() # don't send signals .. if you don't do this: close => closeEvent => will trigger self.reOpen
+        # self.manage_cameras_win.close()
+        
+        self.camera_list_win.unSetPropagate()
+        self.camera_list_win.close()
+        
+        self.config_win.unSetPropagate()
+        self.config_win.close()
+
+        self.closeValkka()
+        singleton.data_model.close()
+        
+        self.closeProcesses()
+        e.accept()
+    
 
     def initVars(self):
-        self.thread = None # a QThread that reads multiprocess pipes
-        self.containers = [] # list of instances of classes in valkka.live.container, e.g. valkka.live.container.grid.VideoContainerNxM, etc.
-        self.mvision_containers = []
-        self.mvision_classes = tools.scanMVisionClasses()
+        """Define files & variables
+        """
+        self.version_file = tools.getConfigFile("version")
+        self.layout_file = tools.getConfigFile("layout")
+        
+        # singleton.thread = None # a QThread that reads multiprocessing pipes
+        
+        self.containers_grid = [] # list of instances of valkka.live.container.grid.VideoContainerNxM
+        
+        self.mvision_classes = tools.scanMVisionClasses() # scans for submodules in namespace valkka.mvision.*
         if (len(self.mvision_classes) > 0):
             self.mvision = True
         else:
             self.mvision = False
 
     def initConfigFiles(self):
-        # self.config_file = tools.getConfigFile("config")
-        self.version_file = tools.getConfigFile("version")
         self.first_start = True
         if (tools.hasConfigDir()):  # this indicates that the program has been started earlier
             ver = self.readVersionNumber()
@@ -105,133 +138,74 @@ class MyGui(QtWidgets.QMainWindow):
             tools.makeConfigDir()
             self.saveVersionNumber()
             # self.saveConfigFile()
-            self.save_window_layout()
+            self.saveWindowLayout()
             self.first_start = True
 
 
     def readDB(self):
         """Datamodel includes the following files: config.dat, devices.dat
         """
-        self.dm = DataModel(directory = tools.getConfigDir())
+        singleton.data_model = DataModel(directory = tools.getConfigDir())
+        # singleton.data_model = DataModel(directory = tools.getConfigDir())
         if (self.first_start):
             print(pre, "readDB : first start")
-            self.dm.clearAll()
-            self.dm.saveAll()
+            singleton.data_model.clearAll()
+            singleton.data_model.saveAll()
 
         # If camera collection is corrupt
-        if not self.dm.checkCameraCollection():
-            self.dm.clearCameraCollection()
+        if not singleton.data_model.checkCameraCollection():
+            singleton.data_model.clearCameraCollection()
 
+
+    def saveVersionNumber(self):
+        with open(self.version_file, "w") as f:
+            f.write(version.get())
+        
+
+    def readVersionNumber(self):
+        try:
+            with open(self.version_file, "r") as f:
+                st = f.read()
+            vs = []
+            for s in st.split("."):
+                vs.append(int(s))
+        except:
+            print("valkka.live : could not read version number")
+            return None
+        else:
+            return vs
+
+
+    def saveWindowLayout(self):
+        container_dic = self.serializeContainers()
+        print(pre, "saveWindowLayout : container_dic =", pformat(container_dic))
+        with open(self.layout_file, "wb") as f:
+            f.write(pickle.dumps(container_dic))
+        
+
+    def loadWindowLayout(self):
+        self.closeContainers()
+        with open(self.layout_file, "rb") as f:
+            container_dic = pickle.loads(f.read())
+        print("loadWindowLayout: container_dic: ", pformat(container_dic))
+        self.deSerializeContainers(container_dic)
+
+
+    # *** Generate Qt structures ***
 
     def generateMethods(self):
-        """Generate some member functions
+        """Autogenerate some member functions
+        
+        - Generates slot functions for launching containers
         """
         for i in range(1, 5):
             # adds member function grid_ixi_slot(self)
-            self.make_grid_slot(i, i)
+            self.makeGridSlot(i, i)
 
         for cl in self.mvision_classes:
-            self.make_mvision_slot(cl)
+            self.makeMvisionSlot(cl)
 
 
-    def QCapsulate(self, widget, name, blocking = False, nude = False):
-        """Helper function that encapsulates QWidget into a QMainWindow
-        """
-
-        class QuickWindow(QtWidgets.QMainWindow):
-
-            class Signals(QtCore.QObject):
-                close = QtCore.Signal()
-                show  = QtCore.Signal()
-
-            def __init__(self, blocking = False, parent = None, nude = False):
-                super().__init__(parent)
-                self.propagate = True # send signals or not
-                self.setStyleSheet(style.main_gui)
-                if (blocking):
-                    self.setWindowModality(QtCore.Qt.ApplicationModal)
-                if (nude):
-                    # http://doc.qt.io/qt-5/qt.html#WindowType-enum
-                    # TODO: create a widget for a proper splashscreen (omitting X11 and centering manually)
-                    # self.setWindowFlags(QtCore.Qt.Popup) # Qt 5.9+ : setFlags()
-                    # self.setWindowFlags(QtCore.Qt.SplashScreen | QtCore.Qt.WindowStaysOnTopHint)
-                    self.setWindowFlags(QtCore.Qt.Dialog)
-                self.signals = self.Signals()
-                
-
-            def closeEvent(self, e):
-                if (self.propagate):
-                    self.signals.close.emit()
-                e.accept()
-                
-            def showEvent(self, e):
-                if (self.propagate):
-                    self.signals.show.emit()
-                e.accept()
-                
-            def setPropagate(self):
-                self.propagate = True
-                
-            def unSetPropagate(self):
-                self.propagate = False
-                
-
-        win = QuickWindow(blocking = blocking, nude = nude)
-        win.setCentralWidget(widget)
-        win.setLayout(QtWidgets.QHBoxLayout())
-        win.setWindowTitle(name)
-        return win
-    
-    
-    def QTabCapsulate(self, name, widget_list, blocking = False):
-        """Helper function that encapsulates QWidget into a QMainWindow
-        
-        :param widget_list:     List of tuples : [(widget,"name"), (widget,"name"), ..]
-        
-        """
-
-        class QuickWindow(QtWidgets.QMainWindow):
-
-            class Signals(QtCore.QObject):
-                close = QtCore.Signal()
-                show  = QtCore.Signal()
-
-            def __init__(self, blocking = False, parent = None):
-                super().__init__(parent)
-                self.propagate = True # send signals or not
-                self.setStyleSheet(style.main_gui)
-                if (blocking):
-                    self.setWindowModality(QtCore.Qt.ApplicationModal)
-                self.signals = self.Signals()
-                self.tab = QtWidgets.QTabWidget()
-                self.setCentralWidget(self.tab)
-                self.setLayout(QtWidgets.QHBoxLayout())
-
-            def closeEvent(self, e):
-                if (self.propagate):
-                    self.signals.close.emit()
-                e.accept()
-                
-            def showEvent(self, e):
-                if (self.propagate):
-                    self.signals.show.emit()
-                e.accept()
-                
-            def setPropagate(self):
-                self.propagate = True
-                
-            def unSetPropagate(self):
-                self.propagate = False
-                
-
-        win = QuickWindow(blocking = blocking)
-        win.setWindowTitle(name)
-        for w in widget_list:
-            win.tab.addTab(w[0], w[1])
-        
-        return win
-    
-    
     def setupUi(self):
         self.setStyleSheet(style.main_gui)
         self.setWindowTitle("Valkka Live")
@@ -261,22 +235,15 @@ class MyGui(QtWidgets.QMainWindow):
         self.aboutmenu = AboutMenu(parent=self)
 
         # create container and their windows
-        self.manage_cameras_container = self.dm.getDeviceListAndForm(None)
-        #self.manage_cameras_win = self.QCapsulate(
-        #   self.manage_cameras_container.widget, "Camera Configuration", blocking = True)
-
-        self.manage_memory_container = self.dm.getConfigForm()
-        #self.manage_memory_win = self.QCapsulate(
-        #   self.manage_memory_container.widget, "Memory Configuration", blocking = True)
-
-        # self.manage_memory_container.signals.save
-        # self.manage_cameras_container.getForm().signals.save_record # ListAndForm : has a list and a formset (SlotFormSet).  SlotFormSet has the signals
-
+        self.manage_cameras_container = singleton.data_model.getDeviceListAndForm(None)
+        
+        self.manage_memory_container = singleton.data_model.getConfigForm()
+        
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
         
 
-        self.config_win = self.QTabCapsulate(
+        self.config_win = QTabCapsulate(
                 "Configuration",
                 [ 
                     (self.manage_cameras_container.widget, "Camera Configuration"),
@@ -289,21 +256,10 @@ class MyGui(QtWidgets.QMainWindow):
         self.config_win.signals.show.connect(self.manage_cameras_container.getForm().show_slot) 
 
         self.makeCameraTree()
-        self.camera_list_win = self.QCapsulate(
-            self.treelist, "Camera List")
+        self.camera_list_win = QCapsulate(self.treelist, "Camera List")
 
-        # self.camera_list_win.show()
-        # self.treelist.show()
-
-        # self.wait_widget = QtWidgets.QWidget()
-        # self.wait_lay = QtWidgets.QHBoxLayout(self.wait_widget)
-        # self.wait_label = QtWidgets.QLabel("Restarting Valkka, please wait ..", self.wait_widget)
-        
         self.wait_label = QtWidgets.QLabel("Restarting Valkka, please wait ..")
-        self.wait_window = self.QCapsulate(self.wait_label, "Wait", nude = True)
-        # self.wait_window.show()
-
-        # self.wait_window = QtWidgets.QMessageBox.information(None, "info","info")
+        self.wait_window = QCapsulate(self.wait_label, "Wait", nude = True)
 
 
     def makeCameraTree(self):
@@ -329,7 +285,7 @@ class MyGui(QtWidgets.QMainWindow):
         """
         devices = []
 
-        for row in self.dm.camera_collection.get():
+        for row in singleton.data_model.camera_collection.get():
             # print(pre, "makeCameraTree : row", row)
             if (row["classname"] == DataModel.RTSPCameraRow.__name__):
                 row.pop("classname")
@@ -365,10 +321,8 @@ class MyGui(QtWidgets.QMainWindow):
         # *** Menu bar connections ***
         # the self.filemenu.exit attribute was autogenerated
         self.filemenu.exit.               triggered.connect(self.exit_slot)
-        self.filemenu.save_window_layout. triggered.connect(
-            self.save_window_layout_slot)
-        self.filemenu.load_window_layout. triggered.connect(
-            self.load_window_layout_slot)
+        self.filemenu.save_window_layout. triggered.connect(self.save_window_layout_slot)
+        self.filemenu.load_window_layout. triggered.connect(self.load_window_layout_slot)
 
         """
         self.configmenu.manage_cameras.   triggered.connect(
@@ -398,21 +352,11 @@ class MyGui(QtWidgets.QMainWindow):
             getattr(self.mvisionmenu,cl.name).triggered.connect(getattr(self,cl.name+"_slot"))
 
 
-
     def post(self):
-        """
-        self.mvision_container = container.VideoContainerNxM(
-            parent            = None,
-            gpu_handler       = self.gpu_handler,
-            filterchain_group = self.filterchain_group,
-            title             = "MVision",
-            n_dim             = 1,
-            m_dim             = 1,
-            child_class       = container.MVisionContainer,
-            child_class_pars  = mvision
-            )
-        """
+        pass
 
+
+    # *** Container handling ***
 
     def serializeContainers(self):
         """Serializes the current view of open video grids (i.e. the view)
@@ -429,21 +373,15 @@ class MyGui(QtWidgets.QMainWindow):
                 }
         """
         container_list = [] # list of instances of classes in valkka.live.container, e.g. valkka.live.container.grid.VideoContainerNxM, etc.
-        mvision_container_list = []
         
-        for container in self.containers:
+        for container in self.containers_grid:
             # these are of the type valkka.live.container.grid.VideoContainerNxM
-            print("gui: serialize containers : container=", container)
+            print("gui: serialize containers : container=", pformat(container))
             container_list.append(container.serialize())
         
-        for container in self.mvision_containers:
-            # these are of the type valkka.live.container.mvision.MVisionContainer
-            mvision_container_list.append(container.serialize())
-            
         # classnames compatible with local namespace
         return {
-            "valkka.live.container.grid.VideoContainerNxM"   : container_list, 
-            "valkka.live.container.mvision.MVisionContainer" : mvision_container_list
+            "valkka.live.container.grid.VideoContainerNxM"   : container_list
             }
 
 
@@ -456,76 +394,63 @@ class MyGui(QtWidgets.QMainWindow):
         """
         # glo = globals()
         # print("glo>",glo)
-        for key, value in dic.items():
-            # class_instance = glo[key] # retrieve the class instance from the global namespace
-            class_instance = pydoc.locate(key)
+        singleton.reCacheDevicesById() # singleton.devices_by_id will be used by the containers
+        
+        # must use makeGridSlot & makeMvisionSlot here!
+        
+        for key, value in dic.items(): # main container classes
+            class_instance = pydoc.locate(key) # key is a complete python module path, e.g. "valkka.live.container.grid.VideoContainerNxM"
             for container_kwargs in value: # value is a list of containers of type key, each list element is a dictionary of serialized parameters
+                ok = False
+                
                 # non-serialized parameters:
                 dic = {
-                    "parent"            : None, # TODO
-                    "gpu_handler"       : self.gpu_handler,
-                    "filterchain_group" : self.filterchain_group
+                    "parent"            : None,
+                    "gpu_handler"       : self.gpu_handler,         # RootContainers(s) pass this downstream to child containers
+                    "filterchain_group" : self.filterchain_group    # RootContainers(s) pass this downstream to child containers
                     }
                 dic.update(container_kwargs)
                 
-                # container specific parameters
+                # container-specific parameters
                 if key == "valkka.live.container.grid.VideoContainerNxM":
-                    lis = self.containers
+                    lis = self.containers_grid
+                    print("deSerializeContainers: dic =", dic)
+                    child_class = dic["child_class"]
                     
-                elif key == "valkka.live.container.mvision.MVisionContainer":
-                    lis = self.mvision_containers
-                    dic.update({
-                        "thread"        : None, # TODO
-                        "process_map"   : None
-                        })
+                    # check the children objects of the main video container
+                    if child_class == valkka.live.container.video.VideoContainer:
+                        ok = True
+                    elif child_class == valkka.live.container.mvision.MVisionContainer:
+                        """
+                        if ( (cl.tag in singleton.process_map) and (len(singleton.process_map[cl.tag])>0) ):
+                            ok = True
+                        else:
+                            print("deSerializeContainers:","Enough!","Can't instantiate more detectors of this type (max number is "+str(cl.max_instances)+")")
+                        """
+                        ok = True
+                        # an example how the child container parameters must be updated
+                        # such parameters should be singletons
+                        """
+                        for child_par in dic["child_pars"]:
+                            child_par.update({
+                                "thread"        : self.thread,
+                                "process_map"   : self.process_map
+                                })
+                        """
+                if ok:
+                    container = class_instance(**dic) # instantiate container
+                    container.signals.closing.connect(self.rem_grid_container_slot)
+                    lis.append(container)
                     
-                container = class_instance(**dic) # instantiate container
-                lis.append(container)
-                
 
-    """
-    def saveConfigFile(self):
-        configdump = json.dumps({
-            "containers": self.serializeContainers()
-        })
+    def closeContainers(self):
+        print("gui: closeContainers: containers_grid =", self.containers_grid)
+        for container in self.containers_grid:
+            container.close()
+        self.containers_grid = []
+        
 
-        f = open(self.config_file, "w")
-        f.write(configdump)
-        f.close()
-        self.saveVersionNumber()
-
-
-    def loadConfigFile(self):
-        try:
-            f = open(self.config_file, "r")
-        except FileNotFoundError:
-            config = constant.config_skeleton
-        else:
-            config = json.loads(f.read())
-        return config
-    """
-
-
-    def saveVersionNumber(self):
-        f = open(self.version_file, "w")
-        f.write(version.get())
-        f.close()
-
-
-    def readVersionNumber(self):
-        try:
-            f = open(self.version_file, "r")
-            st = f.read()
-            f.close()
-            vs = []
-            for s in st.split("."):
-                vs.append(int(s))
-        except:
-            print("valkka.live : could not read version number")
-            return None
-        else:
-            return vs
-
+    # *** Multiprocess handling ***
 
     def startProcesses(self):
         """Create and start python multiprocesses
@@ -536,34 +461,35 @@ class MyGui(QtWidgets.QMainWindow):
         
         Read all about it in here : http://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them
         """
-        self.process_map = {} # each key is a list of started multiprocesses
+        singleton.process_map = {} # each key is a list of started multiprocesses
         # self.process_avail = {} # count instances
         
         for mvision_class in self.mvision_classes:
             name = mvision_class.name
             tag  = mvision_class.tag
             num  = mvision_class.max_instances        
-            if (tag not in self.process_map):
-                self.process_map[tag] = []
+            if (tag not in singleton.process_map):
+                singleton.process_map[tag] = []
                 # self.process_avail[tag] = num
                 for n in range(0, num):
                     p = mvision_class()
                     p.start()
-                    self.process_map[tag].append(p)
+                    singleton.process_map[tag].append(p)
         
         
     def closeProcesses(self):
-        for key in self.process_map:
-            for p in self.process_map[key]:
+        for key in singleton.process_map:
+            for p in singleton.process_map[key]:
                 p.stop()
             
+    # *** Valkka ***
         
     def openValkka(self):
         self.cpu_scheme = CPUScheme()
         
-        # self.dm.camera_collection
+        # singleton.data_model.camera_collection
         try:
-            memory_config = next(self.dm.config_collection.get({"classname" : DataModel.MemoryConfigRow.__name__}))
+            memory_config = next(singleton.data_model.config_collection.get({"classname" : DataModel.MemoryConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default mem config")
             memory_config = default.memory_config
@@ -597,7 +523,7 @@ class MyGui(QtWidgets.QMainWindow):
             affinity = self.cpu_scheme.getUSB()
         )
 
-        self.filterchain_group = FilterChainGroup(datamodel     = self.dm, 
+        self.filterchain_group = FilterChainGroup(datamodel     = singleton.data_model, 
                                                   livethread    = self.livethread, 
                                                   usbthread     = self.usbthread,
                                                   gpu_handler   = self.gpu_handler, 
@@ -611,8 +537,8 @@ class MyGui(QtWidgets.QMainWindow):
             pass
         else:
             if self.mvision:
-                self.thread = multiprocess.QValkkaThread()
-                self.thread.start()
+                singleton.thread = multiprocess.QValkkaThread()
+                singleton.thread.start()
                 
                 
     def closeValkka(self):
@@ -621,92 +547,41 @@ class MyGui(QtWidgets.QMainWindow):
         self.usbthread.close()
         self.filterchain_group.close()
         self.gpu_handler.close()
-        if self.thread:
-            self.thread.stop()
+        if singleton.thread:
+            singleton.thread.stop()
 
 
     def reOpenValkka(self):
         print("gui: valkka reinit")
         self.wait_window.show()
-        self.save_window_layout("tmplayout")
+        self.saveWindowLayout("tmplayout")
         self.closeContainers()
         self.closeValkka()
         self.openValkka()
-        self.load_window_layout("tmplayout")
+        self.loadWindowLayout("tmplayout")
         self.wait_window.hide()
 
 
-    def closeContainers(self):
-        print("gui: closeContainers: containers=", self.containers)
-        print("gui: closeContainers: mvision containers=", self.mvision_containers)
-        for container in self.containers:
-            container.close()
-        for container in self.mvision_containers:
-            print("gui: closing mvision_container: ", container)
-            container.close()
-        self.containers = []
-        self.mvision_containers = []
+    # *** slot generators ***
 
-
-    def closeEvent(self, e):
-        print("gui : closeEvent!")
-        self.closeContainers()
-
-        # self.manage_cameras_win.unSetPropagate() # don't send signals .. if you don't do this: close => closeEvent => will trigger self.reOpen
-        # self.manage_cameras_win.close()
-        
-        self.camera_list_win.unSetPropagate()
-        self.camera_list_win.close()
-        
-        self.config_win.unSetPropagate()
-        self.config_win.close()
-
-        self.closeValkka()
-        self.dm.close()
-        
-        self.closeProcesses()
-        e.accept()
-
-
-    def rem_container_slot(self, cont):
-        print("gui: rem_container_slot: removing container:",cont)
-        print("gui: rem_container_slot: containers:",self.containers)
-        try:
-            self.containers.remove(cont)
-        except ValueError:
-            print("gui: could not remove container",cont)
-        print("gui: rem_container_slot: containers now:",self.containers)
-        
-        
-    def rem_mvision_container_slot(self, cont):
-        print("gui: rem_mvision_container_slot: removing mvision container:",cont)
-        print("gui: rem_mvision_container_slot: mvision containers:",self.mvision_containers)
-        try:
-            self.mvision_containers.remove(cont)
-        except ValueError:
-            print("gui: rem_mvision_container_slot: could not remove container",cont)
-        print("gui: rem_mvision_container_slot: mvision containers now:",self.mvision_containers)
-        
-        
-    # slot function makers
-
-    def make_grid_slot(self, n, m):
+    def makeGridSlot(self, n, m):
         """Create a n x m video grid, show it and add it to the list of video containers
         """
         def slot_func():
             cont = container.VideoContainerNxM(
-                gpu_handler=self.gpu_handler, 
-                filterchain_group=self.filterchain_group, 
-                n_dim=n, 
-                m_dim=m)
-            cont.signals.closing.connect(self.rem_container_slot)
-            self.containers.append(cont)
+                gpu_handler         = self.gpu_handler, 
+                filterchain_group   = self.filterchain_group, 
+                n_dim               = n, 
+                m_dim               = m
+                )
+            cont.signals.closing.connect(self.rem_grid_container_slot)
+            self.containers_grid.append(cont)
         setattr(self, "grid_%ix%i_slot" % (n, m), slot_func)
 
 
-    def make_mvision_slot(self, cl):
+    def makeMvisionSlot(self, cl):
         def slot_func():
-            if ( (cl.tag in self.process_map) and (len(self.process_map[cl.tag])>0) ):
+            if ( (cl.tag in singleton.process_map) and (len(singleton.process_map[cl.tag])>0) ):
                 cont = container.VideoContainerNxM(
                     parent            = None,
                     gpu_handler       = self.gpu_handler,
@@ -715,55 +590,39 @@ class MyGui(QtWidgets.QMainWindow):
                     n_dim             = 1,
                     m_dim             = 1,
                     child_class       = container.MVisionContainer,
-                    # serializable parameters (for re-creating this container):
-                    child_class_pars  = {"mvision_class": cl}, 
-                    # non-seriazable parameters:
-                    child_class_pars_ = {
-                        "thread"      : self.thread,
-                        "process_map" : self.process_map
-                        }
+                    child_class_pars  = {
+                        "mvision_class": cl,
+                        "thread"       : singleton.thread,
+                        "process_map"  : singleton.process_map
+                        }, 
                     )
-                cont.signals.closing.connect(self.rem_mvision_container_slot)
-                self.mvision_containers.append(cont)
+                cont.signals.closing.connect(self.rem_grid_container_slot)
+                self.containers_grid.append(cont)
             else:
                 QtWidgets.QMessageBox.about(self,"Enough!","Can't instantiate more detectors of this type (max number is "+str(cl.max_instances)+")")
                 
         setattr(self, cl.name+"_slot", slot_func)
 
+    
+    # *** SLOTS ***
 
-    def save_window_layout(self, filename = "layout"):
-        container_dic = self.serializeContainers()
-        print(pre, "save_window_layout : container_dic =",container_dic)
+    # container related slots
+
+    def rem_grid_container_slot(self, cont):
+        print("gui: rem_grid_container_slot: removing container:",cont)
+        print("gui: rem_grid_container_slot: containers:",self.containers_grid)
+        try:
+            self.containers_grid.remove(cont)
+        except ValueError:
+            print("gui: could not remove container",cont)
+        print("gui: rem_grid_container_slot: containers now:", pformat(self.containers_grid))
         
-        f = open(tools.getConfigFile(filename), "wb")
-        f.write(pickle.dumps(container_dic))
-        f.close()
-
-
-    def load_window_layout(self, filename = "layout"):
-        self.closeContainers()
-        f = open(tools.getConfigFile(filename), "rb")
-        container_dic = pickle.loads(f.read())
-        f.close()
         
-        print("load_window_layout: container_dic: ", container_dic)
-        self.deSerializeContainers(container_dic)
-        
-
-
     # explictly defined slot functions
 
     def exit_slot(self):
         self.close()
 
-    """
-    def manage_cameras_slot(self):
-        self.manage_cameras_win.show()
-
-    def memory_usage_slot(self):
-        self.manage_memory_win.show()
-    """
-    
     def config_dialog_slot(self):
         self.config_modified = False
         self.config_win.show()
@@ -774,33 +633,20 @@ class MyGui(QtWidgets.QMainWindow):
         
     def camera_list_slot(self):
         self.camera_list_win.show()
-
-    """
-    def save_memory_conf_slot(self):
-        self.manage_memory_win.close()
-        self.reOpenValkka()
-
-    def save_camera_config_slot(self):
-        self.updateCameraTree()
-        self.reOpenValkka()
-    """
     
     def config_dialog_close_slot(self):
         if (self.config_modified):
             self.updateCameraTree()
             self.reOpenValkka()
     
-
     def save_window_layout_slot(self):
-        self.save_window_layout()
+        self.saveWindowLayout()
 
     def load_window_layout_slot(self):
-        self.load_window_layout()
+        self.loadWindowLayout()
 
     def about_slot(self):
         QtWidgets.QMessageBox.about(self, "About", constant.program_info % (version.get(), version.getValkka()))
-
-
 
 
 

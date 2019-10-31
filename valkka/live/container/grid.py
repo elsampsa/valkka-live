@@ -24,6 +24,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import copy
 from valkka.api2.tools import parameterInitCheck
+
 from valkka.live import style
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
@@ -107,6 +108,7 @@ class VideoContainerNxM(RootVideoContainer):
             
             # set per-child object parameters
             if len(child_pars) > i:
+                print("createChildren: child_pars", child_pars)
                 pars_ = child_pars[i] # typically from the de-serialization
                 pars.update(pars_)
                 

@@ -19,14 +19,29 @@ You should have received a copy of the GNU Affero General Public License along w
 @version 0.8.0 
 @brief   a container class that manages Qt widgets for stream visualization and frame streaming to machine vision modules
 """
+from pprint import pprint, pformat
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+
+from valkka.live import singleton
 from valkka.api2.tools import parameterInitCheck
+# from valkka.live.tools import parameterInitCheck
 from valkka.live.container.video import VideoContainer
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
 from valkka.mvision import multiprocess
 
+
+def filter_keys(keys, dic):
+    """
+    :param keys: allowed keys
+    :param dic : dictionary to be filtered
+    """
+    out = {}
+    for key in dic.keys():
+        if (key in keys): # key is in allowed keys
+            out[key] = dic[key]
+    return out
 
 
 class MVisionContainer(VideoContainer):
@@ -34,13 +49,14 @@ class MVisionContainer(VideoContainer):
     """
     
     parameter_defs = {
-        "parent_container"  : None,                 # RootVideoContainer or child class
-        "filterchain_group" : FilterChainGroup,     # Filterchain manager class
-        "n_xscreen"         : (int,0),              # x-screen index
+        #"parent_container"  : None,                 # RootVideoContainer or child class
+        #"filterchain_group" : FilterChainGroup,     # Filterchain manager class
+        #"n_xscreen"         : (int,0),              # x-screen index
+        #"device_id"         : (int, -1),            # optional: the unique id of this video stream
         "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
         # non-seriazable parameters:
-        "thread"            : None,                 # thread that watches the multiprocesses communication pipes
-        "process_map"       : (dict,{}),
+        # "thread"            : None,                 # thread that watches the multiprocesses communication pipes # NEW: now at singleton
+        # "process_map"       : (dict,{}),            # NEW: now at singleton
         "verbose"           : (bool, False)
     }
 
@@ -49,14 +65,16 @@ class MVisionContainer(VideoContainer):
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        parameterInitCheck(MVisionContainer.parameter_defs, kwargs, self)
+        print("MVisionContainer: __init__: kwargs:", pformat(kwargs))
+        super().__init__(**filter_keys(super().parameter_defs.keys(), kwargs))
+        parameterInitCheck(MVisionContainer.parameter_defs, filter_keys(MVisionContainer.parameter_defs.keys(), kwargs), self)
         assert(issubclass(self.mvision_class,multiprocess.QValkkaShmemProcess2))
-        super().__init__(parent_container = self.parent_container, filterchain_group = self.filterchain_group, n_xscreen = self.n_xscreen)
+        tag = self.mvision_class.tag # identifies a list of multiprocesses in singleton.process_map
         
-        tag = self.mvision_class.tag # identifies a list of multiprocesses in self.process_map
-            
+        self.verbose = True
+        
         try:
-            queue = self.process_map[tag]
+            queue = singleton.process_map[tag]
         except KeyError:
             self.mvision_process = None
             return
@@ -67,6 +85,14 @@ class MVisionContainer(VideoContainer):
             self.mvision_process = None
             return
     
+    
+    def serialize(self):
+        """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
+        """
+        return {
+            "mvision_class" : self.mvision_class,
+            "device_id" : self.getDeviceId()
+            }
     
     def makeWidget(self, parent=None):
         self.main_widget = self.ContainerWidget(parent)
@@ -84,7 +110,11 @@ class MVisionContainer(VideoContainer):
             QtWidgets.QSizePolicy.Expanding)
         
         self.video.signals.drop.connect(self.setDevice)
-    
+        
+        # this VideoContainer was initialized with a device id, so we stream the video now
+        if self.device_id > -1:
+            self.setDeviceById(self.device_id)
+        
     
     def setDevice(self, device): 
         """Sets the video stream
@@ -132,7 +162,7 @@ class MVisionContainer(VideoContainer):
                 shmem_name       = self.shmem_name
                 )
                 
-            self.thread.addProcess(self.mvision_process)
+            singleton.thread.addProcess(self.mvision_process)
             
             # is there a signal giving the bounding boxes..?  let's connect it
             if hasattr(self.mvision_process.signals,"bboxes"):
@@ -174,8 +204,8 @@ class MVisionContainer(VideoContainer):
     def close(self):
         super().close() # calls clearDevice
         tag = self.mvision_class.tag
-        self.process_map[tag].append(self.mvision_process) # .. and recycle it
-        print(self.pre, "close: process_map=", self.process_map)
+        singleton.process_map[tag].append(self.mvision_process) # .. and recycle it
+        print(self.pre, "close: process_map=", singleton.process_map)
         self.mvision_process = None
         
 

@@ -128,8 +128,8 @@ class RootVideoContainer:
        
     parameter_defs = {
         "parent"                : None,
-        "gpu_handler"           : GPUHandler,
-        "filterchain_group"     : FilterChainGroup, # this will be passed upstream to VideoContainer
+        "gpu_handler"           : GPUHandler,       # this will be passed upstream to child containers (for example VideoContainer)
+        "filterchain_group"     : FilterChainGroup, # this will be passed upstream to child containers (for example VideoContainer) 
         # seriazable parameters:
         "title"                 : (str, "Video Grid"),
         "n_xscreen"             : (int, 0),

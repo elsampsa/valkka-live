@@ -25,6 +25,8 @@ import sys
 import pickle
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2.chains import ViewPort
+
+from valkka.live import singleton
 from valkka.live import style
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement, QuickMenuSection
 from valkka.live.filterchain import FilterChainGroup
@@ -308,14 +310,16 @@ class VideoContainer:
     def setDeviceById(self, _id):
         """Set the video to this VideoContainer by stream id only
         """
-        self.device = None # TODO: set self.device as well
-        self.filterchain = self.filterchain_group.get(_id = self.device._id)
-        if self.filterchain:
-            self.viewport.setXScreenNum(self.n_xscreen)
-            self.viewport.setWindowId  (int(self.video.winId()))
-            self.filterchain.addViewPort(self.viewport)
-
-
+        print(self.pre, "setDeviceById:", _id)
+        try:
+            device = singleton.devices_by_id[_id]
+        except KeyError:
+            print(self.pre, "setDeviceById: no device with id", _id)
+            return
+        else:
+            self.setDevice(device)
+        
+        
     def clearDevice(self):
         """Remove the current stream
         """
