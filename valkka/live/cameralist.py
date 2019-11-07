@@ -25,6 +25,7 @@ import sys
 import pickle
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
 from valkka.api2.tools import parameterInitCheck
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
 
 class TreeModel(QtCore.QAbstractItemModel):
@@ -282,8 +283,6 @@ class MyGui(QtWidgets.QMainWindow):
         pass
 
     def setupUi(self):
-        from valkka.live.datamodel import DataModel
-        
         self.setGeometry(QtCore.QRect(100, 100, 500, 500))
         # self.w = self.VideoWidget(self)
         self.w = QtWidgets.QWidget(self)
@@ -310,7 +309,7 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.camera1 = RTSPCameraListItem(
             
-            camera = DataModel.RTSPCameraDevice(
+            camera = RTSPCameraDevice(
                 _id     =1,
                 slot    =1,
                 address ="192.168.1.4",
@@ -321,7 +320,7 @@ class MyGui(QtWidgets.QMainWindow):
             
         self.camera7 = USBCameraListItem(
             
-            camera = DataModel.USBCameraDevice(
+            camera = USBCameraDevice(
                 _id    =1,
                 slot   =2,
                 address ="/dev/video2"),

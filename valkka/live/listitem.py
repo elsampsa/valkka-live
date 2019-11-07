@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
-from valkka.live.datamodel import DataModel
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
 
 """
@@ -171,7 +171,7 @@ class RTSPCameraListItem(ListItem):
 
     parameter_defs = {
         "parent": None,
-        "camera": DataModel.RTSPCameraDevice
+        "camera": RTSPCameraDevice
     }
 
     def __init__(self, **kwargs):
@@ -195,7 +195,7 @@ class USBCameraListItem(ListItem):
 
     parameter_defs = {
         "parent": None,
-        "camera": DataModel.USBCameraDevice
+        "camera": USBCameraDevice
     }
 
     def __init__(self, **kwargs):

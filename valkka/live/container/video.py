@@ -48,7 +48,7 @@ class VideoContainer:
         ContainerWidget
              |
              +-- VideoWidget (handles drag'n'drop)
-                    - Drag'n'drop receives objects of the type DataModel.RTSPCameraDevice (has member _id to define uniquely a stream)
+                    - Drag'n'drop receives objects of the type device.RTSPCameraDevice (has member _id to define uniquely a stream)
                       into VideoContainer.setDevice (i.e. into the main container object method)
                 
 
@@ -146,7 +146,7 @@ class VideoContainer:
             if ("application/octet-stream" in formlist):
                 device = pickle.loads(
                     e.mimeData().data("application/octet-stream").data())
-                print("VideoWidget: got: ", device) # DataModel.RTSPCameraDevice
+                print("VideoWidget: got: ", device) # device.RTSPCameraDevice
                 self.signals.drop.emit(device)
                 e.accept()
             else:
@@ -281,7 +281,7 @@ class VideoContainer:
     def setDevice(self, device): 
         """Sets the video stream
         
-        :param device:      A rather generic device class.  In this case DataModel.RTSPCameraDevice.
+        :param device:      A rather generic device class.  In this case device.RTSPCameraDevice.
         """
         print(self.pre, "setDevice :", device)
         
@@ -335,7 +335,7 @@ class VideoContainer:
         self.video.update()
         
 
-    def getDevice(self): # e.g. DataModel.RTSPCameraDevice
+    def getDevice(self): # e.g. device.RTSPCameraDevice
         return self.device
     
     
@@ -343,7 +343,7 @@ class VideoContainer:
         if self.device is None:
             return -1
         else:
-            return self.device._id # e.g. DataModel.RTSPCameraDevice
+            return self.device._id # e.g. device.RTSPCameraDevice
     
 
     def mouseGestureHandler(self, info):

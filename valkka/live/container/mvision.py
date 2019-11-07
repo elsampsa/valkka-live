@@ -108,7 +108,7 @@ class MVisionContainer(VideoContainer):
     def setDevice(self, device): 
         """Sets the video stream
         
-        :param device:      A rather generic device class.  In this case DataModel.RTSPCameraDevice.
+        :param device:      A rather generic device class.  In this case device.RTSPCameraDevice.
         """
         self.report("setDevice :", device)
         

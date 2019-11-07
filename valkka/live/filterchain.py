@@ -22,12 +22,14 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
-from valkka.live.datamodel import DataModel
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import constant
-from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, LiveManagedFilterchain, USBManagedFilterchain
+from valkka.api2.chains import ManagedFilterchain, LiveManagedFilterchain, USBManagedFilterchain
 from valkka.api2.threads import LiveThread, USBDeviceThread
 from valkka.api2.tools import parameterInitCheck
+from valkka.live.datamodel.base import DataModel
+from valkka.live.datamodel.row import RTSPCameraRow, USBCameraRow
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
 
 class FilterChainGroup:
@@ -80,13 +82,13 @@ class FilterChainGroup:
         for dic in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
             if (self.verbose): print(self.pre, "read : dic", dic)
             
-            if (dic["classname"] == DataModel.RTSPCameraRow.__name__):
+            if (dic["classname"] == RTSPCameraRow.__name__):
                 affinity = -1
                 if self.cpu_scheme:
                     affinity = self.cpu_scheme.getAV()
                 
                 dic.pop("classname")
-                device = DataModel.RTSPCameraDevice(**dic) # a neat object with useful methods
+                device = RTSPCameraDevice(**dic) # a neat object with useful methods
                 
                 print("FilterChainGroup : read : slot    =", device.getLiveMainSlot())
                 print("FilterChainGroup : read : address =", device.getMainAddress())
@@ -112,13 +114,13 @@ class FilterChainGroup:
                 )
                 self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
                 
-            elif (dic["classname"] == DataModel.USBCameraRow.__name__):
+            elif (dic["classname"] == USBCameraRow.__name__):
                 affinity = -1
                 if self.cpu_scheme:
                     affinity = self.cpu_scheme.getAV()
                 
                 dic.pop("classname")
-                device = DataModel.USBCameraDevice(**dic) # a neat object with useful methods
+                device = USBCameraDevice(**dic) # a neat object with useful methods
                 
                 print("FilterChainGroup : read : slot    =", device.getLiveMainSlot())
                 print("FilterChainGroup : read : address =", device.getMainAddress())
@@ -164,11 +166,11 @@ class FilterChainGroup:
         devices = []
         for dic in self.datamodel.camera_collection.get():
             if (self.verbose): print(self.pre, "update : dic", dic)
-            if (dic["classname"] == DataModel.RTSPCameraRow.__name__):
+            if (dic["classname"] == RTSPCameraRow.__name__):
                 devices.append(dic)
             
         devices_by_id={}
-        for dic in devices: # DataModel.RTSPCameraRow instances
+        for dic in devices: # RTSPCameraRow instances
             _id = dic["_id"]
             new_ids.append(_id)
             devices_by_id[_id] = dic
@@ -198,7 +200,7 @@ class FilterChainGroup:
                 livethread  = self.livethread,
                 openglthreads
                             = self.gpu_handler.openglthreads,
-                address     = DataModel.RTSPCameraRow.getMainAddressFromDict(dic),
+                address     = RTSPCameraRow.getMainAddressFromDict(dic),
                 slot        = dic["slot"],
                 _id         = dic["_id"],
                 # affinity    = a,
@@ -235,9 +237,9 @@ class FilterChainGroup:
             return None
         
         # get filterchain init parameters that are compatible with RTSPCameraDevice input parameters
-        pars = filterchain.getParDic(DataModel.RTSPCameraDevice.parameter_defs) 
+        pars = filterchain.getParDic(RTSPCameraDevice.parameter_defs) 
         # .. and instantiate an RTSPCameraDevice with those parameters
-        device = DataModel.RTSPCameraDevice(**pars)
+        device = RTSPCameraDevice(**pars)
         
         print(self.pre, "getDevice :", pars, device)
         
@@ -253,7 +255,7 @@ def test1():
     collection = dm.camera_collection
     
     collection.new(
-        DataModel.RTSPCameraRow,
+        RTSPCameraRow,
             {"slot": 1,
              "address": "192.168.1.41",
              "username": "admin",
@@ -261,7 +263,7 @@ def test1():
              "tail": ""}
             )
     
-    collection.new(DataModel.RTSPCameraRow,
+    collection.new(RTSPCameraRow,
             {"slot": 2,
              "address": "192.168.1.42",
              "username": "admin",
@@ -295,7 +297,7 @@ def test1():
     
     print("\n ADDING ONE \n")
     
-    collection.new(DataModel.RTSPCameraRow,
+    collection.new(RTSPCameraRow,
             {"slot": 3,
              "address": "192.168.1.43",
              "username": "admin",

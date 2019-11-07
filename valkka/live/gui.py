@@ -35,13 +35,12 @@ except importerror:
 from valkka.live import version
 version.check() # checks the valkka version
 
-import sys
 import json
 import pickle
 from pprint import pprint, pformat
 
 from valkka.api2 import LiveThread, USBDeviceThread
-from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
+# from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
@@ -55,9 +54,13 @@ from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 from valkka.live.qt.tools import QCapsulate, QTabCapsulate
 
-from valkka.live.datamodel import DataModel
+from valkka.live.datamodel.base import DataModel
+from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
 from valkka.live.cameralist import BasicView
+
 from valkka.live.filterchain import FilterChainGroup
 
 pre = "valkka.live :"
@@ -287,19 +290,19 @@ class MyGui(QtWidgets.QMainWindow):
 
         for row in singleton.data_model.camera_collection.get():
             # print(pre, "makeCameraTree : row", row)
-            if (row["classname"] == DataModel.RTSPCameraRow.__name__):
+            if (row["classname"] == RTSPCameraRow.__name__):
                 row.pop("classname")
                 devices.append(
                     RTSPCameraListItem(
-                        camera = DataModel.RTSPCameraDevice(**row),
+                        camera = RTSPCameraDevice(**row),
                         parent = self.server
                     )
                 )
-            elif (row["classname"] == DataModel.USBCameraRow.__name__):
+            elif (row["classname"] == USBCameraRow.__name__):
                 row.pop("classname")
                 devices.append(
                     USBCameraListItem(
-                        camera = DataModel.USBCameraDevice(**row),
+                        camera = USBCameraDevice(**row),
                         parent = self.server
                     )
                 )
@@ -489,7 +492,7 @@ class MyGui(QtWidgets.QMainWindow):
         
         # singleton.data_model.camera_collection
         try:
-            memory_config = next(singleton.data_model.config_collection.get({"classname" : DataModel.MemoryConfigRow.__name__}))
+            memory_config = next(singleton.data_model.config_collection.get({"classname" : MemoryConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default mem config")
             memory_config = default.memory_config
@@ -554,11 +557,11 @@ class MyGui(QtWidgets.QMainWindow):
     def reOpenValkka(self):
         print("gui: valkka reinit")
         self.wait_window.show()
-        self.saveWindowLayout("tmplayout")
+        self.saveWindowLayout()
         self.closeContainers()
         self.closeValkka()
         self.openValkka()
-        self.loadWindowLayout("tmplayout")
+        self.loadWindowLayout()
         self.wait_window.hide()
 
 
