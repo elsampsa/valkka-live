@@ -30,3 +30,8 @@ memory_config = {
     }
 
 fps = 25
+
+valkkafs = {
+    "number_of_blocks" : 10,
+    "blocksize_mb"     : 10
+}

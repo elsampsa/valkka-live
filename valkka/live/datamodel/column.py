@@ -1,5 +1,5 @@
 """
-NAME.py :
+column.py : cute-mongo-form colums
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,7 +13,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
 
-@file    NAME.py
+@file    column.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.8.0 
@@ -36,6 +36,7 @@ class USBCameraColumn(Column):
         "key_name": str,  # name of the database key in key(value)
         "label_name": str   # used to create the forms
     }
+    parameter_defs.update(Column.parameter_defs)
 
     def __init__(self, **kwargs):
         # auxiliary string for debugging output

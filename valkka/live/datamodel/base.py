@@ -31,9 +31,9 @@ from valkka.live import default
 from valkka.live.form import SlotFormSet
 from valkka.live import constant, tools
 
-from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow
+from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
 from valkka.live.datamodel.column import USBCameraColumn
-from valkka.live.datamodel.container import DeviceList, MemoryConfigForm, ListAndForm
+from valkka.live.datamodel.container import DeviceList, MemoryConfigForm, ValkkaFSForm, ListAndForm
 
 from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
@@ -151,6 +151,14 @@ class DataModel:
                 MemoryConfigRow
                 ]
             )
+
+        self.valkkafs_collection = \
+            SimpleCollection(filename=os.path.join(self.directory, "valkkafs.dat"),
+                             row_classes=[
+                ValkkaFSConfigRow
+                ]
+            )
+
         self.collections.append(self.config_collection)
 
     def getDeviceList(self):
@@ -165,6 +173,11 @@ class DataModel:
     def getConfigForm(self):
         return MemoryConfigForm(
             row_class=MemoryConfigRow, collection=self.config_collection)
+
+
+    def getValkkaFSForm(self):
+        return ValkkaFSForm(
+            row_class=ValkkaFSConfigRow, collection = self.valkkafs_collection)
 
 
     def getRowsById(self, query):

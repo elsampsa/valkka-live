@@ -1,5 +1,5 @@
 """
-NAME.py :
+row.py : cute-mongo-form row definitions
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,7 +13,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-@file    NAME.py
+@file    row.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.8.0
@@ -22,11 +22,12 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
-from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn
+from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn, ConstantComboBoxColumn, ConstantRadioButtonColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from valkka.live import default, tools, style
 from valkka.live.datamodel.column import USBCameraColumn
 from valkka.live.qt.widget import FormWidget
+from valkka.api2.valkkafs import findBlockDevices
 
 
 class EmptyRow(Row):
@@ -261,12 +262,9 @@ class RTSPCameraRow(Row):
         self.substream_address.setText(self.getSubAddress())
             
             
-    
 
 class MemoryConfigRow(Row):
-
     # A general collection for misc. stuff: configuration, etc.
-
 
     columns = [
         ColumnSpec(
@@ -323,6 +321,52 @@ class MemoryConfigRow(Row):
 
         # assume 25 fps cameras
         return int((buftime / 1000) * 25 * ncam)
+
+
+class ValkkaFSConfigRow(Row):
+
+    def getValkkaFSDevices():
+        lis = [] # tuples of (name, key)
+        for key, value in findBlockDevices().items():
+            # they look like this: {'27f5e5d8-9e20-4bc1-84aa-6a3cbab498c8': ('/dev/sdc1', 500107862016)}
+            lis.append((
+                value[0]+" ("+str(int(value[1]/1024/1024))+" MB)",
+                key
+            ))
+        return lis
+
+    columns = [
+        ColumnSpec(
+            IntegerColumn,
+            key_name    = "blocksize",
+            label_name  = "Blocksize (MB)",
+            min_value   = 1,
+            max_value   = 1024*1024*1024, # 1 GB
+            def_value   = default.valkkafs["blocksize_mb"]), 
+
+        ColumnSpec(
+            IntegerColumn,
+            key_name    = "number_of_blocks",
+            label_name  = "Number of Blocks",
+            min_value   = 5,
+            max_value   = 999999999,
+            def_value   = default.valkkafs["number_of_blocks"]), 
+        # Calculate Total Size (MB)
+
+        ColumnSpec(ConstantRadioButtonColumn, 
+            key_name = "fs_flavor",    
+            label_name = "ValkkaFS type", 
+            list = [("Normal file", "file"),("Dedicated block device", "valkkafs")]),
+
+        ColumnSpec(ConstantComboBoxColumn, 
+            key_name = "device",    
+            label_name = "Available Devices", 
+            callback = getValkkaFSDevices)
+        ]
+        # TODO:
+        # Actions (buttons): format, save, cancel (exit without applying changes)
+  
+
 
 
 

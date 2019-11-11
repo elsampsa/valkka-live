@@ -1,5 +1,5 @@
 """
-NAME.py :
+widget.py : Custom Qt Widgets
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,11 +13,11 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
 
-@file    NAME.py
+@file    widget.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.8.0 
-@brief   
+@brief   Custom Qt Widgets
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5

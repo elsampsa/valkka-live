@@ -239,9 +239,9 @@ class MyGui(QtWidgets.QMainWindow):
 
         # create container and their windows
         self.manage_cameras_container = singleton.data_model.getDeviceListAndForm(None)
-        
         self.manage_memory_container = singleton.data_model.getConfigForm()
-        
+        self.manage_valkkafs_container = singleton.data_model.getValkkaFSForm()
+
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
         
@@ -249,8 +249,9 @@ class MyGui(QtWidgets.QMainWindow):
         self.config_win = QTabCapsulate(
                 "Configuration",
                 [ 
-                    (self.manage_cameras_container.widget, "Camera Configuration"),
-                    (self.manage_memory_container. widget, "Memory Configuration")
+                    (self.manage_cameras_container. widget, "Camera Configuration"),
+                    (self.manage_memory_container.  widget, "Memory Configuration"),
+                    (self.manage_valkkafs_container.widget, "Recording Configuration")
                 ]
             )
 

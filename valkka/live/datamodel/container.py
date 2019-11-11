@@ -1,5 +1,5 @@
 """
-NAME.py :
+container.py : cute-mongo-forms containers
 
 Copyright 2018 Sampsa Riikonen
 
@@ -13,7 +13,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
 
-@file    NAME.py
+@file    container.py
 @author  Sampsa Riikonen
 @date    2018
 @version 0.8.0 
@@ -26,7 +26,7 @@ from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 from cute_mongo_forms.row import RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
 # from valkka.live import default, tools
-from valkka.live.datamodel.row import MemoryConfigRow
+from valkka.live.datamodel.row import MemoryConfigRow, ValkkaFSConfigRow
 
 
 # *** Simple lists ***
@@ -145,7 +145,72 @@ class MemoryConfigForm(SimpleForm):
             self.row_instance.update(self.collection, _id)
 
         self.signals.save.emit()
+
+
+
+class ValkkaFSForm(SimpleForm):
+
+    class Signals(QtCore.QObject):
+        save = QtCore.Signal()
+
+    parameter_defs = {
+        "row_class": RowWatcher,
+        "collection": None
+    }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.signals = self.Signals()
+        self.load()
+
+    def makeWidget(self):
+        super().makeWidget()
+
+        self.button_row = QtWidgets.QWidget(self.widget)
+        self.button_lay = QtWidgets.QHBoxLayout(self.button_row)
+        self.lay.addWidget(self.button_row)
+
+        self.reset_button = QtWidgets.QPushButton("Reset", self.button_row)
+        self.save_button = QtWidgets.QPushButton("Save", self.button_row)
+        self.button_lay.addWidget(self.reset_button)
+        self.button_lay.addWidget(self.save_button)
+
+        self.info_label = QtWidgets.QLabel("(not yet functional)", self.widget)
+        self.lay.addWidget(self.info_label)
         
+        self.reset_button.clicked.connect(self.row_instance.clear)
+        self.save_button.clicked.connect(self.save_slot)
+
+    def load(self):
+        try:
+            el = next(self.collection.get(
+                {"classname": ValkkaFSConfigRow.__name__}))
+        except StopIteration:
+            print(self.pre, "no row!")
+        else:
+            print(self.pre, "reading saved")
+            self.row_instance.get(self.collection, el["_id"])
+
+    def save_slot(self):
+        try:
+            el = next(self.collection.get(
+                {"classname": ValkkaFSConfigRow.__name__}))
+        except StopIteration:
+            print(self.pre, "new row")
+            _id = self.row_instance.new(
+                self.collection)  # create a new instance
+        else:
+            print(self.pre, "update row")
+            _id = el["_id"]
+            self.row_instance.update(self.collection, _id)
+
+        self.signals.save.emit()
+
+
+
+
+
+
 
 class ListAndForm:
     """Creates a composite widget using a List and a FormSet
