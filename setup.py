@@ -48,7 +48,10 @@ setup(
     # this is needed for namespace packages:
     packages=[
         'valkka.live',
+        'valkka.live.chain',
+        'valkka.live.datamodel',
         'valkka.live.container',
+        'valkka.live.qt',
         'valkka.mvision',
         'valkka.mvision.movement',
         'valkka.mvision.alpr',
