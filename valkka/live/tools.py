@@ -28,7 +28,10 @@ import pkgutil
 import importlib
 import types
 import re
+import logging
+import copy
 
+loggers = {}
 home = os.path.expanduser("~")
 config_dir = os.path.join(home, ".valkka", "live")
 
@@ -38,6 +41,32 @@ if sys.version_info.minor < 6:
     importerror = ImportError
 else:
     importerror = ModuleNotFoundError
+
+
+def getLogger(name, set_default = True, level = None):
+    global loggers
+    # print(">", name)
+    # specify either by string or by a logger object
+    if (isinstance(name, str)):
+        logger = loggers.get(name)
+        if not logger: # no such logger, create new
+            # print("new logger instance")
+            logger = logging.getLogger(name)
+            loggers[name] = logger 
+            # a handler must be added only once
+            if set_default:
+                formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+                ch = logging.StreamHandler()
+                ch.setFormatter(formatter)
+                logger.addHandler(ch)
+
+    else: # so it's a logger object directly ..
+        logger = name
+                
+    if level is not None:
+        logger.setLevel(logging.DEBUG)
+    
+    return logger
 
 
 def getConfigDir():
@@ -176,7 +205,6 @@ def getFreeGPU_MB():
     return val
 
 
-
 def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
     """ Checks that parameters are consistent with a definition
 
@@ -217,7 +245,7 @@ def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
                 raise(
                     AttributeError(
                         "Wrong type of parameter " +
-                        key +
+                        key + " is " + str(parameter.__class__) +
                         " : should be " +
                         required_type.__name__))
             else:
@@ -244,13 +272,13 @@ def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
                 raise(
                     AttributeError(
                         "Wrong type of parameter " +
-                        key +
+                        key + " is " + str(parameter.__class__) +
                         " : should be " +
                         required_type.__name__))
             else:
                 setattr(obj, key, parameter)  # parameters2.pop(key)
         else:
-            raise(AttributeError("Check your definitions syntax"))
+            raise(AttributeError("Check your definitions syntax at "+key+" : "+str(parameter)))
 
     # in definitions, there might still some leftover parameters the user did
     # not bother to give
@@ -266,10 +294,8 @@ def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
         else:
             raise(AttributeError("Missing a mandatory parameter " + key))
 
-        definitions.pop(key)
-
     # setattr(obj,"kwargs", parameters2)
-    return definitions
+
 
 
 def filter_keys(keys, dic):

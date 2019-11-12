@@ -34,7 +34,7 @@ from valkka.live.container.video import VideoContainer
 
 
 class VideoContainerNxM(RootVideoContainer):
-    """A RootVideoContainer with n x m (y x x) video grid
+    """A RootVideoContainer with n x m (y x x) video grid for live video
     
     
     ::

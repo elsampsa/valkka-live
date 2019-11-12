@@ -184,7 +184,7 @@ class VideoContainer:
 
     parameter_defs = {
         "parent_container"  : None,                 # RootVideoContainer or child class
-        "filterchain_group" : FilterChainGroup,     # Filterchain manager class
+        "filterchain_group" : None,                 # Instance of FilterChainGroup.  Filterchain manager class.  # None for debugging
         "n_xscreen"         : (int, 0),             # x-screen index
         "verbose"           : (bool, False),
         "device_id"         : (int, -1)             # optional: the unique id of this video stream
