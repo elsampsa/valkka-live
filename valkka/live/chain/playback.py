@@ -52,9 +52,10 @@ class PlaybackFilterchain(BaseFilterchain):
 
 
         ** decode branch **
-                                                                                               
-                               OpenGLThread (connected by user) <<--- (AVThread:avthread) <<-------+
-                               
+                                                                
+        OpenGLThread (connected by user)---+{ForkFrameFilterN:fork_filter_decode} <<--- (AVThread:avthread) <<-------+
+                                           |
+
     """
     
     parameter_defs = {
@@ -132,8 +133,6 @@ class PlaybackFilterchain(BaseFilterchain):
     def requestClose(self):
         if not self.closed:
             self.avthread.requestStopCall()
-            self.clearRecording()
-            self.releaseAllShmem()
             self.clearAllViewPorts()
         self.closed = True
         
@@ -147,6 +146,8 @@ class PlaybackFilterchain(BaseFilterchain):
 
 
     def make_decode_branch(self):
+        self.fork_filter_decode = core.ForkFrameFilterN("fork_filter_decode_" + str(self.slot))
+
         self.framefifo_ctx = core.FrameFifoContext()
         self.framefifo_ctx.n_basic = self.n_basic
         self.framefifo_ctx.n_setup = self.n_setup

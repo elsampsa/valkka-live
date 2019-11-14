@@ -20,6 +20,8 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Default configuration values
 """
 
+from valkka.live import singleton
+
 memory_config = {
     "msbuftime" : 100,
     "n_720p"    : 20,
@@ -31,7 +33,9 @@ memory_config = {
 
 fps = 25
 
-valkkafs = {
-    "number_of_blocks" : 10,
-    "blocksize_mb"     : 10
+valkkafs_config = {
+    "dirname"    : singleton.valkkafs_dir.get(),
+    "n_blocks"   : 10,
+    "blocksize"  : 10
 }
+

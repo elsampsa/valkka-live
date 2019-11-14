@@ -19,6 +19,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @version 0.8.0 
 @brief   
 """
+from valkka.live.local import ValkkaLocalDir
 
 # The datamodel.DataModel instance:
 data_model = None
@@ -32,6 +33,9 @@ process_map = {}
 
 # QThread for interprocess communication
 thread = None
+
+config_dir = ValkkaLocalDir("live")
+valkkafs_dir = ValkkaLocalDir("live","fs")
 
 def reCacheDevicesById():
     global data_model, devices_by_id

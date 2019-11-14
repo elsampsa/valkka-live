@@ -280,7 +280,7 @@ class PlaybackFilterChainGroup(FilterChainGroup):
     
 
     def __init__(self, **kwargs):
-        parameterInitCheck(LiveFilterChainGroup.parameter_defs, kwargs, self)
+        parameterInitCheck(PlaybackFilterChainGroup.parameter_defs, kwargs, self)
         self.pre = self.__class__.__name__ + " : "
         self.chains = []
         self.context_type = None

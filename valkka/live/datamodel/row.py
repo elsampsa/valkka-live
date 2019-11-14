@@ -335,6 +335,12 @@ class ValkkaFSConfigRow(Row):
             ))
         return lis
 
+    """
+    "dirname"    : singleton.valkkafs_dir.get(),
+    "n_blocks"   : 10,
+    "blocksize"  : 10
+    """
+
     columns = [
         ColumnSpec(
             IntegerColumn,
@@ -342,7 +348,7 @@ class ValkkaFSConfigRow(Row):
             label_name  = "Blocksize (MB)",
             min_value   = 1,
             max_value   = 1024*1024*1024, # 1 GB
-            def_value   = default.valkkafs["blocksize_mb"]), 
+            def_value   = default.valkkafs_config["blocksize"]), 
 
         ColumnSpec(
             IntegerColumn,
@@ -350,7 +356,7 @@ class ValkkaFSConfigRow(Row):
             label_name  = "Number of Blocks",
             min_value   = 5,
             max_value   = 999999999,
-            def_value   = default.valkkafs["number_of_blocks"]), 
+            def_value   = default.valkkafs_config["n_blocks"]), 
         # Calculate Total Size (MB)
 
         ColumnSpec(ConstantRadioButtonColumn, 

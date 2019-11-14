@@ -39,7 +39,7 @@ import json
 import pickle
 from pprint import pprint, pformat
 
-from valkka.api2 import LiveThread, USBDeviceThread
+from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager
 # from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
 
@@ -49,21 +49,25 @@ from valkka.live import singleton
 from valkka.live.menu import FileMenu, ViewMenu, ConfigMenu, AboutMenu
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import style, container, tools, constant
+from valkka.live.local import ValkkaLocalDir
 from valkka.live import default
 from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 from valkka.live.qt.tools import QCapsulate, QTabCapsulate
 
 from valkka.live.datamodel.base import DataModel
-from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow
+from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
 from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
 from valkka.live.cameralist import BasicView
 
-from valkka.live.filterchain import FilterChainGroup
+from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
 
 pre = "valkka.live :"
+
+config_dir = singleton.config_dir
+valkkafs_dir = singleton.valkkafs_dir
 
 class MyGui(QtWidgets.QMainWindow):
 
@@ -109,8 +113,8 @@ class MyGui(QtWidgets.QMainWindow):
     def initVars(self):
         """Define files & variables
         """
-        self.version_file = tools.getConfigFile("version")
-        self.layout_file = tools.getConfigFile("layout")
+        self.version_file = config_dir.getFile("version")
+        self.layout_file = config_dir.getFile("layout")
         
         # singleton.thread = None # a QThread that reads multiprocessing pipes
         
@@ -124,8 +128,8 @@ class MyGui(QtWidgets.QMainWindow):
 
     def initConfigFiles(self):
         self.first_start = True
-        if (tools.hasConfigDir()):  # this indicates that the program has been started earlier
-            ver = self.readVersionNumber()
+        ver = self.readVersionNumber()
+        if ver is not None:  # this indicates that the program has been started earlier
             print("valkka.live : loading config file for version number")
             if ver:
                 if (ver[0] == version.VERSION_MAJOR and ver[1] == version.VERSION_MINOR):
@@ -138,7 +142,7 @@ class MyGui(QtWidgets.QMainWindow):
         if self.first_start:  # first time program start
             # TODO: eula could be shown here
             print(pre, "initConfigFiles : first start")
-            tools.makeConfigDir()
+            config_dir.reMake()
             self.saveVersionNumber()
             # self.saveConfigFile()
             self.saveWindowLayout()
@@ -148,7 +152,7 @@ class MyGui(QtWidgets.QMainWindow):
     def readDB(self):
         """Datamodel includes the following files: config.dat, devices.dat
         """
-        singleton.data_model = DataModel(directory = tools.getConfigDir())
+        singleton.data_model = DataModel(directory = config_dir.get())
         # singleton.data_model = DataModel(directory = tools.getConfigDir())
         if (self.first_start):
             print(pre, "readDB : first start")
@@ -498,6 +502,12 @@ class MyGui(QtWidgets.QMainWindow):
             print(pre, "Using default mem config")
             memory_config = default.memory_config
 
+        try:
+            valkkafs_config = next(singleton.data_model.valkkafs_collection.get({"classname" : ValkkaFSConfigRow.__name__}))
+        except StopIteration:
+            print(pre, "Using default valkkafs config")
+            valkkafs_config = default.valkkafs_config
+
         n_frames = round(memory_config["msbuftime"] * default.fps / 1000.) # accumulated frames per buffering time = n_frames
 
         if (memory_config["bind"]):
@@ -527,14 +537,31 @@ class MyGui(QtWidgets.QMainWindow):
             affinity = self.cpu_scheme.getUSB()
         )
 
-        self.filterchain_group = FilterChainGroup(datamodel     = singleton.data_model, 
-                                                  livethread    = self.livethread, 
-                                                  usbthread     = self.usbthread,
-                                                  gpu_handler   = self.gpu_handler, 
-                                                  cpu_scheme    = self.cpu_scheme)
+        valkkafs = ValkkaFS.newFromDirectory(
+            dirname = valkkafs_config["dirname"],
+            blocksize = valkkafs_config["blocksize"],
+            n_blocks = valkkafs_config["n_blocks"],
+            verbose = True
+        )        
+        self.valkkafsmanager = ValkkaFSManager(valkkafs)
+
+        self.filterchain_group = LiveFilterChainGroup(
+            datamodel     = singleton.data_model, 
+            livethread    = self.livethread, 
+            usbthread     = self.usbthread,
+            gpu_handler   = self.gpu_handler, 
+            cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
         # self.filterchain_group.update() # TODO: use this once fixed
         
+        self.filterchain_group_play = PlaybackFilterChainGroup(
+            datamodel     = singleton.data_model,
+            valkkafsmanager
+                          = self.valkkafsmanager,
+            gpu_handler   = self.gpu_handler, 
+            cpu_scheme    = self.cpu_scheme)
+        self.filterchain_group_play.read()
+
         try:
             from valkka.mvision import multiprocess
         except ImportError:
@@ -550,7 +577,9 @@ class MyGui(QtWidgets.QMainWindow):
         self.livethread.close()
         self.usbthread.close()
         self.filterchain_group.close()
+        self.filterchain_group_play.close()
         self.gpu_handler.close()
+        self.valkkafsmanager.close()
         if singleton.thread:
             singleton.thread.stop()
 
