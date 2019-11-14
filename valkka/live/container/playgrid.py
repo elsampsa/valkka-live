@@ -303,5 +303,12 @@ def main():
 if (__name__ == "__main__"):
     main()
 
+"""
+TODO:
+- A different filterchain group for playback
+- Finish valkkafs config
+- Connect live filterchain to valkkafs
+- Enable creating playgrid views in the main gui
+"""
 
- 
+
