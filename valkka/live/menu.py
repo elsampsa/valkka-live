@@ -48,11 +48,16 @@ class GridMenu(QuickMenu):
     ]
 
 
+class PlayGridMenu(GridMenu):
+    title = "Playback Video Grid"
+    
+
 class ViewMenu(QuickMenu):
     title = "View"
     elements = [
         QuickMenuElement(title="Camera List"),
-        GridMenu
+        GridMenu,
+        PlayGridMenu
     ]
 
 
