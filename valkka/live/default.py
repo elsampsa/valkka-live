@@ -36,6 +36,8 @@ fps = 25
 valkkafs_config = {
     "dirname"    : singleton.valkkafs_dir.get(),
     "n_blocks"   : 10,
-    "blocksize"  : 10
+    "blocksize"  : 10,
+    "fs_flavor"  : "file",
+    "record"     : False
 }
 

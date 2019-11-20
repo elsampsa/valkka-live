@@ -39,7 +39,7 @@ import json
 import pickle
 from pprint import pprint, pformat
 
-from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager
+from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError
 # from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
 from valkka.api2.tools import parameterInitCheck
 
@@ -127,11 +127,14 @@ class MyGui(QtWidgets.QMainWindow):
         else:
             self.mvision = False
 
+        self.valkkafs = None
+
+
     def initConfigFiles(self):
         self.first_start = True
         ver = self.readVersionNumber()
         if ver is not None:  # this indicates that the program has been started earlier
-            print("valkka.live : loading config file for version number")
+            print("valkka.live : loading config file for version number", ver)
             if ver:
                 if (ver[0] == version.VERSION_MAJOR and ver[1] == version.VERSION_MINOR):
                     self.first_start = False
@@ -146,7 +149,7 @@ class MyGui(QtWidgets.QMainWindow):
             config_dir.reMake()
             self.saveVersionNumber()
             # self.saveConfigFile()
-            self.saveWindowLayout()
+            self.saveWindowLayout() # clears window layout
             self.first_start = True
 
 
@@ -556,14 +559,57 @@ class MyGui(QtWidgets.QMainWindow):
             affinity = self.cpu_scheme.getUSB()
         )
 
-        valkkafs = ValkkaFS.newFromDirectory(
-            dirname = valkkafs_config["dirname"],
-            blocksize = valkkafs_config["blocksize"],
-            n_blocks = valkkafs_config["n_blocks"],
-            verbose = True
-        )
+        # see datamodel.row.ValkkaFSConfigRow
+        blocksize = valkkafs_config["blocksize"]
+        n_blocks  = valkkafs_config["n_blocks"]
+        fs_flavor = valkkafs_config["fs_flavor"] 
+        record    = valkkafs_config["record"]
 
-        self.valkkafsmanager = ValkkaFSManager(valkkafs)
+        # TODO: activate this if ValkkaFS changed in config!
+        #if record:
+        if fs_flavor == "file":
+            partition_uuid = None
+        else:
+            partition_uuid = valkkafs_config["partition_uuid"]
+            
+        create_new_fs = False
+
+        if self.valkkafs is None: # first time
+            create_new_fs = False # try to load initially from disk
+        else:
+            create_new_fs = not self.valkkafs.is_same( # has changed, so must recreate
+                partition_uuid = partition_uuid, # None or a string
+                blocksize = blocksize,
+                n_blocks = n_blocks
+            )
+        
+        if not create_new_fs: # let's try to load it
+            print("openValkka: trying to load FS")
+            try:
+                self.valkkafs = ValkkaFS.loadFromDirectory(
+                    dirname = singleton.valkkafs_dir.get()
+                )
+            except ValkkaFSLoadError as e:
+                print("openValkka: loading ValkkaFS failed with", e)
+                create_new_fs = True # no luck, must recreate
+
+        if create_new_fs:
+            print("openValkka: (re)create FS")
+            self.valkkafs = ValkkaFS.newFromDirectory(
+                dirname = singleton.valkkafs_dir.get(),
+                blocksize = valkkafs_config["blocksize"],
+                n_blocks = valkkafs_config["n_blocks"],
+                partition_uuid = partition_uuid,
+                verbose = True
+            )
+
+        """
+        else:
+            self.valkkafs = None
+        """
+
+        # if no recording selected, set self.valkkafsmanager = None
+        self.valkkafsmanager = ValkkaFSManager(self.valkkafs)
 
         self.filterchain_group = LiveFilterChainGroup(
             datamodel     = singleton.data_model, 

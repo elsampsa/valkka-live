@@ -22,7 +22,7 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
-from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn, ConstantComboBoxColumn, ConstantRadioButtonColumn
+from cute_mongo_forms.column import LineEditColumn, IntegerColumn, SpinBoxIntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn, ConstantComboBoxColumn, ConstantRadioButtonColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from valkka.live import default, tools, style
 from valkka.live.datamodel.column import USBCameraColumn
@@ -330,8 +330,8 @@ class ValkkaFSConfigRow(Row):
         for key, value in findBlockDevices().items():
             # they look like this: {'27f5e5d8-9e20-4bc1-84aa-6a3cbab498c8': ('/dev/sdc1', 500107862016)}
             lis.append((
-                value[0]+" ("+str(int(value[1]/1024/1024))+" MB)",
-                key
+                value[0]+" ("+str(int(value[1]/1024/1024))+" MB)", # shown in dropdown
+                key # data to be saved
             ))
         return lis
 
@@ -341,9 +341,15 @@ class ValkkaFSConfigRow(Row):
     "blocksize"  : 10
     """
 
-    columns = [
+    columns = [        
         ColumnSpec(
-            IntegerColumn,
+            CheckBoxColumn, 
+            key_name    = "record", 
+            label_name  = "Activate Recording",
+            def_value   = False),
+
+        ColumnSpec(
+            SpinBoxIntegerColumn,
             key_name    = "blocksize",
             label_name  = "Blocksize (MB)",
             min_value   = 1,
@@ -351,8 +357,8 @@ class ValkkaFSConfigRow(Row):
             def_value   = default.valkkafs_config["blocksize"]), 
 
         ColumnSpec(
-            IntegerColumn,
-            key_name    = "number_of_blocks",
+            SpinBoxIntegerColumn,
+            key_name    = "n_blocks",
             label_name  = "Number of Blocks",
             min_value   = 5,
             max_value   = 999999999,
@@ -365,7 +371,7 @@ class ValkkaFSConfigRow(Row):
             list = [("Normal file", "file"),("Dedicated block device", "valkkafs")]),
 
         ColumnSpec(ConstantComboBoxColumn, 
-            key_name = "device",    
+            key_name = "partition_uuid",    
             label_name = "Available Devices", 
             callback = getValkkaFSDevices)
         ]
@@ -373,7 +379,61 @@ class ValkkaFSConfigRow(Row):
         # Actions (buttons): format, save, cancel (exit without applying changes)
   
 
+    def makeWidget(self):
+        """Subclassed from Row : custom form.  Add a total disk space field.
+        """
+        self.widget = FormWidget()
+        self.lay = QtWidgets.QGridLayout(self.widget)
+        
+        cc=0;
+        self.placeWidget(cc, "record"); cc+=1
+        self.placeWidget(cc, "blocksize"); cc+=1
+        self.placeWidget(cc, "n_blocks"); cc+=1
 
+        self.label_total_size = QtWidgets.QLabel("Total Size (MB)", self.widget)
+        self.label_total_size_value = QtWidgets.QLabel("", self.widget)
+        self.placeWidgetPair(cc, (self.label_total_size, self.label_total_size_value)); cc+=1
+
+        self.placeWidget(cc, "fs_flavor"); cc+=1
+        self.placeWidget(cc, "partition_uuid"); cc+=1
+        
+        self.connectNotifications()
+
+        def fs_size_changed():
+            total_size_mb = self["blocksize"].getValue()*self["n_blocks"].getValue()
+            self.label_total_size_value.setText(str(total_size_mb))
+
+        def block_device_slot():
+            self["partition_uuid"].updateWidget()
+            n_devs = self["partition_uuid"].widget.count() # QComboBox.count()
+            if n_devs < 1:
+                self["fs_flavor"]["file"].setChecked(True)
+            
+        self["blocksize"].widget.valueChanged.connect(fs_size_changed)
+        self["n_blocks"].widget.valueChanged.connect(fs_size_changed)
+        self["fs_flavor"]["valkkafs"].clicked.connect(block_device_slot)
+
+        fs_size_changed()
+        block_device_slot()
+
+        self.label3  = QtWidgets.QLabel("Actions", self.widget)
+        self.label3_ = QtWidgets.QWidget(self.widget)
+        self.placeWidgetPair(cc, (self.label3, self.label3_)); cc+=1
+        
+        self.format_button = QtWidgets.QPushButton("REFORMAT", self.widget)
+        self.format_label = QtWidgets.QLabel("Applies filesystem changes and clears ValkkaFS")
+        self.placeWidgetPair(cc, (self.format_button, self.format_label)); cc+=1
+        
+        """
+        self.save_button = QtWidgets.QPushButton("SAVE", self.widget)
+        self.save_label = QtWidgets.QLabel("Applies other changes")
+        self.placeWidgetPair(cc, (self.save_button, self.save_label)); cc+=1
+        """
+
+        self.cancel_button = QtWidgets.QPushButton("CANCEL", self.widget)
+        self.cancel_label = QtWidgets.QLabel("Exits without applying any changes")
+        self.placeWidgetPair(cc, (self.cancel_button, self.cancel_label)); cc+=1
+        
 
 
 def main():
