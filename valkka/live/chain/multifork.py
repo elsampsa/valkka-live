@@ -243,17 +243,21 @@ class MultiForkFilterchain(BaseFilterchain):
             
     # (De)activate ValkkaFSWriterThread for this slot
     
-    def setRecording(self, id_rec: int, record_type: RecordType, manager: ValkkaFSManager):
+    def setRecording(self, record_type: RecordType, manager: ValkkaFSManager, id_rec: int = None, ):
         # for the moment, only one ValkkaFSManager can be set
         if self.record_type == RecordType.never:
             print("setRecording: never")
             return
+
+        if id_rec is None:
+            self.id_rec = self._id
+        else:
+            self.id_rec = id_rec
         
         if self.valkkafsmanager is not None:
             self.clearRecording()
             
         self.record_type = record_type
-        self.id_rec = id_rec
         self.valkkafsmanager = manager
         
         self.fork_filter_file.connect("recorder_" + str(self.slot) , self.valkkafsmanager.getFrameFilter())

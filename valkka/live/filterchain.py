@@ -264,7 +264,16 @@ class LiveFilterChainGroup(FilterChainGroup):
         return device
 
 
+    def setRecording(self, record_type: RecordType, manager: ValkkaFSManager):
+        """Set recording state for all filterchains in this group
+        """
+        for chain in self.chains:
+            chain.setRecording(
+                record_type = record_type,
+                manager = manager
+                )
 
+    
 class PlaybackFilterChainGroup(FilterChainGroup):
     """Create & manage filterchains for live video
 

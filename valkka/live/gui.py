@@ -63,6 +63,7 @@ from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListI
 from valkka.live.cameralist import BasicView
 
 from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
+from valkka.live.chain.multifork import RecordType
 
 pre = "valkka.live :"
 
@@ -253,7 +254,7 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
-        
+        self.manage_valkkafs_container.signals.save.connect(self.config_modified_slot)
 
         self.config_win = QTabCapsulate(
                 "Configuration",
@@ -597,7 +598,7 @@ class MyGui(QtWidgets.QMainWindow):
             print("openValkka: (re)create FS")
             self.valkkafs = ValkkaFS.newFromDirectory(
                 dirname = singleton.valkkafs_dir.get(),
-                blocksize = valkkafs_config["blocksize"],
+                blocksize = valkkafs_config["blocksize"] * 1024*1024, # MB
                 n_blocks = valkkafs_config["n_blocks"],
                 partition_uuid = partition_uuid,
                 verbose = True
@@ -618,6 +619,9 @@ class MyGui(QtWidgets.QMainWindow):
             gpu_handler   = self.gpu_handler, 
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
+        if record:
+            self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)
+        
         # self.filterchain_group.update() # TODO: use this once fixed
         
         self.filterchain_group_play = PlaybackFilterChainGroup(
