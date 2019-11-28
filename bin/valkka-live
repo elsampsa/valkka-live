@@ -6,7 +6,7 @@ export __GL_SYNC_TO_VBLANK=0
 # # turn off compositor # maybe no ..
 # qdbus org.kde.KWin /Compositor suspend
 
-run-valkka-live
+run-valkka-live "$@"
 if [[ $? -eq 139 ]]; then 
     echo "****************************************************************************************************************************"
     echo "**** Segfault when executing Valkka : are you running on tested hardware and drivers?  See: http://www.valkka.fi   *********"

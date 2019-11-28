@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    tools.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   
 """
 

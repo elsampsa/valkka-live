@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    grid.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Classes implementing a N x M grid, based on the RootVideoContainer (see root.py)
 """
 
@@ -35,7 +35,7 @@ from valkka.live.filterchain import FilterChainGroup
 from valkka.live.container.root import RootVideoContainer
 from valkka.live.container.video import VideoContainer
 from valkka.live.qt.playwidget import TimeLineWidget, CalendarWidget
-from valkka.live.qt.playback import PlaybackController
+from valkka.live.qt.playback import PlaybackController, WidgetSet
 
 
 class PlayVideoContainerNxM(RootVideoContainer):
@@ -80,7 +80,8 @@ class PlayVideoContainerNxM(RootVideoContainer):
     parameter_defs = {
         "n_dim"             : (int, 1),  # y  3
         "m_dim"             : (int, 1),  # x  2
-        "valkkafsmanager"   : ValkkaFSManager
+        "valkkafsmanager"   : ValkkaFSManager,
+        "playback_controller" : PlaybackController
         }
     parameter_defs.update(RootVideoContainer.parameter_defs)
     
@@ -90,6 +91,7 @@ class PlayVideoContainerNxM(RootVideoContainer):
         kwargs.pop("n_dim")
         kwargs.pop("m_dim")
         kwargs.pop("valkkafsmanager")
+        kwargs.pop("playback_controller")
         super().__init__(**kwargs)
 
 
@@ -163,6 +165,7 @@ class PlayVideoContainerNxM(RootVideoContainer):
         self.calendarwidget = CalendarWidget(datetime.date.today(), parent = self.calendar_tab)
         self.calendar_lay.addWidget(self.calendarwidget)
 
+        """
         self.playback_controller = PlaybackController(
             calendar_widget     = self.calendarwidget,
             timeline_widget     = self.timelinewidget,
@@ -170,7 +173,16 @@ class PlayVideoContainerNxM(RootVideoContainer):
             play_button         = self.play_button,
             stop_button         = self.stop_button
             )
-        
+        """
+        self.widget_set = WidgetSet(
+            calendar_widget     = self.calendarwidget,
+            timeline_widget     = self.timelinewidget,
+            play_button         = self.play_button,
+            stop_button         = self.stop_button,
+            zoom_to_fs_button   = self.zoom_to_fs_button
+        )
+        self.playback_controller.register(self.widget_set)
+
         class ScreenMenu(QuickMenu):
             title = "Change Screen"
             elements = [
@@ -259,6 +271,13 @@ class PlayVideoContainerNxM(RootVideoContainer):
             # pass those callbacks to each child
             child.set_cb_focus(get_hide_others_func(child))
             child.set_cb_unfocus(get_show_others_func(child))
+
+
+    def close(self):
+        self.playback_controller.deregister(self.widget_set)
+        super().close()
+
+
 
 
 

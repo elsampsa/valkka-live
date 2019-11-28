@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    multifork.py
 @author  Sampsa Riikonen
 @date    2019
-@version 0.8.0 
+@version 0.9.0 
 @brief   
 """
 
@@ -115,7 +115,7 @@ class MultiForkFilterchain(BaseFilterchain):
         # Timestamp correction type: TimeCorrectionType_none,
         # TimeCorrectionType_dummy, or TimeCorrectionType_smart (default)
         "time_correction"
-                       : None,
+                       : (int, core.TimeCorrectionType_smart),
                        
         # identify this device / stream
         "_id"          : int,
@@ -131,6 +131,7 @@ class MultiForkFilterchain(BaseFilterchain):
         "flush_when_full"
                        : (bool, False),  # clear fifo at overflow
         "affinity"     : (int, -1),
+        "number_of_threads" : (int, 2),  # let's set this to > 1.  Otherwise people start whining when their 4K 60 fps cameras don't work..
         "verbose"      : (bool, False),
         "msreconnect"  : (int, 0),
 
@@ -335,10 +336,15 @@ class MultiForkFilterchain(BaseFilterchain):
         # stream address, i.e. "rtsp://.."
         self.ctx.msreconnect = self.msreconnect
         
-        if (self.time_correction is not None):
-            self.ctx.time_correction = self.time_correction
         self.ctx.recv_buffer_size = self.recv_buffer_size
         self.ctx.reordering_time = self.reordering_mstime * 1000  # from millisecs to microsecs
+
+        self.ctx.time_correction = self.time_correction
+        if self.ctx.time_correction == core.TimeCorrectionType_smart:
+            print("createLiveContext: smart timestamps")
+        else:
+            print("createLiveContext: dummy timestamps")
+            
 
         # connect to the main filterchain
         self.ctx.framefilter = self.fork_filter_main
@@ -410,8 +416,12 @@ class MultiForkFilterchain(BaseFilterchain):
             "avthread_" + str(self.slot),
             self.fork_filter_decode,
             self.framefifo_ctx)
+
+        if self.affinity > -1: # affinity overwrites number of threads
+            self.avthread.setAffinity(self.affinity)
+        elif self.number_of_threads > 1:
+            self.avthread.setNumberOfThreads(self.number_of_threads) # two by default
         
-        self.avthread.setAffinity(self.affinity)
         # get input FrameFilter from AVThread
         self.av_in_filter = self.avthread.getFrameFilter()
         

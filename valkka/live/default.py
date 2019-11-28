@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    default.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Default configuration values
 """
 
@@ -28,7 +28,8 @@ memory_config = {
     "n_1080p"   : 20,
     "n_1440p"   : 10,
     "n_4K"      : 5,
-    "bind"      : True
+    "bind"      : False,
+    "overwrite_timestamps" : False
     }
 
 fps = 25
@@ -38,6 +39,7 @@ valkkafs_config = {
     "n_blocks"   : 10,
     "blocksize"  : 10,
     "fs_flavor"  : "file",
-    "record"     : False
+    "record"     : False,
+    "partition_uuid" : None
 }
 

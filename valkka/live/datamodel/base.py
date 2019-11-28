@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
@@ -59,11 +59,12 @@ class DataModel:
         # print("DataModel", "clearAll")
         self.clearCameraCollection()
         self.config_collection.clear()
+        self.valkkafs_collection.clear()
 
     def saveAll(self):
-        self.camera_collection.save()
-        self.config_collection.save()
-
+        for collection in self.collections:
+            collection.save()
+        
     def clearCameraCollection(self):
         self.camera_collection.clear()
         for i in range(1, constant.max_devices + 1):
@@ -151,6 +152,7 @@ class DataModel:
                 MemoryConfigRow
                 ]
             )
+        self.collections.append(self.config_collection)
 
         self.valkkafs_collection = \
             SimpleCollection(filename=os.path.join(self.directory, "valkkafs.dat"),
@@ -158,8 +160,8 @@ class DataModel:
                 ValkkaFSConfigRow
                 ]
             )
-
-        self.collections.append(self.config_collection)
+        self.collections.append(self.valkkafs_collection)
+        
 
     def getDeviceList(self):
         return DeviceList(collection=self.camera_collection)
@@ -213,6 +215,24 @@ class DataModel:
                 devices_by_id[device._id] = device
         return devices_by_id
         
+
+    def writeDefaultValkkaFSConfig(self):
+        self.valkkafs_collection.new(
+            ValkkaFSConfigRow,
+            {
+                # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
+                "n_blocks"   : default.valkkafs_config["n_blocks"],
+                "blocksize"  : default.valkkafs_config["blocksize"],
+                "fs_flavor"  : default.valkkafs_config["fs_flavor"],
+                "record"     : default.valkkafs_config["record"],
+                "partition_uuid" : default.valkkafs_config["partition_uuid"]
+            })
+
+
+    def writeDefaultMemoryConfig(self):
+        self.config_collection.new(MemoryConfigRow, default.memory_config)
+
+
 
 
 class MyGui(QtWidgets.QMainWindow):

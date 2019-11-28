@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Manage and group Valkka filterchains
 """
 
@@ -34,6 +34,8 @@ from valkka.api2.valkkafs import ValkkaFSManager
 from valkka.live.datamodel.base import DataModel
 from valkka.live.datamodel.row import RTSPCameraRow, USBCameraRow
 from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+
+from valkka import core
 
 
 class FilterChainGroup:
@@ -130,10 +132,18 @@ class LiveFilterChainGroup(FilterChainGroup):
         TODO: we can, of course, just modify the added / removed cameras
         """
         self.reset()
+
+        # take some stuff from the general config
+        config = next(self.datamodel.config_collection.get())
+        if config["overwrite_timestamps"]:
+            self.time_correction = core.TimeCorrectionType_dummy
+        else:
+            self.time_correction = core.TimeCorrectionType_smart
+
         for dic in self.datamodel.camera_collection.get(): # TODO: search directly for RTSPCameraRow
             if (self.verbose): print(self.pre, "read : dic", dic)
             affinity = -1
-            if self.cpu_scheme:
+            if self.cpu_scheme is not None:
                 affinity = self.cpu_scheme.getAV()
             classname = dic.pop("classname")
 
@@ -162,8 +172,10 @@ class LiveFilterChainGroup(FilterChainGroup):
                 affinity    = affinity,
                 msreconnect = 10000,
                 # verbose     = True,
-                verbose     =False,
+                verbose      = False,
                 
+                time_correction = self.time_correction, # overwrite timestamps or not?
+
                 shmem_image_dimensions = constant.shmem_image_dimensions,
                 shmem_n_buffer = constant.shmem_n_buffer,
                 shmem_image_interval = constant.shmem_image_interval

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 import imp
@@ -38,6 +38,7 @@ version.check() # checks the valkka version
 import json
 import pickle
 from pprint import pprint, pformat
+import argparse
 
 from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError
 # from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
@@ -53,6 +54,7 @@ from valkka.live.local import ValkkaLocalDir
 from valkka.live import default
 from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live.qt.playback import PlaybackController
 from valkka.live.qt.tools import QCapsulate, QTabCapsulate
 
 from valkka.live.datamodel.base import DataModel
@@ -64,6 +66,15 @@ from valkka.live.cameralist import BasicView
 
 from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
 from valkka.live.chain.multifork import RecordType
+
+from valkka.api2.logging import *
+from valkka import core # for logging
+"""
+core.setLogLevel_threadlogger(loglevel_crazy)
+core.setLogLevel_valkkafslogger(loglevel_debug)
+core.setLogLevel_avthreadlogger(loglevel_debug)
+core.setLogLevel_valkkafslogger(loglevel_debug)
+"""
 
 pre = "valkka.live :"
 
@@ -129,6 +140,9 @@ class MyGui(QtWidgets.QMainWindow):
             self.mvision = False
 
         self.valkkafs = None
+
+        self.config_modified = False
+        self.valkkafs_modified = False
 
 
     def initConfigFiles(self):
@@ -254,7 +268,7 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
-        self.manage_valkkafs_container.signals.save.connect(self.config_modified_slot)
+        self.manage_valkkafs_container.signals.save.connect(self.valkkafs_modified_slot)
 
         self.config_win = QTabCapsulate(
                 "Configuration",
@@ -523,12 +537,14 @@ class MyGui(QtWidgets.QMainWindow):
             memory_config = next(singleton.data_model.config_collection.get({"classname" : MemoryConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default mem config")
+            singleton.data_model.writeDefaultMemoryConfig()
             memory_config = default.memory_config
 
         try:
             valkkafs_config = next(singleton.data_model.valkkafs_collection.get({"classname" : ValkkaFSConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default valkkafs config")
+            singleton.data_model.writeDefaultValkkaFSConfig()
             valkkafs_config = default.valkkafs_config
 
         n_frames = round(memory_config["msbuftime"] * default.fps / 1000.) # accumulated frames per buffering time = n_frames
@@ -578,6 +594,7 @@ class MyGui(QtWidgets.QMainWindow):
         if self.valkkafs is None: # first time
             create_new_fs = False # try to load initially from disk
         else:
+            print("openValkka: ValkkaFS changed!")
             create_new_fs = not self.valkkafs.is_same( # has changed, so must recreate
                 partition_uuid = partition_uuid, # None or a string
                 blocksize = blocksize,
@@ -611,6 +628,7 @@ class MyGui(QtWidgets.QMainWindow):
 
         # if no recording selected, set self.valkkafsmanager = None
         self.valkkafsmanager = ValkkaFSManager(self.valkkafs)
+        self.playback_controller = PlaybackController(valkkafs_manager = self.valkkafsmanager)
 
         self.filterchain_group = LiveFilterChainGroup(
             datamodel     = singleton.data_model, 
@@ -644,15 +662,31 @@ class MyGui(QtWidgets.QMainWindow):
                 
     def closeValkka(self):
         # live => chain => opengl
-        self.livethread.close()
-        self.usbthread.close()
+        #self.livethread.close()
+        # self.usbthread.close()
+
+        print("Closing live & usb threads")
+        self.livethread.requestClose()
+        self.usbthread.requestClose()
+        self.livethread.waitClose()
+        self.usbthread.waitClose()
+        
+        print("Closing filterchains")
         self.filterchain_group.close()
         self.filterchain_group_play.close()
+
+        print("Closing OpenGLThreads")
         self.gpu_handler.close()
+
+        self.playback_controller.close()
+        
+        print("Closing ValkkaFS threads")
         self.valkkafsmanager.close()
+        
+        print("Closing multiprocessing frontend")
         if singleton.thread:
             singleton.thread.stop()
-
+        
 
     def reOpenValkka(self):
         print("gui: valkka reinit")
@@ -691,7 +725,8 @@ class MyGui(QtWidgets.QMainWindow):
                 filterchain_group   = self.filterchain_group_play, 
                 n_dim               = n, 
                 m_dim               = m,
-                valkkafsmanager     = self.valkkafsmanager
+                valkkafsmanager     = self.valkkafsmanager,
+                playback_controller = self.playback_controller
                 )
             cont.signals.closing.connect(self.rem_playback_grid_container_slot)
             self.containers_playback.append(cont)
@@ -756,12 +791,17 @@ class MyGui(QtWidgets.QMainWindow):
 
     def config_dialog_slot(self):
         self.config_modified = False
+        self.valkkafs_modified = False
         self.config_win.show()
         self.manage_cameras_container.choose_first_slot()
         
     def config_modified_slot(self):
         self.config_modified = True
         
+    def valkkafs_modified_slot(self):
+        self.config_modified = True
+        self.valkkafs_modified = True
+
     def camera_list_slot(self):
         self.camera_list_win.show()
     
@@ -781,7 +821,47 @@ class MyGui(QtWidgets.QMainWindow):
 
 
 
+
+def process_cl_args():
+
+    def str2bool(v):
+        return v.lower() in ("yes", "true", "t", "1")
+
+    parser = argparse.ArgumentParser("valkka-live")
+    parser.register('type','bool',str2bool)    
+    """
+    parser.add_argument("command", action="store", type=str,                 
+        help="mandatory command)")
+    """
+    parser.add_argument("--quiet", action="store", type=bool, default=False, 
+        help="less verbosity")
+
+    parser.add_argument("--reset", action="store", type=bool, default=False, 
+        help="less verbosity")
+
+    parsed_args, unparsed_args = parser.parse_known_args()
+    return parsed_args, unparsed_args
+
 def main():
+    parsed_args, unparsed_args = process_cl_args()
+    
+    #print(parsed_args, unparsed_args)
+    #return
+
+    #"""
+    if len(unparsed_args) > 0:
+        print("Unknown command-line argument", unparsed_args[0])
+        return
+    #"""
+
+    if parsed_args.quiet:
+        # core.setLogLevel_valkkafslogger(loglevel_debug)
+        print("libValkka verbosity set to fatal messages only")
+        core.fatal_log_all()
+
+    if parsed_args.reset:
+        config_dir.reMake()
+
     app = QtWidgets.QApplication(["Valkka Live"])
     mg = MyGui()
     mg.show()

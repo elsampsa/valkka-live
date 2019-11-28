@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    row.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0
+@version 0.9.0 
 @brief
 """
 
@@ -89,7 +89,8 @@ class RTSPCameraRow(Row):
         ColumnSpec(
             LineEditColumn, 
             key_name="subaddress_main", 
-            label_name="Subaddress"),
+            label_name="Subaddress",
+            visible=False),
         ColumnSpec(
             CheckBoxColumn, 
             key_name="live_main", 
@@ -163,6 +164,7 @@ class RTSPCameraRow(Row):
         self.placeWidget(cc, "password"); cc+=1
         self.placeWidget(cc, "port"); cc+=1
         self.placeWidget(cc, "tail"); cc+=1
+        # self.setVisible("tail", False) # test
         
         # Mainstream
         self.label_mainstream = QtWidgets.QLabel("Mainstream", self.widget)
@@ -181,11 +183,15 @@ class RTSPCameraRow(Row):
         self.label_substream = QtWidgets.QLabel("Substream", self.widget)
         self.label_substream.setStyleSheet(style.form_highlight)
         self.placeWidgetPair(cc, (self.label_substream, None)); cc+=1
+        self.label_substream.setVisible(False) # hide for the moment
         self.placeWidget(cc, "subaddress_sub"); cc+=1
         # complete RTSP address
         self.label_substream_address = QtWidgets.QLabel("RTSP address", self.widget)
         self.substream_address = QtWidgets.QLabel("", self.widget)
         self.placeWidgetPair(cc, (self.label_substream_address, self.substream_address)); cc+=1
+        self.label_substream_address.setVisible(False); self.substream_address.setVisible(False); 
+        # .. hide for the moment
+
         # live and rec
         self.placeWidget(cc, "live_sub"); cc+=1
         self.placeWidget(cc, "rec_sub"); cc+=1
@@ -196,7 +202,6 @@ class RTSPCameraRow(Row):
         self.placeWidgetPair(cc, (self.copy_button, None))
         self.copy_button.clicked.connect(self.copy_slot)
         """
-        
         self.connectNotifications()
     
         def rec_main_clicked():
@@ -218,15 +223,22 @@ class RTSPCameraRow(Row):
         self.widget.signals.show.connect(self.show_slot)
         
         # TODO: remove these restrictions once functional:
+        """
         self["subaddress_main"].widget.setEnabled(False)
         self["subaddress_sub"].widget.setEnabled(False)
         self["live_main"].widget.setEnabled(False)
         self["rec_main"].widget.setEnabled(False)
         self["live_sub"].widget.setEnabled(False)
         self["rec_sub"].widget.setEnabled(False)
+        """
+        self.setVisible("subaddress_main", False)
+        self.setVisible("subaddress_sub", False)
+        self.setVisible("live_main", False)
+        self.setVisible("rec_main", False)
+        self.setVisible("live_sub", False)
+        self.setVisible("rec_sub", False)
         
-        
-        
+                
     """
     def get(self, collection, _id):
         #Subclassed from Row : Load one entry from db to QtWidgets
@@ -265,7 +277,6 @@ class RTSPCameraRow(Row):
 
 class MemoryConfigRow(Row):
     # A general collection for misc. stuff: configuration, etc.
-
     columns = [
         ColumnSpec(
             IntegerColumn,
@@ -305,8 +316,13 @@ class MemoryConfigRow(Row):
         ColumnSpec(
             CheckBoxColumn,
             key_name="bind",
-            label_name="Bind Valkka threads to cores",
-            def_value=default.memory_config["bind"])
+            label_name="Bind decoding thread to single core",
+            def_value=default.memory_config["bind"]),
+        ColumnSpec(
+            CheckBoxColumn,
+            key_name="overwrite_timestamps",
+            label_name="Overwrite timestamps",
+            def_value=default.memory_config["overwrite_timestamps"])
     ]
 
 
@@ -341,7 +357,8 @@ class ValkkaFSConfigRow(Row):
     "blocksize"  : 10
     """
 
-    columns = [        
+    columns = [
+        # TODO: for valkkafs metadata directory: (1) add a non-editable column
         ColumnSpec(
             CheckBoxColumn, 
             key_name    = "record", 
@@ -385,7 +402,7 @@ class ValkkaFSConfigRow(Row):
         self.widget = FormWidget()
         self.lay = QtWidgets.QGridLayout(self.widget)
         
-        cc=0;
+        cc = 0
         self.placeWidget(cc, "record"); cc+=1
         self.placeWidget(cc, "blocksize"); cc+=1
         self.placeWidget(cc, "n_blocks"); cc+=1
@@ -416,6 +433,7 @@ class ValkkaFSConfigRow(Row):
         fs_size_changed()
         block_device_slot()
 
+        """
         self.label3  = QtWidgets.QLabel("Actions", self.widget)
         self.label3_ = QtWidgets.QWidget(self.widget)
         self.placeWidgetPair(cc, (self.label3, self.label3_)); cc+=1
@@ -424,16 +442,14 @@ class ValkkaFSConfigRow(Row):
         self.format_label = QtWidgets.QLabel("Applies filesystem changes and clears ValkkaFS")
         self.placeWidgetPair(cc, (self.format_button, self.format_label)); cc+=1
         
-        """
         self.save_button = QtWidgets.QPushButton("SAVE", self.widget)
         self.save_label = QtWidgets.QLabel("Applies other changes")
         self.placeWidgetPair(cc, (self.save_button, self.save_label)); cc+=1
-        """
 
         self.cancel_button = QtWidgets.QPushButton("CANCEL", self.widget)
         self.cancel_label = QtWidgets.QLabel("Exits without applying any changes")
         self.placeWidgetPair(cc, (self.cancel_button, self.cancel_label)); cc+=1
-        
+        """
 
 
 def main():

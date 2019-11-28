@@ -13,7 +13,7 @@ Valkka Python3 examples library is free software: you can redistribute it and/or
 @author  Petri Eränkö
 @author  Sampsa Riikonen
 @date    2017
-@version 0.13.3 
+@version 0.9.0 
 @brief
 """
 
@@ -307,6 +307,7 @@ class TimeLineWidget(QtWidgets.QWidget):
         super().__init__(parent)
         self.signals = TimeLineWidget.Signals()
         self.logger = getLogger(__name__ + "." + self.__class__.__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.propagate = False
 
         self.setFSTimeLimits(None)
@@ -932,6 +933,10 @@ class TimeLineWidget(QtWidgets.QWidget):
         qp.setPen(pen)
         qp.setBrush(brush)
         
+        if limits[0] < 0 or limits[1] < 0:
+            self.logger.critical("bad paintLimits: %i, %i, %i, %i", x0, x1, y0, y1)
+            return
+
         x0 = int(round(self.pixel_per_msec * (limits[0] - self.t0))) + self.lmx
         x1 = int(round(self.pixel_per_msec * (limits[1] - self.t0)))
         y0 = self.ytick + self.mitick
@@ -1162,6 +1167,11 @@ class TimeLineWidget(QtWidgets.QWidget):
         """
         self.mstime = mstimestamp
         self.repaint()
+
+    def zoom_fs_limits_slot(self):
+        self.logger.debug("zoom_fs_limits_slot")
+        self.zoomToFS()
+
 
 
 class MyGui(QtWidgets.QMainWindow):

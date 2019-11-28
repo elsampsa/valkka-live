@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    version.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.8.0 
+@version 0.9.0 
 @brief   Handle program version numbers
 """
 
@@ -28,7 +28,7 @@ from valkka.live import constant
 
 # the following three lines are modded by setver.bash:
 VERSION_MAJOR=0
-VERSION_MINOR=8
+VERSION_MINOR=9
 VERSION_PATCH=0
 
 version_tag = "%i.%i.%i" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
@@ -36,7 +36,7 @@ version_tag = "%i.%i.%i" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 # required valkka version
 MIN_VALKKA_VERSION_MAJOR = 0
 MIN_VALKKA_VERSION_MINOR = 14
-MIN_VALKKA_VERSION_PATCH = 0
+MIN_VALKKA_VERSION_PATCH = 1
 
 # required darknet_py version # https://github.com/elsampsa/darknet-python
 MIN_DARKNET_VERSION_MAJOR = 0
