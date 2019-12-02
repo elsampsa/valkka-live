@@ -22,6 +22,8 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
+from valkka.live.qt.tools import numpy2QPixmap
+from valkka.api2 import ShmemRGBClient
 
 
 class FormWidget(QtWidgets.QWidget):
@@ -39,6 +41,91 @@ class FormWidget(QtWidgets.QWidget):
         self.signals.show.emit()
         e.accept()
 
+
+class SimpleVideoWidget(QtWidgets.QWidget):
+    """Receives QPixMaps to a slot & draws them
+
+    TODO: mouse gestures, draw lines, boxes, etc.
+    """
+    def __init__(self, def_pixmap, parent = None):
+        super().__init__(parent)
+        self.painter = QPainter()
+        self.pixmap = def_pixmap
+
+    def paintEvent(self, e):
+        # http://zetcode.com/gui/pyqt5/painting/
+        self.painter.begin(self)
+        self.drawWidget(self.painter)
+        self.painter.end()
+
+    def drawWidget(self, qp):
+        qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
+
+    # *** slots ***
+    def set_pixmap_slot(self, pixmap):
+        self.pixmap = pixmap
+        self.repaint()
+    
+
+class QValkkaShmemThread(QtCore.QThread):
+    """A Thread that creates a Valkka shmem client, reads frames from it & fires them as qt signals
+
+    Connect QValkkaShmemThread to SimpleVideoWidget.set_pixmap_slot
+    """
+    class Signals(QtCore.QObject):  
+        pixmap = QtCore.Signal(object)
+        exit = QtCore.Signal()
+
+    def __init__(self, shmem_name: str, shmem_n_buffer: int, width: int, height: int, verbose = False):
+        super().__init__()
+        self.pre = "QValkkaShmemThread: "
+        self.shmem_name = shmem_name
+        self.shmem_n_buffer = shmem_n_buffer
+        self.width = width
+        self.height = height
+        self.verbose = verbose
+
+        self.loop = True
+        self.signals = self.Signals()
+        self.signals.exit.connect(self.exit_slot_)
+        
+    def run(self):
+        self.client = ShmemRGBClient(
+            name            = self.shmem_name,
+            n_ringbuffer    = self.n_buffer,   
+            width           = self.width,
+            height          = self.height,
+            # client timeouts if nothing has been received in 1000 milliseconds
+            mstimeout   =1000,
+            verbose     =False
+        )
+        while self.loop:
+            index, isize = self.client.pull()
+            if (index is None):
+                print(self.pre, "Client timed out..")
+            else:
+                print(self.pre, "Client index, size =", index, isize)
+                data = self.client.shmem_list[index]
+                img = data.reshape(
+                    (self.image_dimensions[1], self.image_dimensions[0], 3))
+                pixmap = numpy2QPixmap(img)
+                self.signals.pixmap.emit(pixmap)
+
+        print(self.pre, "exit")
+    
+    def exit_slot_(self):
+        self.loop = False
+        
+    def stop(self):
+        self.requestStop()
+        self.waitStop()
+        
+    def requestStop(self):
+        self.signals.exit.emit()
+    
+    def waitStop(self):
+        self.wait()
+    
 
 
 class MyGui(QtWidgets.QMainWindow):
@@ -63,7 +150,10 @@ class MyGui(QtWidgets.QMainWindow):
     
     
   def openValkka(self):
-    pass
+    """TODO:
+
+    - A simple filterchain for testing SimpleVideoWidget
+    """
     
   
   def closeValkka(self):

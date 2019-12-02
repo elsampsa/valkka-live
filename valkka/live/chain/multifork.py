@@ -85,7 +85,7 @@ class MultiForkFilterchain(BaseFilterchain):
              |             |
              |             +~~ callback (**)
              |
-             +-- {GateFrameFilter: sws_gate} --> {SwScaleFrameFilter: sws_filter} --> {ForkFrameFilterN: sws_fork_filter}
+             +-- {GateFrameFilter: sws_gate} --> {SwScaleFrameFilter: sws_filter} --> {ForkFrameFilterN: sws_fork_M}
                                                                                            |                                                                 
                    +------------+------------+---------------------------------------------+             
                    |            |            |
@@ -97,6 +97,18 @@ class MultiForkFilterchain(BaseFilterchain):
                  --> {ThreadSafeFrameFilter: common_sws_filter} --> {RGBShmemFrameFilter: common_rgb_shmem_filter}
                  [this could feed a common yolo detector for N streams]
                  
+        *** qt bitmap branch *** (in the case you need to pass bitmaps to the qt subsystem)
+
+        --> {GateFrameFilter: qt_gate} --> {TimeIntervalFrameFilter: qt_interval} --> {ForkFrameFilterN: qt_fork_N}
+                                                                                           |                                                                 
+                   +------------+------------+---------------------------------------------+             
+                   |            |            |
+                 on-demand terminals for RGB images, for example
+        
+
+
+
+
 
     """
     
@@ -168,6 +180,7 @@ class MultiForkFilterchain(BaseFilterchain):
         self.make_filesystem_branch() # calls by default self.fs_gate.unSet()
         self.make_decode_branch()
         self.make_analysis_branch()
+        self.make_qt_branch()
         
         self.createContext() # creates & registers contexes to LiveThread & USBDeviceThread
         
@@ -182,8 +195,13 @@ class MultiForkFilterchain(BaseFilterchain):
         # client counters
         self.decoding_client_count = 0
         self.movement_client_count = 0
+        
         self.sws_client_count = 0
         self.x_screen_count = {}
+
+        self.sws_client_count_qt = 0
+        self.x_screen_count_qt = {}
+
         for i in range(len(self.openglthreads)):
             self.x_screen_count[i] = 0
 
@@ -446,7 +464,22 @@ class MultiForkFilterchain(BaseFilterchain):
                 )
         # MovementFrameFilter(const char* name, long int interval, float treshold, long int duration, FrameFilter* next=NULL);
         
-    
+
+    def make_qt_branch(self):
+        """Connect only if bitmaps needed at the Qt side
+        """
+        self.qt_fork_filter = core.ForkFrameFilterN("qt_fork_" + str(self.slot))
+        self.qt_interval = core.TimeIntervalFrameFilter(
+            "qt_interval_" + str(self.slot),
+            self.shmem_image_interval,
+            self.qt_fork_filter
+            )
+        self.qt_gate = core.GateFrameFilter("qt_gate_" + str(self.slot), self.qt_interval)
+        # connect to main:
+        self.fork_filter_decode.connect("qt_branch_" + str(self.slot), self.qt_gate)
+
+
+
     # *** Client calculators ***
     
     def decoding_client(self, inc = 0):
@@ -499,7 +532,23 @@ class MultiForkFilterchain(BaseFilterchain):
         self.sws_client_count += inc
         self.movement_client(inc = inc)
     
-            
+
+    def sws_client_qt(self, inc = 0):
+        """Count instances that need the sw scaled images for Qt
+        
+        Enable qt_gate if number goes from 0 => 1
+        Disable qt_gate if number goes from 1 => 0
+        """
+        if self.sws_client_count_qt < 1 and inc > 0:
+            # connect the analysis branch
+            print("connecting qt_gate for slot", self.slot)
+            self.qt_gate.set()
+        elif self.sws_client_count_qt == 1 and inc < 0:
+            print("disconnecting qt_gate for slot", self.slot)
+            self.qt_gate.unSet()
+        self.sws_client_count_qt += inc
+        
+
     def x_screen_client(self, index, inc = 0):
         if self.x_screen_count[index] < 1 and inc > 0:
             openglthread = self.openglthreads[index]
@@ -542,6 +591,42 @@ class MultiForkFilterchain(BaseFilterchain):
         for key in list(self.shmem_terminals.keys()):
             self.releaseShmem(key)
             
+
+    # *** Shmem hooks for qt bitmaps ***
+
+    def getShmemQt(self):
+        """For passing bitmaps to the Qt side
+        """
+        shmem_name = self.idst + "_qt_" + str(len(self.shmem_terminals_qt))
+        print("getShmemQt : reserving", shmem_name)
+        shmem_filter = core.RGBShmemFrameFilter(shmem_name, self.shmem_n_buffer, self.width, self.height)
+        # shmem_filter = core.BriefInfoFrameFilter(shmem_name) # DEBUG: see if you are actually getting any frames here ..
+        self.shmem_terminals_qt[shmem_name] = shmem_filter
+        self.qt_fork_filter.connect(shmem_name, shmem_filter)
+        # if first time, connect main branch to swscale_branch
+        self.sws_client_qt(inc = 1)
+        return shmem_name 
+    
+        
+    def releaseShmemQt(self, shmem_name):
+        try:
+            self.shmem_terminals_qt.pop(shmem_name)
+        except KeyError:
+            return False
+        print("releaseShmemQt : releasing", shmem_name)
+        self.qt_fork_filter.disconnect(shmem_name)
+        self.sws_client_qt(inc = -1)
+        return True
+        
+
+    def releaseAllShmemQt(self):
+        for key in list(self.shmem_terminals_qt.keys()):
+            self.releaseShmemQt(key)
+    
+
+
+
+
             
     # *** Sending video to OpenGLThreads ***
     # now in the mother class        

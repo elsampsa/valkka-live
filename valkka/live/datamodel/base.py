@@ -32,6 +32,8 @@ from valkka.live.form import SlotFormSet
 from valkka.live import constant, tools
 
 from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
+# from valkka.live.datamodel.layout_row import VideoContainerNxMRow, PlayVideoContainerNxMRow, CameraListWindowRow, MainWindowRow
+from valkka.live.datamodel.layout_row import LayoutContainerRow
 from valkka.live.datamodel.column import USBCameraColumn
 from valkka.live.datamodel.container import DeviceList, MemoryConfigForm, ValkkaFSForm, ListAndForm
 
@@ -60,6 +62,7 @@ class DataModel:
         self.clearCameraCollection()
         self.config_collection.clear()
         self.valkkafs_collection.clear()
+        self.layout_collection.clear()
 
     def saveAll(self):
         for collection in self.collections:
@@ -139,29 +142,49 @@ class DataModel:
         self.camera_collection = \
             SimpleCollection(filename=os.path.join(self.directory, "devices.dat"),
                              row_classes=[
-                EmptyRow,
-                RTSPCameraRow,
-                USBCameraRow
+                    EmptyRow,
+                    RTSPCameraRow,
+                    USBCameraRow
                 ]
             )
         self.collections.append(self.camera_collection)
 
         self.config_collection = \
             SimpleCollection(filename=os.path.join(self.directory, "config.dat"),
-                             row_classes=[  # we could dump here all kinds of info related to different kind of configuration forms
-                MemoryConfigRow
+                row_classes=[  # we could dump here all kinds of info related to different kind of configuration forms
+                    MemoryConfigRow
                 ]
             )
         self.collections.append(self.config_collection)
 
         self.valkkafs_collection = \
             SimpleCollection(filename=os.path.join(self.directory, "valkkafs.dat"),
-                             row_classes=[
-                ValkkaFSConfigRow
+                row_classes=[
+                    ValkkaFSConfigRow
                 ]
             )
         self.collections.append(self.valkkafs_collection)
-        
+
+        """
+        self.layout_collection = \
+            SimpleCollection(filename=os.path.join(self.directory, "layout.dat"),
+                row_classes=[
+                    VideoContainerNxMRow,
+                    PlayVideoContainerNxMRow,
+                    CameraListWindowRow,
+                    MainWindowRow
+                ]
+            )
+        """
+        self.layout_collection = \
+            SimpleCollection(filename=os.path.join(self.directory, "layout.dat"),
+                row_classes=[
+                    LayoutContainerRow
+                ]
+            )
+
+        self.collections.append(self.layout_collection)
+
 
     def getDeviceList(self):
         return DeviceList(collection=self.camera_collection)

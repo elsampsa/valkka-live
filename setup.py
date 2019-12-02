@@ -14,8 +14,9 @@ setup(
     
     install_requires = [
         # 'PySide2 >=5.11.1', # woops.. in 5.12 there has been some API changes
-        'PySide2 == 5.11.1',
-        'cute_mongo_forms >=0.5.0',
+        # 'PySide2 == 5.11.1',
+        'PySide2 == 5.13.2', # 5.13.2+ is again OK
+        'cute_mongo_forms >= 0.6.0',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18'
         # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment

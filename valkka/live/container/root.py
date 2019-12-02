@@ -28,6 +28,9 @@ from valkka.live.gpuhandler import GPUHandler
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live.container.video import VideoContainer
+from valkka.live.tools import classToName, nameToClass
+from valkka.live import singleton
+from valkka.live.qt.tools import getCorrectedGeom
 
 
 class RootVideoContainer:
@@ -91,6 +94,7 @@ class RootVideoContainer:
             self.setMinimumSize(constant.root_video_container_minsize[0], constant.root_video_container_minsize[1])
             self.setStyleSheet(style.root_container)
             self.setWindowTitle(title)
+            self.setContentsMargins(0, 0, 0, 0)
 
         def setPropagate(self):
             self.propagate = True
@@ -174,10 +178,11 @@ class RootVideoContainer:
         # continue window / widget construction in the correct x screen
         self.main_widget = self.ContainerWidget(self.window)
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.window.setCentralWidget(self.main_widget)
 
         if len(geom) >= 4:
-            self.window.setGeometry(
+            self.setGeom(
                 geom[0],
                 geom[1],
                 geom[2],
@@ -274,7 +279,8 @@ class RootVideoContainer:
         dic = {  # parameters that will be used by self.deSerialize to instantiate this class
                 "title"       : self.title,
                 "n_xscreen"   : self.n_xscreen,
-                "child_class" : self.child_class,
+                # "child_class" : self.child_class,
+                "child_class" : classToName(self.child_class),
                 "child_pars"  : [child.serialize() for child in self.children],
                 "geom"        : self.getGeom()
                 }
@@ -283,26 +289,20 @@ class RootVideoContainer:
 
 
     def getGeom(self):
-        return (
-            self.window.x(),
-            self.window.y(),
-            self.window.width(),
-            self.window.height()
+        return getCorrectedGeom(self.window)
+
+
+    def setGeom(self, x, y, width, height):
+        self.window.setGeometry( # without margins
+            x, y, width, height
             )
-
-
+        
     def deSerialize(self, dic, devices_by_id):
         print(self.pre, "deSerialize : dic", dic)
         print(self.pre, "deSerialize : devices_by_id", devices_by_id)
-        
-        self.window.setGeometry(
-            dic["x"],
-            dic["y"],
-            dic["width"],
-            dic["height"]
-            )
+        fm = self.window.frameMargins()
+        self.setGeom(dic["x"], dic["y"], dic["width"], dic["height"])
         childiter = iter(self.children)
-        
         for _id in dic["ids"]:
             child = next(childiter) # follow the grid layout
             if _id in devices_by_id:

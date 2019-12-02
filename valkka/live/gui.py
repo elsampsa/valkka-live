@@ -55,10 +55,13 @@ from valkka.live import default
 from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
 from valkka.live.qt.playback import PlaybackController
-from valkka.live.qt.tools import QCapsulate, QTabCapsulate
+from valkka.live.qt.tools import QCapsulate, QTabCapsulate, getCorrectedGeom
+from valkka.live.tools import nameToClass, classToName
 
 from valkka.live.datamodel.base import DataModel
 from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
+# from valkka.live.datamodel.layout_row import VideoContainerNxMRow, PlayVideoContainerNxMRow, CameraListWindowRow, MainWindowRow
+from valkka.live.datamodel.layout_row import LayoutContainerRow
 from valkka.live.device import RTSPCameraDevice, USBCameraDevice
 
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
@@ -97,6 +100,18 @@ class MyGui(QtWidgets.QMainWindow):
         self.makeLogic()
         self.post()
         
+
+    def getMargins(self):
+        # https://doc.qt.io/qt-5/application-windows.html#x11-peculiarities
+        if singleton.dx > 0:
+            return
+        singleton.dy = self.geometry().y() - self.y() # y() : with frame, geometry().y() : without frame
+        singleton.dx = self.geometry().x() - self.x()
+        singleton.dw = self.frameGeometry().width() - self.width()
+        singleton.dh = self.frameGeometry().height() - self.height()
+        print("getMargins: dy, dx, dw, dh", singleton.dy, singleton.dx, singleton.dw, singleton.dh)
+        # dy, dx, dw, dh 29 4 8 33
+        # WARNING!  Must move main window before this starts to give any values other than zero ..!
         
     # *** redefined Qt member functions ***
     
@@ -164,7 +179,7 @@ class MyGui(QtWidgets.QMainWindow):
             config_dir.reMake()
             self.saveVersionNumber()
             # self.saveConfigFile()
-            self.saveWindowLayout() # clears window layout
+            # self.saveWindowLayout() # clears window layout
             self.first_start = True
 
 
@@ -203,19 +218,25 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def saveWindowLayout(self):
+        self.serializeContainers()
+        """
         container_dic = self.serializeContainers()
         print(pre, "saveWindowLayout : container_dic =", pformat(container_dic))
         with open(self.layout_file, "wb") as f:
             f.write(pickle.dumps(container_dic))
-        
+        print(pre, "saveWindowLayout : camera_list_win geom:", self.camera_list_win.geometry())
+        """
+
 
     def loadWindowLayout(self):
         self.closeContainers()
+        self.deSerializeContainers()
+        """
         with open(self.layout_file, "rb") as f:
             container_dic = pickle.loads(f.read())
         print("loadWindowLayout: container_dic: ", pformat(container_dic))
         self.deSerializeContainers(container_dic)
-
+        """
 
     # *** Generate Qt structures ***
 
@@ -410,6 +431,34 @@ class MyGui(QtWidgets.QMainWindow):
             dic={
                 "kwargs"     : {}, # parameters that we're used to instantiate this class
                 }
+
+
+        A concrete example:
+
+        ::
+
+            {'valkka.live.container.grid.VideoContainerNxM': [
+                {   # individual serialized container
+                    'child_class': <class 'valkka.live.container.video.VideoContainer'>,
+                    'child_pars': [{'device_id': -1}],
+                    'geom': (604, 0, 300, 300),
+                    'm_dim': 1,
+                    'n_dim': 1,
+                    'n_xscreen': 0,
+                    'title': 'Video Grid'
+                },
+                ...
+                ]
+            }
+
+        - TODO: this stuff should be moved to the db .. ?  Or just keep using files..?
+        - Different row types: 
+            VideoContainerNxM : columns: child_class, child_pars, geom, etc.., LAYOUT_ID
+            PlayVideoContainerNxM : .., LAYOUT_ID
+            CameraListWindow : .., LAYOUT_ID
+        - LAYOUT_ID identifies to which layout they belong
+
+        """
         """
         container_list = [] # list of instances of classes in valkka.live.container, e.g. valkka.live.container.grid.VideoContainerNxM, etc.
         
@@ -424,10 +473,38 @@ class MyGui(QtWidgets.QMainWindow):
         return {
             "valkka.live.container.grid.VideoContainerNxM"   : container_list
             }
+        """
+        singleton.data_model.layout_collection.clear()
 
+        container_list = []
+        for container in self.containers_grid:
+            ser = container.serialize()
+            # print(ser)
+            # {'title': 'Video Grid', 'n_xscreen': 0, 'child_class': <class 'valkka.live.container.video.VideoContainer'>, 
+            # 'child_pars': [{'device_id': -1}, {'device_id': -1}, {'device_id': -1}, {'device_id': -1}], 'geom': (604, 0, 300, 300), 'n_dim': 2, 'm_dim': 2}
+            # singleton.data_model.layout_collection.new(VideoContainerNxMRow, ser) # nopes ..
+            ser.update({"type":"VideoContainerNxM"})
+            container_list.append(ser)
 
-    def deSerializeContainers(self, dic):
-        """Re-creates containers, based on the input dictionary, as returned by self.serializeContainers
+        for container in self.containers_playback:
+            ser = container.serialize()
+            ser.update({"type":"PlayVideoContainerNxM"})
+            container_list.append(ser)
+
+        ser = {"type": "QMainWindow", "geom": getCorrectedGeom(self)}
+        container_list.append(ser)
+        if self.camera_list_win.isVisible():
+            ser = {"type": "CameraListWindow", "geom": getCorrectedGeom(self.camera_list_win)}
+            container_list.append(ser)
+
+        singleton.data_model.layout_collection.new(LayoutContainerRow, {"layout" : container_list})
+
+        print(singleton.data_model.layout_collection)
+        singleton.data_model.layout_collection.save()
+        
+
+    def deSerializeContainers(self):
+        """Re-creates containers, based on the list saved into layout_collection
         
         This is the inverse of self.serializeContainers
         
@@ -437,53 +514,61 @@ class MyGui(QtWidgets.QMainWindow):
         # print("glo>",glo)
         singleton.reCacheDevicesById() # singleton.devices_by_id will be used by the containers
         
-        # must use makeGridSlot & makeMvisionSlot here!
+        try:
+            row = next(singleton.data_model.layout_collection.get())
+        except StopIteration:
+            return
         
-        for key, value in dic.items(): # main container classes
-            class_instance = pydoc.locate(key) # key is a complete python module path, e.g. "valkka.live.container.grid.VideoContainerNxM"
-            for container_kwargs in value: # value is a list of containers of type key, each list element is a dictionary of serialized parameters
-                ok = False
-                
-                # non-serialized parameters:
+        container_list = row["layout"]
+
+        # print(">", container_list)
+        for container_dic in container_list:
+            t = container_dic.pop("type") # get the type & remove it from the dict
+
+            if t == "VideoContainerNxM":
+                container_dic["child_class"] = nameToClass(container_dic.pop("child_class")) # swap from class name to class instance
+                container_dic["geom"] = tuple(container_dic["geom"])  # woops.. tuple does not json-serialize, but is changed to list .. so change it back to tuplee
+                # non-serializable parameters:
                 dic = {
                     "parent"            : None,
                     "gpu_handler"       : self.gpu_handler,         # RootContainers(s) pass this downstream to child containers
                     "filterchain_group" : self.filterchain_group    # RootContainers(s) pass this downstream to child containers
                     }
-                dic.update(container_kwargs)
+                container_dic.update(dic)
+                # now container has the parameters to instantiate the object
+                print(">", container_dic)
+                cont = container.VideoContainerNxM(**container_dic) # instantiate container
+                cont.signals.closing.connect(self.rem_grid_container_slot)
+                self.containers_grid.append(cont)
+            
+            if t == "PlayVideoContainerNxM":
+                container_dic["child_class"] = nameToClass(container_dic.pop("child_class")) # swap from class name to class instance
+                container_dic["geom"] = tuple(container_dic["geom"])  # woops.. tuple does not json-serialize, but is changed to list .. so change it back to tuplee
+                # non-serializable parameters:
+                dic = {
+                    "parent"              : None,
+                    "gpu_handler"         : self.gpu_handler,            # RootContainers(s) pass this downstream to child containers
+                    "filterchain_group"   : self.filterchain_group_play,
+                    "valkkafsmanager"     : self.valkkafsmanager,
+                    "playback_controller" : self.playback_controller
+                    }
+                container_dic.update(dic)
+                # now container has the parameters to instantiate the object
+                print(">", container_dic)
+                cont = container.PlayVideoContainerNxM(**container_dic) # instantiate container
+                cont.signals.closing.connect(self.rem_playback_grid_container_slot)
+                self.containers_playback.append(cont)
+            
+            elif t == "QMainWindow":
+                geom = container_dic["geom"]
+                self.setGeometry(geom[0], geom[1], geom[2], geom[3])
                 
-                # container-specific parameters
-                if key == "valkka.live.container.grid.VideoContainerNxM":
-                    lis = self.containers_grid
-                    print("deSerializeContainers: dic =", dic)
-                    child_class = dic["child_class"]
-                    
-                    # check the children objects of the main video container
-                    if child_class == valkka.live.container.video.VideoContainer:
-                        ok = True
-                    elif child_class == valkka.live.container.mvision.MVisionContainer:
-                        """
-                        if ( (cl.tag in singleton.process_map) and (len(singleton.process_map[cl.tag])>0) ):
-                            ok = True
-                        else:
-                            print("deSerializeContainers:","Enough!","Can't instantiate more detectors of this type (max number is "+str(cl.max_instances)+")")
-                        """
-                        ok = True
-                        # an example how the child container parameters must be updated
-                        # such parameters should be singletons
-                        """
-                        for child_par in dic["child_pars"]:
-                            child_par.update({
-                                "thread"        : self.thread,
-                                "process_map"   : self.process_map
-                                })
-                        """
-                if ok:
-                    container = class_instance(**dic) # instantiate container
-                    container.signals.closing.connect(self.rem_grid_container_slot)
-                    lis.append(container)
-                    
+            elif t == "CameraListWindow":
+                geom = container_dic["geom"]
+                self.camera_list_win.setVisible(True)
+                self.camera_list_win.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
+        
     def closeContainers(self):
         print("gui: closeContainers: containers_grid =", self.containers_grid)
         for container in self.containers_grid:
@@ -713,6 +798,7 @@ class MyGui(QtWidgets.QMainWindow):
                 )
             cont.signals.closing.connect(self.rem_grid_container_slot)
             self.containers_grid.append(cont)
+            self.getMargins()
         setattr(self, "grid_%ix%i_slot" % (n, m), slot_func)
 
 

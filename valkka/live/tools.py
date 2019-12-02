@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    tools.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.9.0 
+@version 0.9.0
 @brief   Helper routines
 """
 
@@ -30,6 +30,7 @@ import types
 import re
 import logging
 import copy
+from pydoc import locate
 
 loggers = {}
 home = os.path.expanduser("~")
@@ -44,6 +45,18 @@ else:
     importerror = ModuleNotFoundError
 
 
+def classToName(cls):
+    """Class to full module + class name
+    """
+    return cls.__module__+"."+cls.__name__
+
+
+def nameToClass(name):
+    """Full module + class name to class
+    """
+    return locate(name)
+    
+
 def getLogger(name, set_default = True, level = None):
     global loggers
     # print(">", name)
@@ -53,7 +66,7 @@ def getLogger(name, set_default = True, level = None):
         if not logger: # no such logger, create new
             # print("new logger instance")
             logger = logging.getLogger(name)
-            loggers[name] = logger 
+            loggers[name] = logger
             # a handler must be added only once
             if set_default:
                 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
@@ -63,10 +76,10 @@ def getLogger(name, set_default = True, level = None):
 
     else: # so it's a logger object directly ..
         logger = name
-                
+
     if level is not None:
         logger.setLevel(logging.DEBUG)
-    
+
     return logger
 
 
@@ -98,14 +111,14 @@ def scanMVisionClasses():
     valkka = importlib.import_module("valkka")
     for obj in pkgutil.iter_modules(valkka.__path__, valkka.__name__ + "."):
         """
-        In Ubuntu 18, which uses python 3.6+ : https://docs.python.org/3.6/library/pkgutil.html#pkgutil.iter_modules : obj = ModuleInfo instance 
-        In Ubuntu 16, which uses python 3.5 : https://docs.python.org/3.5/library/pkgutil.html#pkgutil.iter_modules  : obj = (module_finder, name, ispkg) 
+        In Ubuntu 18, which uses python 3.6+ : https://docs.python.org/3.6/library/pkgutil.html#pkgutil.iter_modules : obj = ModuleInfo instance
+        In Ubuntu 16, which uses python 3.5 : https://docs.python.org/3.5/library/pkgutil.html#pkgutil.iter_modules  : obj = (module_finder, name, ispkg)
         """
         if obj.__class__ == tuple:
             name = obj[1] # ubuntu 16 / python 3.5
         else:
             name = obj.name
-    
+
         if (name.find(".mvision")>-1): # AttributeError: 'tuple' object has no attribute 'name' ???
             # print("mvision scan: >",p)
             try:
@@ -115,7 +128,7 @@ def scanMVisionClasses():
             else:
                 # print(m)
                 mvision_modules.append(m)
-            
+
     mvision_classes = []
 
     for m in mvision_modules:
@@ -138,8 +151,8 @@ def scanMVisionClasses():
                         continue
                     if (hasattr(submodule, "MVisionProcess")): # do we have a class valkka.mvision*.*.base.MVisionProcess ?
                         mvisionclass = getattr(submodule, "MVisionProcess")
-                        if (hasattr(mvisionclass, "name") 
-                            and hasattr(mvisionclass, "tag")  
+                        if (hasattr(mvisionclass, "name")
+                            and hasattr(mvisionclass, "tag")
                             and hasattr(mvisionclass, "max_instances")): # does that class has these members?
                             name = getattr(mvisionclass, "name")
                             print("mvision scan: found machine vision class with name, tag and max_instances")
@@ -148,24 +161,24 @@ def scanMVisionClasses():
                             print("mvision scan: submodule",name,"missing members (name, tag or max_instances)")
                     else:
                         print("mvision scan: submodule",name,"missing MVisionProcess")
-                        
+
     return mvision_classes
 
 
 def getH264V4l2(verbose=False):
     """Find all V4l2 cameras with H264 encoding, and returns a list of tuples with ..
-    
+
     (device file, device name), e.g. ("/dev/video2", "HD Pro Webcam C920 (/dev/video2)")
     """
     import glob
     from subprocess import Popen, PIPE
-    
+
     cams=[]
 
     for device in glob.glob("/sys/class/video4linux/*"):
         devname=device.split("/")[-1]
         devfile=os.path.join("/dev",devname)
-        
+
         lis=("v4l2-ctl --list-formats -d "+devfile).split()
 
         p = Popen(lis, stdout=PIPE, stderr=PIPE)
@@ -175,7 +188,7 @@ def getH264V4l2(verbose=False):
         # print(p.stderr.read().decode("utf-8"))
         st = p.stdout.read().decode("utf-8")
         # print(st)
-        
+
         if (st.lower().find("h264")>-1):
             namefile=os.path.join(device, "name")
             # print(namefile)
@@ -186,7 +199,7 @@ def getH264V4l2(verbose=False):
     if (verbose):
         for cam in cams:
             print(cam)
-        
+
     return cams
 
 
@@ -197,7 +210,7 @@ def getFreeGPU_MB():
     lis=("glxinfo").split()
     p = Popen(lis, stdout=PIPE, stderr=PIPE)
     st = p.stdout.read().decode("utf-8")
-    
+
     try:
         val=int(s.findall(st)[0])
     except IndexError or ValueError:
@@ -311,7 +324,7 @@ def filter_keys(keys, dic):
     return out
 
 
-    
+
 
 if (__name__ == "__main__"):
     """
@@ -320,10 +333,10 @@ if (__name__ == "__main__"):
         print(cl)
     """
     print(getFreeGPU_MB())
-    
-    
-    
 
-    
+
+
+
+
 
 

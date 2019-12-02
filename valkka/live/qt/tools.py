@@ -21,8 +21,41 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
-from valkka.live import style, constant
+from valkka.live import style, constant, singleton
 import sys
+
+
+
+def getCorrectedGeom(window):
+    """Returns x, y, width, height that can be used with setGeometry (that uses coordinates without frames)
+    """
+    # with window frames:
+    q = window.frameGeometry() 
+    p = window.pos()
+    return (
+        p.x() + singleton.dx, # window frame + margin .. will be used to set the window size without margin
+        p.y() + singleton.dy,
+        q.width() - singleton.dw,
+        q.height() - singleton.dh
+        )
+    """# works only after window has been shown I guess... what a f mess
+    dy = self.window.frameGeometry().height() - self.window.geometry().height()
+    print("dy", dy)
+    """
+    # self.window.move(x + singleton.dx, y + singleton.dy)
+    # self.window.setFramePosition(x, y) # this one neither?
+    # https://doc.qt.io/qt-5/stylesheet-customizing.html#box-model
+    # geometry() : "Returns the geometry of the window, excluding its window frame"
+    # https://doc.qt.io/qt-5/application-windows.html#window-geometry
+    #
+    # fm = self.window.frameMargins() # not in the python API !?
+    """
+    # https://forum.qt.io/topic/99528/window-titlebar-height-example/3
+    qapp = QtCore.QCoreApplication.instance()
+    bh = qapp.style().pixelMetric(QtWidgets.QStyle.PM_TitleBarHeight)
+    """
+
+
 
 
 def QCapsulate(widget, name, blocking = False, nude = False):
@@ -123,3 +156,15 @@ def QTabCapsulate(name, widget_list, blocking = False):
     return win
 
  
+def numpy2QPixmap(img):
+    """Stupid, time-leaking conversion from numpy array => QImage => QPixmap
+    
+    .. but there seems to be no other way
+    
+    A memleak & a fix: https://bugreports.qt.io/browse/PYSIDE-140?focusedCommentId=403528&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-403528
+    """
+    ch = ctypes.c_char.from_buffer(img, 0)
+    rcount = ctypes.c_long.from_address(id(ch)).value
+    qimage = QImage(ch, img.shape[1], img.shape[0], QImage.Format_RGB888)
+    ctypes.c_long.from_address(id(ch)).value = rcount
+    return QPixmap.fromImage(qimage)

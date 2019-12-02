@@ -29,6 +29,7 @@ from valkka.live.tools import filter_keys
 from valkka.live.container.video import VideoContainer
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
+from valkka.live.tools import classToName, nameToClass
 from valkka.mvision import multiprocess
 
 
@@ -42,7 +43,7 @@ class MVisionContainer(VideoContainer):
         #"filterchain_group" : FilterChainGroup,     # Filterchain manager class
         #"n_xscreen"         : (int,0),              # x-screen index
         #"device_id"         : (int, -1),            # optional: the unique id of this video stream
-        "mvision_class"     : type,                 # for example : valkka_mvision.movement.base.MVisionProcess
+        "mvision_class"     : None,                  # Either a class instance, or a complete string of the module.class, for example : valkka_mvision.movement.base.MVisionProcess
         # non-seriazable parameters:
         # "thread"            : None,                 # thread that watches the multiprocesses communication pipes # NEW: now at singleton
         # "process_map"       : (dict,{}),            # NEW: now at singleton
@@ -57,7 +58,13 @@ class MVisionContainer(VideoContainer):
         print("MVisionContainer: __init__: kwargs:", pformat(kwargs))
         super().__init__(**filter_keys(super().parameter_defs.keys(), kwargs))
         parameterInitCheck(MVisionContainer.parameter_defs, filter_keys(MVisionContainer.parameter_defs.keys(), kwargs), self)
-        assert(issubclass(self.mvision_class,multiprocess.QValkkaShmemProcess2))
+        
+        if isinstance(self.mvision_class, str):
+            self.mvision_class = nameToClass(self.mvision_class)
+        
+        assert(issubclass(self.mvision_class, multiprocess.QValkkaShmemProcess2))
+        
+        
         tag = self.mvision_class.tag # identifies a list of multiprocesses in singleton.process_map
         
         self.verbose = True
@@ -79,7 +86,7 @@ class MVisionContainer(VideoContainer):
         """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
         """
         return {
-            "mvision_class" : self.mvision_class,
+            "mvision_class" : classToName(self.mvision_class),
             "device_id" : self.getDeviceId()
             }
     

@@ -214,8 +214,7 @@ class PlayVideoContainerNxM(RootVideoContainer):
         dic = super().serialize()
         dic.update({ # add constructor parameters of this class
             "n_dim": self.n_dim,
-            "m_dim": self.m_dim,
-            "valkkafsmanager": self.valkkafsmanager
+            "m_dim": self.m_dim
             })
         return dic
 

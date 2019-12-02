@@ -34,6 +34,12 @@ process_map = {}
 # QThread for interprocess communication
 thread = None
 
+# For a hack to get the X11 window margins
+dx = 0
+dy = 0
+dw = 0
+dh = 0
+
 config_dir = ValkkaLocalDir("live")
 valkkafs_dir = ValkkaLocalDir("live","fs")
 
