@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    constant.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.9.0 
+@version 0.10.0 
 @brief   Constant values, strings, etc.
 """
 

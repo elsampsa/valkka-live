@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    container.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.9.0 
+@version 0.10.0 
 @brief   
 """
 
