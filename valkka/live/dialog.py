@@ -153,9 +153,11 @@ class CopyToDialog(QtWidgets.QDialog):
         
         self.write_button = QtWidgets.QPushButton("Overwrite slots", self.buttons)
         self.cancel_button = QtWidgets.QPushButton("Cancel", self.buttons)
-        self.buttons_lay.addWidget(self.write_button, 2, 0)
-        self.buttons_lay.addWidget(self.cancel_button, 3, 0)
-        
+        # self.buttons_lay.addWidget(self.write_button, 2, 0)
+        # self.buttons_lay.addWidget(self.cancel_button, 3, 0)
+        self.buttons_lay.addWidget(self.write_button)
+        self.buttons_lay.addWidget(self.cancel_button)
+
         self.ip_field_lay = QtWidgets.QHBoxLayout(self.ip_field)
         self.slot_field_lay = QtWidgets.QHBoxLayout(self.slot_field)
 

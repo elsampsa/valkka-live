@@ -605,7 +605,7 @@ class MultiForkFilterchain(BaseFilterchain):
         self.qt_fork_filter.connect(shmem_name, shmem_filter)
         # if first time, connect main branch to swscale_branch
         self.sws_client_qt(inc = 1)
-        return shmem_name 
+        return shmem_name, self.shmem_n_buffer, self.width, self.height
     
         
     def releaseShmemQt(self, shmem_name):

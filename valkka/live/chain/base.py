@@ -53,7 +53,7 @@ class BaseFilterchain:
         # client counters
         self.decoding_client_count = 0
         self.x_screen_count = {}
-        for i in range(len(self.openglthreads)):
+        for i in range(len(self.openglthreads)): 
             self.x_screen_count[i] = 0
         # view port related
         self.ports = []
