@@ -735,7 +735,9 @@ class MyGui(QtWidgets.QMainWindow):
             gpu_handler   = self.gpu_handler, 
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
+
         if record:
+            print("openValkka: ValkkaFS **RECORDING ACTIVATED**")
             self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)
         
         # self.filterchain_group.update() # TODO: use this once fixed
