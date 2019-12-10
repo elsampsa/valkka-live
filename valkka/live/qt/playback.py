@@ -13,7 +13,7 @@ Valkka Python3 examples library is free software: you can redistribute it and/or
 @author  Petri Eränkö
 @author  Sampsa Riikonen
 @date    2019
-@version 0.10.0 
+@version 0.11.0 
 @brief   A controller that brings together TimeLineWidget, CalendarWidget and the ValkkaFSManager
 """
 

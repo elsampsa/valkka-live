@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.10.0 
+@version 0.11.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 import imp
@@ -303,6 +303,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.config_win.signals.close.connect(self.config_dialog_close_slot)
         # when the configuration dialog is reopened, inform the camera configuration form .. this way it can re-check if usb cams are available
         self.config_win.signals.show.connect(self.manage_cameras_container.getForm().show_slot) 
+        self.config_win.signals.show.connect(self.manage_cameras_container.choose_first_slot) # so that we have at least one device chosen
 
         self.makeCameraTree()
         self.camera_list_win = QCapsulate(self.treelist, "Camera List")
@@ -668,7 +669,6 @@ class MyGui(QtWidgets.QMainWindow):
         record    = valkkafs_config["record"]
 
         # TODO: activate this if ValkkaFS changed in config!
-        #if record:
         if fs_flavor == "file":
             partition_uuid = None
         else:
@@ -679,15 +679,16 @@ class MyGui(QtWidgets.QMainWindow):
         if self.valkkafs is None: # first time
             create_new_fs = False # try to load initially from disk
         else:
-            print("openValkka: ValkkaFS changed!")
+            print("openValkka: checking ValkkaFS")
             create_new_fs = not self.valkkafs.is_same( # has changed, so must recreate
                 partition_uuid = partition_uuid, # None or a string
-                blocksize = blocksize,
+                blocksize = blocksize * 1024*1024,
                 n_blocks = n_blocks
             )
+            if create_new_fs: print("openValkka: ValkkaFS changed!")
         
         if not create_new_fs: # let's try to load it
-            print("openValkka: trying to load FS")
+            print("openValkka: trying to load ValkkaFS")
             try:
                 self.valkkafs = ValkkaFS.loadFromDirectory(
                     dirname = singleton.valkkafs_dir.get()
@@ -697,7 +698,7 @@ class MyGui(QtWidgets.QMainWindow):
                 create_new_fs = True # no luck, must recreate
 
         if create_new_fs:
-            print("openValkka: (re)create FS")
+            print("openValkka: (re)create ValkkaFS")
             self.valkkafs = ValkkaFS.newFromDirectory(
                 dirname = singleton.valkkafs_dir.get(),
                 blocksize = valkkafs_config["blocksize"] * 1024*1024, # MB
@@ -705,6 +706,18 @@ class MyGui(QtWidgets.QMainWindow):
                 partition_uuid = partition_uuid,
                 verbose = True
             )
+            # to keep things consistent..
+            singleton.data_model.valkkafs_collection.new(
+                ValkkaFSConfigRow,
+                {
+                    # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
+                    "n_blocks"       : default.valkkafs_config["n_blocks"],
+                    "blocksize"      : valkkafs_config["blocksize"],
+                    "fs_flavor"      : valkkafs_config["fs_flavor"],
+                    "record"         : record,
+                    "partition_uuid" : partition_uuid
+                })
+
 
         """
         else:
