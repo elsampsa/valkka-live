@@ -25,12 +25,14 @@ import numpy
 import imutils
 import importlib
 import cv2
+import logging
+
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
-from valkka.mvision.multiprocess import QValkkaShmemProcess2
+from valkka.live.multiprocess import MessageObject
+from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
 from valkka.live import style
-
-pre = "valkka.mvision.movement.base : "
+from valkka.live.tools import getLogger, setLogger
 
 
 class MovementDetector(Analyzer):
@@ -58,7 +60,8 @@ class MovementDetector(Analyzer):
         # checks that kwargs is consistent with parameter_defs.  Attaches
         # parameters as attributes to self
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        self.pre = self.__class__.__name__ + " : "
+        if self.debug:
+            self.logger.warning("Enabling OpenCV high-gui.  That requires opencv installed with apt-get.  Otherwise, get ready for a segfault..")
         self.init()
             
 
@@ -77,7 +80,7 @@ class MovementDetector(Analyzer):
         return self.ismoving
         
     def __call__(self, img):
-        self.report("got frame :",img.shape)
+        self.logger.info("got frame : %s",img.shape)
 
         # NOTE: this is where all the image analysis takes place.  Implement your own
     
@@ -91,7 +94,7 @@ class MovementDetector(Analyzer):
 
         if (self.prevframe.__class__ is None.__class__):  # first frame
             self.prevframe = modframe.copy()
-            self.report("First image found!")
+            self.logger.info("First image found!")
             result = self.state_same
 
         else:  # second or n:th frame
@@ -106,14 +109,14 @@ class MovementDetector(Analyzer):
 
             if (val >= self.treshold):  # one promille ok .. there is movement
                 self.t0 = time.time()
-                self.report("==>MOVEMENT!")
+                self.logger.info("==>MOVEMENT!")
                 self.ismoving = True
                 if (self.wasmoving):
                     result = self.state_same
                 else:
                     self.t0_event = self.t0
                     self.wasmoving = True
-                    self.report("==> NEW MOVEMENT EVENT!")
+                    self.logger.info("==> NEW MOVEMENT EVENT!")
                     result = self.state_start
 
             else:  # no movement
@@ -123,7 +126,7 @@ class MovementDetector(Analyzer):
                     dt_event = time.time() - self.t0_event
                     self.wasmoving = False
                     result = self.state_stop
-                    self.report("==> MOVEMENT STOPPED!")
+                    self.logger.info("==> MOVEMENT STOPPED!")
                 else:
                     result = self.state_same
 
@@ -139,7 +142,7 @@ class MovementDetector(Analyzer):
 
 
 
-class MVisionProcess(QValkkaShmemProcess2):
+class MVisionProcess(QShmemProcess):
     """ NOTE: the name of the class must always be MVisionProcess, so that Valkka Live can find the class
     
     This is a python multiprocess that runs on the background in its own isolated memory space.
@@ -150,17 +153,7 @@ class MVisionProcess(QValkkaShmemProcess2):
     
     To send a signal from frontend to backend, you must use the "sendSignal" method.  If you use sendSignal("mytest_") then you should implement a backend method "mytest_"
     
-    If you define a new signal in "outgoing_signal_defs", you also need to implement a frontend method with the same name.
-    
-    This is what goes on under-the-hood:
-    
-    ::
-    
-        sendSignal_(name = "start_move") sends a signal to an interprocess communication pipe 
-        => that pipe is read by a valkka.mvision.multiprocess.QValkkaThread => QValkkaThread gets a signal_string
-        => QValkkaThread calls handleSignal(signal_string) method from this class (inherited from ValkkaProcess)
-        => ValkkaProcess.handleSignal searches for a frontend method in this class, corresponding to signal_string
-        
+    If you define a new signal in "outgoing_signal_defs", you also need to implement a frontend method with the same name.    
         
     Purely python-based machine vision modules need multiprocessing, shared memory and semaphores.  Expect framerates in the 1 fps range to work.  If you need something more serious, write the whole thing in cpp and use valkka cpp infrastructures (see the repository "valkka-cpp-examples")
     """
@@ -169,44 +162,26 @@ class MVisionProcess(QValkkaShmemProcess2):
     tag  = "movement" # NOTE: name identifying the detector group
     max_instances = 5 # NOTE: how many detectors belonging to the same group can be instantiated
     
-    incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        
-        # don't touch these three..
-        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
-        "deactivate_"   : [],
-        "stop_"         : [],
-
-        "test_"         : {"test_int": int, "test_str": str},
-        "ping_"         : {"message": str}
-    }
-
-    outgoing_signal_defs = {
-        "pong_o"        : {"message": str},
-        "start_move"    : {},
-        "stop_move"     : {}
-    }
-
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
     #"""
     class Signals(QtCore.QObject):
-        pong_o = QtCore.Signal(object)
+        pong = QtCore.Signal(object)
         start_move = QtCore.Signal()
         stop_move = QtCore.Signal()
     #"""
 
     parameter_defs = {
-        "verbose": (bool, False),
+        "verbose" : (bool, False),
         "deadtime": (int, 1)
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name)
-        self.pre = self.__class__.__name__ + ":" + self.name+ " : "
-        self.signals = self.Signals()
+        super().__init__(name)
         
+
     def preRun_(self):
         super().preRun_()
         # its a good idea to instantiate the analyzer after the multiprocess has been spawned (like we do here)
@@ -234,72 +209,25 @@ class MVisionProcess(QValkkaShmemProcess2):
 
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
-        self.report("cycle_ starts")
+        self.logger.debug("cycle_ starts")
         index, isize = self.client.pull()
         if (index is None):
-            self.report("Client timed out..")
+            self.logger.debug("Client timed out..")
             pass
         else:
-            self.report("Client index, size =",index, isize)
+            self.logger.debug("Client index, size =",index, isize)
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
             result = self.analyzer(img)
             # NOTE: you could use and combine several analyzers here, say first see if there is movement and then do the rest
             # print(self.pre,">>>",data[0:10])
-
             if (result == MovementDetector.state_same):
                 pass
             elif (result == MovementDetector.state_start):
-                self.sendSignal_(name="start_move")
+                self.send_out__(MessageObject("start_move"))
             elif (result == MovementDetector.state_stop):
-                self.sendSignal_(name="stop_move")
-
-
-    # *** backend methods corresponding to incoming signals ***
-    # *** i.e., how the signals are handled inside the running multiprocess
-    
-    def test_(self, test_int=0, test_str="nada"):
-        print(self.pre, "test_ signal received with", test_int, test_str)
-
-    def ping_(self, message="nada"):
-        print(
-            self.pre,
-            "At backend: ping_ received",
-            message,
-            "sending it back to front")
-        self.sendSignal_(name="pong_o", message=message)
-
-
-    # ** frontend methods launching incoming signals
-    # *** you can call these after the multiprocess is started
-    
-    def test(self, **kwargs):
-        dictionaryCheck(self.incoming_signal_defs["test_"], kwargs)
-        kwargs["name"] = "test_"
-        self.sendSignal(**kwargs)
-
-    def ping(self, **kwargs):
-        dictionaryCheck(self.incoming_signal_defs["ping_"], kwargs)
-        kwargs["name"] = "ping_"
-        self.sendSignal(**kwargs)
-
-
-    # ** frontend methods handling outgoing signals ***
-    
-    def pong_o(self, message="nada"):
-        print(self.pre, "At frontend: pong got message", message)
-        ns = Namespace()
-        ns.message = message
-        self.signals.pong_o.emit(ns)
-
-    def start_move(self):
-        print(self.pre, "At frontend: got movement")
-        self.signals.start_move.emit()
-
-    def stop_move(self):
-        print(self.pre, "At frontend: movement stopped")
-        self.signals.stop_move.emit()
+                self.send_out__(MessageObject("stop_move"))
 
 
     # *** create a widget for this machine vision module ***
@@ -345,92 +273,13 @@ def test2():
 def test3():
     """Test the multiprocess
     """
-    import time
-    
-    p = MVisionProcess()
-    p.start()
-    time.sleep(5)
-    p.stop()
-    
+    test_process(MVisionProcess)
+
     
 def test4():
-    """Test multiprocess with outgoing signals
-    """
-    import time
-    from valkka.mvision import QValkkaThread
-    
-    t = QValkkaThread()
-    t.start()
-    time.sleep(1)
-    # t.stop(); return
-    
-    print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess()
-    p1.start()
-    t.addProcess(p1)
-    time.sleep(5)
-    
-    print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess()
-    p2.start()
-    t.addProcess(p2)
-    time.sleep(5)
-    
-    print("Remove multiprocesses")
-    t.delProcess(p1)
-    # t.delProcess(p2)
-    
-    p1.stop()
-    p2.stop()
-    
-    print("bye")
-    
-    t.stop()
-    
-    
-def test5():
-    """Test the analyzer process with files
-    
-    They must be encoded and muxed correctly, i.e., with:
-    
-    ::
-    
-        ffmpeg -i your_video_file -c:v h264 -an outfile.mkv
-    
-    """
-    import time
-    from valkka.mvision.file import FileGUI
+    test_with_file(MVisionProcess)
 
-    # from valkka.mvision import QValkkaThread
-    
-    #t = QValkkaThread()
-    #t.start()
-    
-    # """
-    ps = MVisionProcess()
-    # """
-       
-    #t.addProcess(ps)
-    #time.sleep(5)
-    #t.stop()
-    #return
 
-    app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(
-        mvision_process = ps, 
-        shmem_name              ="test_studio_file",
-        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    =1000,
-        shmem_ringbuffer_size   =5
-        )
-    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
-    fg.show()
-    app.exec_()
-    ps.stop()
-    print("bye from app!")
-    
-    
-    
 def main():
     pre = "main :"
     print(pre, "main: arguments: ", sys.argv)

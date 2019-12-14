@@ -17,7 +17,9 @@ This plugin is free software: you can redistribute it and/or modify it under the
 """
 
 import sys
+import logging
 from valkka.api2 import parameterInitCheck
+from valkka.live.tools import getLogger, setLogger
 
 pre = "valkka.mvision.base : "
 
@@ -50,7 +52,10 @@ class Analyzer(object):
             kwargs,
             self,
             undefined_ok=True)
-        self.pre = self.__class__.__name__ + " : "
+        self.pre = self.__class__.__name__
+        self.logger = getLogger(self.pre)
+        if self.debug or self.verbose:
+            setLogger(self.logger, logging.DEBUG)
         # self.init() # do this in child classes only ..
 
 

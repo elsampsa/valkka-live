@@ -109,91 +109,13 @@ def test3():
     """Test the multiprocess
     """
     import time
-    
-    p = MVisionProcess()
-    p.start()
-    time.sleep(5)
-    p.stop()
-    
+    test_process(MVisionProcess)
+
     
 def test4():
-    """Test multiprocess with outgoing signals
-    """
-    import time
-    from valkka.mvision import QValkkaThread
-    
-    t = QValkkaThread()
-    t.start()
-    time.sleep(1)
-    # t.stop(); return
-    
-    print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess()
-    p1.start()
-    t.addProcess(p1)
-    time.sleep(5)
-    
-    print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess()
-    p2.start()
-    t.addProcess(p2)
-    time.sleep(5)
-    
-    print("Remove multiprocesses")
-    t.delProcess(p1)
-    # t.delProcess(p2)
-    
-    p1.stop()
-    p2.stop()
-    
-    print("bye")
-    
-    t.stop()
-    
-    
-def test5():
-    """Test the analyzer process with files
-    
-    They must be encoded and muxed correctly, i.e., with:
-    
-    ::
-    
-        ffmpeg -i your_video_file -c:v h264 -an outfile.mkv
-    
-    """
-    import time
-    from valkka.mvision.file import FileGUI
+    test_with_file(MVisionProcess)
 
-    # from valkka.mvision import QValkkaThread
-    
-    #t = QValkkaThread()
-    #t.start()
-    
-    # """
-    ps = MVisionProcess()
-    # """
-       
-    #t.addProcess(ps)
-    #time.sleep(5)
-    #t.stop()
-    #return
 
-    app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(
-        mvision_process = ps, 
-        shmem_name              ="test_studio_file",
-        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    =1000,
-        shmem_ringbuffer_size   =5
-        )
-    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
-    fg.show()
-    app.exec_()
-    ps.stop()
-    print("bye from app!")
-    
-    
-    
 def main():
     pre = "main :"
     print(pre, "main: arguments: ", sys.argv)

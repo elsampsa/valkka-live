@@ -57,30 +57,37 @@ def nameToClass(name):
     return locate(name)
     
 
-def getLogger(name, set_default = True, level = None):
+def getLogger(name):
     global loggers
-    # print(">", name)
-    # specify either by string or by a logger object
-    if (isinstance(name, str)):
-        logger = loggers.get(name)
-        if not logger: # no such logger, create new
-            # print("new logger instance")
-            logger = logging.getLogger(name)
-            loggers[name] = logger
-            # a handler must be added only once
-            if set_default:
-                formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-                ch = logging.StreamHandler()
-                ch.setFormatter(formatter)
-                logger.addHandler(ch)
-
-    else: # so it's a logger object directly ..
-        logger = name
-
-    if level is not None:
-        logger.setLevel(logging.DEBUG)
-
+    # print(">getLogger", name)
+    logger = loggers.get(name)
+    if logger: return logger
+    # https://docs.python.org/2/howto/logging.html
+    # log levels here : https://docs.python.org/2/howto/logging.html#when-to-use-logging
+    # in the future, migrate this to a logger config file
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(name)
+    loggers[name] = logger 
     return logger
+    
+    
+def setLogger(name, level):
+    """Give either logger name or the logger itself
+    """
+    if (isinstance(name,str)):
+        logger = getLogger(name)
+    else:
+        logger = name 
+    
+    # print(">setLogger", name, "level",level)
+    logger.setLevel(level)
+
+    if not logger.hasHandlers():
+        # print(">setLogger", name, "setting handler")
+        formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        ch = logging.StreamHandler()
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
 
 
 def getConfigDir():

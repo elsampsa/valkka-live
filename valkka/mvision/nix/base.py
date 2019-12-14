@@ -17,22 +17,25 @@ This plugin is free software: you can redistribute it and/or modify it under the
 """
 
 # from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
+# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
 from PySide2 import QtWidgets, QtCore, QtGui
 import sys
 import time
 import os
 import numpy
-# import cv2
 import imutils
+import importlib
+import cv2
+import logging
+
 from valkka.api2 import parameterInitCheck, typeCheck
-
-# local imports
-from valkka.live import style
 from valkka.mvision.base import Analyzer
-from valkka.mvision.multiprocess import QValkkaShmemProcess2
-from valkka.mvision import tools, constant
-
-pre = "valkka.mvision.movement.base : "
+from valkka.live.multiprocess import MessageObject
+from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.live import style
+from valkka.live.tools import getLogger, setLogger
+from valkka.mvision.tools import getModulePath
+from valkka.mvision import constant
 
 
 class ExternalDetector(Analyzer):
@@ -52,8 +55,8 @@ class ExternalDetector(Analyzer):
         # checks that kwargs is consistent with parameter_defs.  Attaches
         # parameters as attributes to self
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        self.pre = self.__class__.__name__ + ":"
         self.init()
+
 
     def init(self):
         """Start the process
@@ -78,12 +81,12 @@ class ExternalDetector(Analyzer):
     def reset(self):
         """Tell the external analyzer to reset itself
         """
-        self.report("sending reset")
+        self.logger.info("sending reset")
         try:
             self.p.stdin.write(bytes("T\n","utf-8"))
             self.p.stdin.flush()
         except IOError:
-            self.report("could not send reset command")
+            self.logger.info("could not send reset command")
 
 
     def close(self):
@@ -93,7 +96,7 @@ class ExternalDetector(Analyzer):
             self.p.stdin.write(bytes("X\n","utf-8"))
             self.p.stdin.flush()
         except IOError:
-            self.report("could not send exit command")
+            self.logger.info("could not send exit command")
         self.p.wait() # wait until the process is closed
         try:
             os.remove(self.tmpfile) # clean up the temporary file
@@ -102,12 +105,12 @@ class ExternalDetector(Analyzer):
 
     
     def __call__(self, img):
-        self.report("got frame :",img.shape)
+        self.logger.info("got frame : %s",img.shape)
         
         # before sending the new frame, collect results the analyzer produced from the previous frame
-        self.report("waiting for external process")
+        self.logger.info("waiting for external process")
         st = str(self.p.stdout.readline(),"utf-8")
-        self.report("got >"+st+"<")
+        self.logger.info("got >"+st+"<")
         
         if (st=="C\n"):
             result=""
@@ -122,7 +125,7 @@ class ExternalDetector(Analyzer):
             self.p.stdin.write(bytes("R\n","utf-8"))
             self.p.stdin.flush()
         except IOError:
-            self.report("could not send data")
+            self.logger.info("could not send data")
             
         # the data from the previous frame: format here the string into a data structure if you need to
         return result
@@ -147,7 +150,7 @@ class ExternalDetector(Analyzer):
 
 
 
-class MVisionProcess(QValkkaShmemProcess2):
+class MVisionProcess(QShmemProcess):
     """A multiprocess that uses stdin, stdout and the filesystem to communicate with an external machine vision program
     """
     name = "Stdin, stdout and filesystem example"
@@ -155,19 +158,8 @@ class MVisionProcess(QValkkaShmemProcess2):
     max_instances = 3
     
     # The (example) process that gets executed.  You can find it in the module directory
-    executable = "python3 "+os.path.join(tools.getModulePath(),"example_process1.py")
+    executable = "python3 "+os.path.join(getModulePath(),"example_process1.py")
     
-    incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        # don't touch these three..
-        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
-        "deactivate_"   : [],
-        "stop_"         : []
-    }
-
-    outgoing_signal_defs = {
-        "text": {"message": str}
-    }
-
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
@@ -180,16 +172,14 @@ class MVisionProcess(QValkkaShmemProcess2):
         "verbose": (bool, False)
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name)
-        self.pre = self.__class__.__name__ + ":" + self.name+ " : "
-        self.signals = self.Signals()
-        
+        super().__init__(name)
+        self.analyzer = None
         
     def preRun_(self):
+        super().preRun_()
         self.analyzer = None
-        super().preRun_() # calls deactivate_ => preDeactivate_
         
     def postRun_(self):
         if (self.analyzer): self.analyzer.close()
@@ -202,7 +192,8 @@ class MVisionProcess(QValkkaShmemProcess2):
         self.analyzer = ExternalDetector(
             executable = self.executable,
             image_dimensions = self.image_dimensions,
-            tmpfile = self.tmpfile
+            tmpfile = self.tmpfile,
+            verbose = self.verbose
             )
         
     def preDeactivate_(self):
@@ -213,44 +204,29 @@ class MVisionProcess(QValkkaShmemProcess2):
     
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
-        self.report("cycle_ starts")
+        self.logger.info("cycle_ starts")
         index, isize = self.client.pull()
         if (index is None):
-            self.report("Client timed out..")
+            self.logger.info("Client timed out..")
             pass
         else:
-            self.report("Client index, size =",index, isize)
+            self.logger.info("Client index, size =",index, isize)
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
             result = self.analyzer(img)
             
             if (result != ""):
-                self.sendSignal_(name="text", message=result)
+                self.send_out__(MessageObject("text", message = result))
+                # self.sendSignal_(name="text", message=result)
 
-    # *** backend methods corresponding to incoming signals ***
-    # *** i.e., how the signals are handled inside the running multiprocess
     
-    def stop_(self):
-        self.running = False
-
-    # ** frontend methods launching incoming signals
-    # *** you can call these after the multiprocess is started
-    
-    def stop(self):
-        self.sendSignal(name="stop_")
-
-    # ** frontend methods handling outgoing signals ***
-    
-    def text(self, message=""):
-        self.report("At frontend: text got message", message)
-        self.signals.text.emit(message+"\n")
-
     # *** create a widget for this machine vision module ***
     def getWidget(self):
         widget = QtWidgets.QLabel("NO TEXT YET")
         widget.setStyleSheet(style.detector_test)
-        self.signals.text.connect(lambda message: widget.setText(message))
+        self.signals.text.connect(lambda message_object:\
+            widget.setText(message_object["message"]))
         return widget
         
     
@@ -264,7 +240,7 @@ def test1():
     analyzer = ExternalDetector(
         verbose=True, 
         debug=True,
-        executable = os.path.join(tools.getModulePath(),"example_process1.py"),
+        executable = os.path.join(getModulePath(),"example_process1.py"),
         image_dimensions = (width, height),
         tmpfile = "/tmp/valkka-debug"
         )
@@ -290,92 +266,13 @@ def test2():
 def test3():
     """Test the multiprocess
     """
-    import time
-    
-    p = MVisionProcess()
-    p.start()
-    time.sleep(5)
-    p.stop()
-    
+    test_process(MVisionProcess)
+
     
 def test4():
-    """Test multiprocess with outgoing signals
-    """
-    import time
-    from valkka.mvision import QValkkaThread
-    
-    t = QValkkaThread()
-    t.start()
-    time.sleep(1)
-    # t.stop(); return
-    
-    print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess()
-    p1.start()
-    t.addProcess(p1)
-    time.sleep(5)
-    
-    print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess()
-    p2.start()
-    t.addProcess(p2)
-    time.sleep(5)
-    
-    print("Remove multiprocesses")
-    t.delProcess(p1)
-    # t.delProcess(p2)
-    
-    p1.stop()
-    p2.stop()
-    
-    print("bye")
-    
-    t.stop()
-    
-    
-def test5():
-    """Test the analyzer process with files
-    
-    They must be encoded and muxed correctly, i.e., with:
-    
-    ::
-    
-        ffmpeg -i your_video_file -c:v h264 -an outfile.mkv
-    
-    """
-    import time
-    from valkka.mvision.file import FileGUI
+    test_with_file(MVisionProcess)
 
-    # from valkka.mvision import QValkkaThread
-    
-    #t = QValkkaThread()
-    #t.start()
-    
-    # """
-    ps = MVisionProcess()
-    # """
-       
-    #t.addProcess(ps)
-    #time.sleep(5)
-    #t.stop()
-    #return
 
-    app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(
-        mvision_process = ps, 
-        shmem_name              ="test_studio_file",
-        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    =1000,
-        shmem_ringbuffer_size   =5
-        )
-    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
-    fg.show()
-    app.exec_()
-    ps.stop()
-    print("bye from app!")
-    
-    
-    
 def main():
     pre = "main :"
     print(pre, "main: arguments: ", sys.argv)

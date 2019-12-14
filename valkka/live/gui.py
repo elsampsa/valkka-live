@@ -603,15 +603,25 @@ class MyGui(QtWidgets.QMainWindow):
                 singleton.process_map[tag] = []
                 # self.process_avail[tag] = num
                 for n in range(0, num):
-                    p = mvision_class()
-                    p.start()
+                    verbose = True
+                    p = mvision_class(verbose = verbose)
+                    # p.start()
+                    p.go()
                     singleton.process_map[tag].append(p)
         
         
     def closeProcesses(self):
         for key in singleton.process_map:
             for p in singleton.process_map[key]:
-                p.stop()
+                # p.stop()
+                p.requestStop()
+
+        for key in singleton.process_map:
+            for p in singleton.process_map[key]:
+                p.waitStop()
+
+
+        
             
     # *** Valkka ***
         
@@ -754,11 +764,13 @@ class MyGui(QtWidgets.QMainWindow):
             from valkka.mvision import multiprocess
         except ImportError:
             pass
+        """
         else:
             if self.mvision:
                 singleton.thread = multiprocess.QValkkaThread()
                 singleton.thread.start()
-                
+        """
+
                 
     def closeValkka(self):
         # live => chain => opengl
@@ -783,9 +795,11 @@ class MyGui(QtWidgets.QMainWindow):
         print("Closing ValkkaFS threads")
         self.valkkafsmanager.close()
         
-        print("Closing multiprocessing frontend")
+        # print("Closing multiprocessing frontend")
+        """
         if singleton.thread:
             singleton.thread.stop()
+        """
         
 
     def reOpenValkka(self):
@@ -847,7 +861,7 @@ class MyGui(QtWidgets.QMainWindow):
                     child_class       = container.MVisionContainer,
                     child_class_pars  = {
                         "mvision_class": cl,
-                        "thread"       : singleton.thread,
+                        # "thread"       : singleton.thread,
                         "process_map"  : singleton.process_map
                         }, 
                     )

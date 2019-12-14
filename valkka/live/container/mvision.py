@@ -62,8 +62,7 @@ class MVisionContainer(VideoContainer):
         if isinstance(self.mvision_class, str):
             self.mvision_class = nameToClass(self.mvision_class)
         
-        assert(issubclass(self.mvision_class, multiprocess.QValkkaShmemProcess2))
-        
+        assert(issubclass(self.mvision_class, multiprocess.QShmemProcess))
         
         tag = self.mvision_class.tag # identifies a list of multiprocesses in singleton.process_map
         
@@ -158,7 +157,7 @@ class MVisionContainer(VideoContainer):
                 shmem_name       = self.shmem_name
                 )
                 
-            singleton.thread.addProcess(self.mvision_process)
+            # singleton.thread.addProcess(self.mvision_process)
             
             # is there a signal giving the bounding boxes..?  let's connect it
             if hasattr(self.mvision_process.signals,"bboxes"):
@@ -166,11 +165,12 @@ class MVisionContainer(VideoContainer):
                 self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
             
             
-    def set_bounding_boxes_slot(self, bbox):
+    def set_bounding_boxes_slot(self, message_object):
         if (self.device):
+            bbox_list = message_object["bbox_list"]
             # device might have been cleared while the yolo object detector takes it time ..
             # .. and then it still calls this
-            self.filterchain.setBoundingBoxes(self.viewport, bbox)
+            self.filterchain.setBoundingBoxes(self.viewport, bbox_list)
             
             
     def clearDevice(self):

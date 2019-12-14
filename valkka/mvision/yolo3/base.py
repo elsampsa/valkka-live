@@ -22,15 +22,17 @@ import sys
 import time
 import os
 import numpy
-# import imutils
+import imutils
 import importlib
-from valkka.live import style
-from valkka.live.tools import getFreeGPU_MB
+import cv2
+import logging
+
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
-from valkka.mvision.multiprocess import QValkkaShmemProcess2
-
-pre = "valkka.mvision.yolo3.base : "
+from valkka.live.multiprocess import MessageObject
+from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.live import style
+from valkka.live.tools import getLogger, setLogger
 
 # if the following works, then darknet is available and the weights file has been downloaded ok
 from darknet.api2.constant import get_yolov2_weights_file, get_yolov3_weights_file, get_yolov3_tiny_weights_file
@@ -57,7 +59,6 @@ class YoloV3Analyzer(Analyzer):
         # checks that kwargs is consistent with parameter_defs.  Attaches
         # parameters as attributes to self
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        self.pre = self.__class__.__name__ + " : "
         self.init()
             
             
@@ -73,7 +74,7 @@ class YoloV3Analyzer(Analyzer):
         pass
         
     def __call__(self, img):
-        self.report("analyzing frame :",img.shape)    
+        self.logger.debug("analyzing frame : %s",img.shape)    
         lis = self.predictor(img)
         """
         lis = [ # debugging ..
@@ -87,12 +88,12 @@ class YoloV3Analyzer(Analyzer):
             ('dog', 99, img.shape[0]*0.25, img.shape[0]*0.75, img.shape[1]*0.25, img.shape[1]*0.75)
             ]
         """
-        self.report("finished analyzing frame")
+        self.logger.debug("finished analyzing frame")
         return lis
 
 
 
-class MVisionProcess(QValkkaShmemProcess2):
+class MVisionProcess(QShmemProcess):
     """
     YOLO v3 object detector
     
@@ -108,18 +109,6 @@ class MVisionProcess(QValkkaShmemProcess2):
     
     required_mb = 2700      # required GPU memory in MB
     
-    incoming_signal_defs = {  # each key corresponds to a front- and backend method
-        # don't touch these three..
-        "activate_"     : {"n_buffer": int, "image_dimensions": tuple, "shmem_name": str},
-        "deactivate_"   : [],
-        "stop_"         : [],
-    }
-
-    outgoing_signal_defs = {
-        "objects" : {"object_list" : list},
-        "bboxes"  : {"bbox_list"   : list}
-    }
-
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
@@ -134,12 +123,11 @@ class MVisionProcess(QValkkaShmemProcess2):
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(self.__class__.name)
-        self.pre = self.__class__.__name__ + ":" + self.name+ " : "
-        self.signals = self.Signals()
-        
-    def preRun_(self):
         self.analyzer = None
+
+    def preRun_(self):
         super().preRun_()
+        self.analyzer = None
         
     def postRun_(self):
         if (self.analyzer): self.analyzer.close() # release any resources acquired by the analyzer
@@ -178,13 +166,13 @@ class MVisionProcess(QValkkaShmemProcess2):
 
     def cycle_(self):
         lis=[]
-        self.report("cycle_ starts")
+        self.logger.debug("cycle_ starts")
         index, isize = self.client.pull()
         if (index is None):
-            self.report("Client timed out..")
+            self.logger.debug("Client timed out..")
             pass
         else:
-            self.report("Client index, size =",index, isize)
+            self.logger.debug("Client index, size = %s, %s", index, isize)
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
@@ -218,32 +206,16 @@ class MVisionProcess(QValkkaShmemProcess2):
             ))
             # """
             
-            
         if (hasattr(self, "warning_message")):
             object_list.append(self.warning_message)
   
         # print("YoloV3",bbox_list)
         #if (len(lis)>0):
-        self.sendSignal_(name="objects", object_list=object_list)
-        self.sendSignal_(name="bboxes",  bbox_list=bbox_list)
-
-    # *** backend methods corresponding to incoming signals ***
-    # *** i.e., how the signals are handled inside the running multiprocess
-    
-    # nada
-
-    # ** frontend methods launching incoming signals
-    # *** you can call these after the multiprocess is started
-    
-    # nada
-
-    # ** frontend methods handling outgoing signals ***
-    
-    def objects(self, object_list):
-        self.signals.objects.emit(object_list)
+        # self.sendSignal_(name="objects", object_list=object_list)
+        # self.sendSignal_(name="bboxes",  bbox_list=bbox_list)
+        self.send_out__(MessageObject("objects", object_list = object_list))
+        self.send_out__(MessageObject("bboxes", bbox_list = bbox_list))
         
-    def bboxes(self, bbox_list):
-        self.signals.bboxes.emit(bbox_list)
 
     # *** create a widget for this machine vision module ***
     def getWidget(self):
@@ -259,15 +231,15 @@ class MVisionProcess(QValkkaShmemProcess2):
         self.signals.objects.connect(self.objects_slot)
         return self.widget
     
-    def objects_slot(self, object_list):
+    def objects_slot(self, message_object):
         txt=""
-        for o in object_list:
+        for o in message_object["object_list"]:
             txt += str(o) + "\n"
         self.widget.setText(txt)
         
         
 def test1():
-    """Dummy-testing the movement analyzer
+    """Dummy-testing the analyzer
     """
     analyzer = YoloV3Analyzer(verbose=True, debug=True)
 
@@ -294,91 +266,13 @@ def test3():
     """Test the multiprocess
     """
     import time
-    
-    p = MVisionProcess()
-    p.start()
-    time.sleep(5)
-    p.stop()
-    
+    test_process(MVisionProcess)
+
     
 def test4():
-    """Test multiprocess with outgoing signals
-    """
-    import time
-    from valkka.mvision import QValkkaThread
-    
-    t = QValkkaThread()
-    t.start()
-    time.sleep(1)
-    # t.stop(); return
-    
-    print("Creating multiprocess, informing thread")
-    p1 = MVisionProcess()
-    p1.start()
-    t.addProcess(p1)
-    time.sleep(5)
-    
-    print("Creating another multiprocess, informing thread")
-    p2 = MVisionProcess()
-    p2.start()
-    t.addProcess(p2)
-    time.sleep(5)
-    
-    print("Remove multiprocesses")
-    t.delProcess(p1)
-    # t.delProcess(p2)
-    
-    p1.stop()
-    p2.stop()
-    
-    print("bye")
-    
-    t.stop()
-    
-    
-def test5():
-    """Test the analyzer process with files
-    
-    They must be encoded and muxed correctly, i.e., with:
-    
-    ::
-    
-        ffmpeg -i your_video_file -c:v h264 -an outfile.mkv
-    
-    """
-    import time
-    from valkka.mvision.file import FileGUI
+    test_with_file(MVisionProcess)
 
-    # from valkka.mvision import QValkkaThread
-    
-    #t = QValkkaThread()
-    #t.start()
-    
-    # """
-    ps = MVisionProcess()
-    # """
-       
-    #t.addProcess(ps)
-    #time.sleep(5)
-    #t.stop()
-    #return
 
-    app = QtWidgets.QApplication(["mvision test"])
-    fg = FileGUI(
-        mvision_process = ps, 
-        shmem_name              ="test_studio_file",
-        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    =1000,
-        shmem_ringbuffer_size   =5
-        )
-    # fg = FileGUI(MVisionProcess, shmem_image_interval = shmem_image_interval)
-    fg.show()
-    app.exec_()
-    ps.stop()
-    print("bye from app!")
-    
-    
-    
 def main():
     pre = "main :"
     print(pre, "main: arguments: ", sys.argv)

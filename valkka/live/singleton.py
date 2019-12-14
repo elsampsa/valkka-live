@@ -32,7 +32,7 @@ devices_by_id = {}
 process_map = {}
 
 # QThread for interprocess communication
-thread = None
+# thread = None
 
 # For a hack to get the X11 window margins
 dx = 0
