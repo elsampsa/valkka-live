@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 from valkka.live import style, constant, singleton
 import sys
-
+import ctypes
 
 
 def getCorrectedGeom(window):
@@ -165,6 +165,6 @@ def numpy2QPixmap(img):
     """
     ch = ctypes.c_char.from_buffer(img, 0)
     rcount = ctypes.c_long.from_address(id(ch)).value
-    qimage = QImage(ch, img.shape[1], img.shape[0], QImage.Format_RGB888)
+    qimage = QtGui.QImage(ch, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
     ctypes.c_long.from_address(id(ch)).value = rcount
-    return QPixmap.fromImage(qimage)
+    return QtGui.QPixmap.fromImage(qimage)

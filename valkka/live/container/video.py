@@ -75,7 +75,9 @@ class VideoContainer:
     class Signals(QtCore.QObject):
         close = QtCore.Signal(object)
         drop  = QtCore.Signal(object)
-
+        left_double_click  = QtCore.Signal()
+        right_double_click = QtCore.Signal()
+        
     # Right-click pop-up menu
     # Adding installed cameras here could be done as follows: create this
     # class and the callbacks dynamically
@@ -369,6 +371,7 @@ class VideoContainer:
                 print(
                     self.pre,
                     ": mouseGestureHandler: Right button double-clicked")
+                self.handle_right_double_click(info)
 
     # mouse gesture handlers
 
@@ -383,11 +386,14 @@ class VideoContainer:
             self.cb_unfocus()
         self.double_click_focus = not(
             self.double_click_focus)  # boolean switch
+        self.signals.left_double_click.emit()
 
     def handle_right_single_click(self, info):
         # get the QMenu object from the QuickMenu helper class and show it
         self.right_click_menu.menu.popup(QtGui.QCursor.pos())
 
+    def handle_right_double_click(self, info):
+        self.signals.right_double_click.emit()
 
 
 

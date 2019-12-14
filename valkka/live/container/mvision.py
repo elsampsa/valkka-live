@@ -31,13 +31,50 @@ from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
 from valkka.live.tools import classToName, nameToClass
 from valkka.mvision import multiprocess
+from valkka.live.qt.widget import SimpleVideoWidget, LineCrossingVideoWidget, VideoShmemThread
 
 
 
 class MVisionContainer(VideoContainer):
     """This class starts an analyzer process and passes it the correct shmem identifier
     """
-    
+    class AnalyzerWindow(QtWidgets.QMainWindow):
+
+        def __init__(self, parent = None):
+            super().__init__()
+            self.w = QtWidgets.QWidget(self)
+            self.setCentralWidget(self.w)
+            self.lay = QtWidgets.QVBoxLayout(self.w)
+            # self.video = SimpleVideoWidget(parent = self.w)
+            self.video = LineCrossingVideoWidget(parent = self.w)
+            self.lay.addWidget(self.video)
+            self.filterchain = None
+
+
+        def activate(self, filterchain):
+            self.filterchain = filterchain
+            self.shmem_name, self.shmem_n_buffer, self.width, self.height = filterchain.getShmemQt()
+            self.thread = VideoShmemThread(
+                    self.shmem_name,
+                    self.shmem_n_buffer,
+                    self.width,
+                    self.height
+                )
+            self.thread.signals.pixmap.connect(self.video.set_pixmap_slot)
+            self.thread.start()
+            self.setVisible(True)
+
+        def showEvent(self, e):
+            print("AnalyzerWindow: showEvent")
+            
+        def closeEvent(self, e):
+            print("AnalyzerWindow: closeEvent")
+            if self.filterchain:
+                self.thread.signals.pixmap.disconnect(self.video.set_pixmap_slot)
+                self.filterchain.releaseShmemQt(self.shmem_name)
+                self.thread.stop()
+                
+
     parameter_defs = {
         #"parent_container"  : None,                 # RootVideoContainer or child class
         #"filterchain_group" : FilterChainGroup,     # Filterchain manager class
@@ -80,6 +117,10 @@ class MVisionContainer(VideoContainer):
             self.mvision_process = None
             return
     
+        self.analyzer_window = self.AnalyzerWindow()
+        self.analyzer_window.setVisible(False)
+        self.signals.right_double_click.connect(self.right_double_click_slot)
+
     
     def serialize(self):
         """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
@@ -172,18 +213,25 @@ class MVisionContainer(VideoContainer):
             # .. and then it still calls this
             self.filterchain.setBoundingBoxes(self.viewport, bbox_list)
             
+
+    def right_double_click_slot(self):
+        if self.filterchain:
+            self.analyzer_window.activate(self.filterchain)
+
+
             
     def clearDevice(self):
         """Remove the current stream
         """
         print(self.pre, "clearDevice: ")
-        
         self.report("clearDevice")
         if not self.device:
             return
         if (self.mvision_process==None):
             return
         
+        self.analyzer_window.close()
+
         self.filterchain.delViewPort(self.viewport)
         self.filterchain.releaseShmem(self.shmem_name)
 

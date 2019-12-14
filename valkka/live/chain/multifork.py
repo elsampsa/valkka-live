@@ -99,9 +99,10 @@ class MultiForkFilterchain(BaseFilterchain):
                  
         *** qt bitmap branch *** (in the case you need to pass bitmaps to the qt subsystem)
 
-        --> {GateFrameFilter: qt_gate} --> {TimeIntervalFrameFilter: qt_interval} --> {ForkFrameFilterN: qt_fork_N}
-                                                                                           |                                                                 
-                   +------------+------------+---------------------------------------------+             
+        --> {GateFrameFilter: qt_gate} --> {TimeIntervalFrameFilter: qt_interval} -->
+        --> {SwScaleFrameFilter: qt_sws_filter} --> {ForkFrameFilterN: qt_fork_N}
+                                                              |                                                                 
+                   +------------+------------+----------------+             
                    |            |            |
                  on-demand terminals for RGB images, for example
         
@@ -214,6 +215,8 @@ class MultiForkFilterchain(BaseFilterchain):
         self.width      = self.shmem_image_dimensions[0]
         self.height     = self.shmem_image_dimensions[1]
             
+        self.shmem_terminals_qt = {}
+
         self.record_type = None
         self.id_rec = None
         self.valkkafsmanager = None
@@ -469,12 +472,19 @@ class MultiForkFilterchain(BaseFilterchain):
         """Connect only if bitmaps needed at the Qt side
         """
         self.qt_fork_filter = core.ForkFrameFilterN("qt_fork_" + str(self.slot))
+        
+        self.qt_sws_filter =\
+        core.SwScaleFrameFilter("qt_sws_scale_" + str(self.slot), self.width, 
+            self.height, self.qt_fork_filter)
+
         self.qt_interval = core.TimeIntervalFrameFilter(
             "qt_interval_" + str(self.slot),
-            self.shmem_image_interval,
-            self.qt_fork_filter
+            # self.shmem_image_interval,
+            500,
+            self.qt_sws_filter
             )
         self.qt_gate = core.GateFrameFilter("qt_gate_" + str(self.slot), self.qt_interval)
+
         # connect to main:
         self.fork_filter_decode.connect("qt_branch_" + str(self.slot), self.qt_gate)
 
