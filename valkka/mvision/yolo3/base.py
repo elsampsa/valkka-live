@@ -167,6 +167,7 @@ class MVisionProcess(QShmemProcess):
     def cycle_(self):
         lis=[]
         self.logger.debug("cycle_ starts")
+        """ old API
         index, isize = self.client.pull()
         if (index is None):
             self.logger.debug("Client timed out..")
@@ -176,23 +177,34 @@ class MVisionProcess(QShmemProcess):
             data = self.client.shmem_list[index]
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
-            
-            if (self.analyzer!=None):
-                lis = self.analyzer(img)
-            
-            """
-            print("img.shape=",img.shape)
-            for l in lis:
-                print(l)
-            """
-            
-            """ # list looks like this:
-            [ ('dog', 99, 134, 313, 214, 542), 
-            ('truck', 91, 476, 684, 81, 168),
-            ('bicycle', 99, 99, 589, 124, 447)
-            ]
-            """
-            
+        """
+        index, meta = self.client.pullFrame()
+        if (index is None):
+            self.logger.debug("Client timed out..")
+            return
+        
+        self.logger.debug("Client index = %s", index)
+        if (meta.size < 1) or (self.analyzer is None):
+            return
+
+        data = self.client.shmem_list[index][0:meta.size]
+        img = data.reshape(
+            (meta.height, meta.width, 3))
+        lis = self.analyzer(img)
+
+        """
+        print("img.shape=",img.shape)
+        for l in lis:
+            print(l)
+        """
+        
+        """ # list looks like this:
+        [ ('dog', 99, 134, 313, 214, 542), 
+        ('truck', 91, 476, 684, 81, 168),
+        ('bicycle', 99, 99, 589, 124, 447)
+        ]
+        """
+        
         object_list=[]
         bbox_list=[]
         for l in lis:

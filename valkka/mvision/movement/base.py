@@ -210,6 +210,7 @@ class MVisionProcess(QShmemProcess):
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
         self.logger.debug("cycle_ starts")
+        """
         index, isize = self.client.pull()
         if (index is None):
             self.logger.debug("Client timed out..")
@@ -220,14 +221,34 @@ class MVisionProcess(QShmemProcess):
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
             result = self.analyzer(img)
-            # NOTE: you could use and combine several analyzers here, say first see if there is movement and then do the rest
-            # print(self.pre,">>>",data[0:10])
-            if (result == MovementDetector.state_same):
-                pass
-            elif (result == MovementDetector.state_start):
-                self.send_out__(MessageObject("start_move"))
-            elif (result == MovementDetector.state_stop):
-                self.send_out__(MessageObject("stop_move"))
+        """
+        index, meta = self.client.pullFrame()
+        if (index is None):
+            self.logger.debug("Client timed out..")
+            return
+        
+        self.logger.debug("Client index = %s", index)
+        if meta.size < 1:
+            return
+
+        data = self.client.shmem_list[index][0:meta.size]
+        img = data.reshape(
+            (meta.height, meta.width, 3))
+        """ # WARNING: the x-server doesn't like this, i.e., we're creating a window from a separate python multiprocess, so the program will crash
+        print(self.pre,"Visualizing with OpenCV")
+        cv2.imshow("openCV_window",img)
+        cv2.waitKey(1)
+        """
+        self.logger.debug("got frame %s", img.shape)
+        result = self.analyzer(img)
+        # NOTE: you could use and combine several analyzers here, say first see if there is movement and then do the rest
+        # print(self.pre,">>>",data[0:10])
+        if (result == MovementDetector.state_same):
+            pass
+        elif (result == MovementDetector.state_start):
+            self.send_out__(MessageObject("start_move"))
+        elif (result == MovementDetector.state_stop):
+            self.send_out__(MessageObject("stop_move"))
 
 
     # *** create a widget for this machine vision module ***

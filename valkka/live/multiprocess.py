@@ -148,7 +148,7 @@ class QMultiProcess(Process):
 
     def __init__(self, name = "QMultiProcess"):
         self.name = name
-        self.pre = __name__ + "." + self.name
+        self.pre = self.__class__.__name__ + "." + self.name
         self.logger = getLogger(self.pre)
         super().__init__()
         self.signals = self.Signals()

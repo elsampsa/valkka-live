@@ -22,18 +22,27 @@ import sys
 import time
 import logging
 
-from valkka.api2 import ValkkaProcess, Namespace, safe_select, ShmemRGBClient
+from valkka.api2 import ValkkaProcess, Namespace, ShmemRGBClient, ShmemRGBServer
 from valkka.api2.tools import *
 from valkka.live.multiprocess import MessageObject, safe_select, QMultiProcess
+from valkka.mvision import singleton
 
 logger = getLogger(__name__)
 
 
+"""
+
+::
+
+    QShmemProcess.activate => QShmemProcess.c__activate  [activates shmem ringbuffer client]
+
+    QShmem.setMasterProcess => QShmem.c__setMasterProcess [activates shmem ringbuffer server]
+
+"""
 
 class QShmemProcess(QMultiProcess):
     """A multiprocess with Qt signals and reading RGB images from shared memory.  Shared memory client is instantiated on demand (by calling activate)
     """
-
     timeout = 1.0
 
     class Signals(QtCore.QObject):
@@ -47,51 +56,69 @@ class QShmemProcess(QMultiProcess):
         self.send_out__(MessageObject("pong", lis = [1,2,3]))
 
 
-    def c__activate(self, n_buffer:int = None, image_dimensions:tuple = None, shmem_name:str = None):
-        """Shared mem info is given.  Now we can create the shmem client
-        """
+    def c__activate(self, 
+        n_buffer:int = None, 
+        image_dimensions:tuple = None, 
+        shmem_name:str = None):
+    
+        # if not defined, use default values
+        if n_buffer is None: n_buffer = self.n_buffer
+        if image_dimensions is None: image_dimensions = self.image_dimensions
+        if shmem_name is None: shmem_name = self.shmem_name
+
         self.logger.debug("c__activate")
         self.listening = True
-        self.image_dimensions = image_dimensions
+        # self.image_dimensions = image_dimensions
         self.client = ShmemRGBClient(
             name            =shmem_name,
             n_ringbuffer    =n_buffer,   # size of ring buffer
             width           =image_dimensions[0],
             height          =image_dimensions[1],
             # client timeouts if nothing has been received in 1000 milliseconds
-            mstimeout   =1000,
-            verbose     =False
-        )
+            mstimeout   =int(self.timeout*1000),
+            verbose     =self.shmem_verbose
+            )
         self.postActivate_()
         
+
     def c__deactivate(self):
         """Init shmem variables to None
         """
         self.logger.debug("c__deactivate")
         self.preDeactivate_()
         self.listening = False
-        self.image_dimensions = None
+        # self.image_dimensions = None
         self.client = None # shared memory client created when activate is called
-
     # ****
 
     parameter_defs = {
+        "n_buffer"          : (int, 10),
+        "image_dimensions"  : (tuple, (1920//4, 1080//4)),
+        "shmem_verbose"     : (bool, False),
+        "shmem_name"        : None
         }
 
     def __init__(self, name = "QShmemProcess", **kwargs):
         super().__init__(name)
         parameterInitCheck(QShmemProcess.parameter_defs, kwargs, self)
-        
-        
+        if self.shmem_name is None:
+            self.shmem_name = "valkkashmemclient"+str(id(self))
+        else:
+            assert(isinstance(self.shmem_name, str))
+        self.shmem_name_default = self.shmem_name
+
+
     def preRun_(self):
         self.logger.debug("preRun_")
         self.c__deactivate() # init variables
         
+
     def postRun_(self):
         """Clear shmem variables
         """
         self.c__deactivate()
         
+
     def run(self):
         self.preRun_()
 
@@ -107,29 +134,39 @@ class QShmemProcess(QMultiProcess):
         self.back_pipe.send(None)
         self.logger.debug("bye!")
 
-    def cycle_(self):
-        index, isize = self.client.pull()
-        if (index is None):
-            print(self.pre, "Client timed out..")
-        else:
-            print(self.pre, "Client index, size =", index, isize)
-            data = self.client.shmem_list[index]
-            img = data.reshape(
-                (self.image_dimensions[1], self.image_dimensions[0], 3))
-            """ # WARNING: the x-server doesn't like this, i.e., we're creating a window from a separate python multiprocess, so the program will crash
-            print(self.pre,"Visualizing with OpenCV")
-            cv2.imshow("openCV_window",img)
-            cv2.waitKey(1)
-            """
-            print(self.pre, ">>>", data[0:10])
-            # res=self.analyzer(img) # does something .. returns something ..
 
+    def cycle_(self):
+        """Receives frames from the shmem client and does something with them
+
+        Typically launch qt signals
+        """
+        index, meta = self.client.pullFrame()
+        if (index is None):
+            self.logger.debug("Client timed out..")
+            return
         
+        self.logger.debug("Client index = %s", index)
+        if meta.size < 1:
+            return
+
+        data = self.client.shmem_list[index][0:meta.size]
+        img = data.reshape(
+            (meta.height, meta.width, 3))
+        """ # WARNING: the x-server doesn't like this, i.e., we're creating a window from a separate python multiprocess, so the program will crash
+        print(self.pre,"Visualizing with OpenCV")
+        cv2.imshow("openCV_window",img)
+        cv2.waitKey(1)
+        """
+        self.logger.debug("got frame %s", img.shape)
+        # res=self.analyzer(img) # does something .. returns something ..
+
+
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client.  Overwrite in child classes
         """
         pass
-        
+
+
     def preDeactivate_(self):
         """Whatever you need to do prior to deactivating the shmem client.  Overwrite in child classes
         """
@@ -141,14 +178,300 @@ class QShmemProcess(QMultiProcess):
     def activate(self, **kwargs):
         self.sendMessageToBack(MessageObject(
             "activate", **kwargs))
+
+
+    def deactivate(self):
+        self.sendMessageToBack(MessageObject(
+            "deactivate"))
+
+
+    def ping(self, message = ""):
+        """Test call
+        """
+        self.sendMessageToBack(MessageObject("ping", message = message))
+
+
+
+class QShmemMasterProcess(QShmemProcess):
+
+
+    class Client:
+        def __init__(self, fd = None, pipe = None, shmem_client = None):
+            self.fd = fd
+            self.pipe = pipe
+            self.shmem_client = shmem_client
+
+
+    def c__registerClient(self,
+        n_buffer:int = None, 
+        image_dimensions:tuple = None, 
+        shmem_name:str = None,
+        ipc_index:int = None):
+        """Shared mem info is given.  Now we can create the shmem client
+
+        There can be several shmem clients
+        """
+        self.logger.debug("c__registerClient")
+
+        event_fd, pipe = singleton.ipc.get2(ipc_index)
+        singleton.ipc.wait(ipc_index) # wait till the shmem server has been created
+        # this flag is controlled by QShmemClientProcess.c__setMasterProcess
+        singleton.ipc.clear(ipc_index)
+        shmem_client = ShmemRGBClient(
+                name            =shmem_name,
+                n_ringbuffer    =n_buffer,   # size of ring buffer
+                width           =image_dimensions[0],
+                height          =image_dimensions[1],
+                # client timeouts if nothing has been received in 1000 milliseconds
+                mstimeout   =1000,
+                verbose     =False
+                )
+        shmem_client.useEventFd(event_fd)
+
+        fd = event_fd.getFd()
+
+        client = self.Client(
+            fd = fd,
+            pipe = pipe,
+            shmem_client = shmem_client
+            )
+
+        self.clients[ipc_index] = client
+        self.clients_by_fd[fd] = client
+        self.logger.debug("c__registerClient: fd=%s", fd)
+        self.rlis.append(fd)
+
+
+    def c__unregisterClient(self, ipc_index = None):
+        client = self.clients.pop(ipc_index)
+        self.rlis.remove(client.fd)
+    
+
+    parameter_defs = {
+        }
+
+
+    def __init__(self, name = "QShmemMasterProcess", **kwargs):
+        super().__init__(name)
+        parameterInitCheck(QShmemMasterProcess.parameter_defs, kwargs, self)
+
+
+    def preRun_(self):
+        self.logger.debug("preRun_")
+        self.clients = {}
+        self.clients_by_fd = {}
+        self.rlis = [self.back_pipe]
+
+
+    def postRun_(self):
+        """Clear shmem variables
+        """
+        self.clients = {}
+
+
+    def run(self):
+        self.preRun_()
+
+        while self.loop:
+            # self.logger.debug("run: select %s", self.rlis)
+            rlis, wlis, elis = safe_select(self.rlis, [], [], timeout = self.timeout)
+            # self.logger.debug("run: select done %s", rlis)
+
+            if self.back_pipe in rlis:
+                rlis.remove(self.back_pipe)
+                obj = self.back_pipe.recv()
+                self.routeMainPipe__(obj)
+
+            for fd in rlis:
+                self.logger.debug("run: handling %s", fd)
+                client = self.clients_by_fd[fd]
+                reply = self.handleFrame_(client.shmem_client)
+                client.pipe.send(reply)
+
+                
+
+        self.postRun_()
+        # indicate front end qt thread to exit
+        self.back_pipe.send(None)
+        self.logger.debug("run: bye!")
+
+
+    def handleFrame_(self, shmem_client):
+        """Receives frames from the shmem client and does something with them
+
+        Typically launch qt signals
+        """
+        index, meta = shmem_client.pullFrame()
+        if meta.size < 1:
+            return None
+        return "kokkelis"
+        
+
+    def postActivate_(self):
+        """Whatever you need to do after creating the shmem client.  Overwrite in child classes
+        """
+        pass
+
+
+    def preDeactivate_(self):
+        """Whatever you need to do prior to deactivating the shmem client.  Overwrite in child classes
+        """
+        pass
+    
+
+
+    # *** frontend ***
+
+    def registerClient(self, **kwargs):
+        self.sendMessageToBack(MessageObject(
+            "registerClient", **kwargs))
+
+
+    def unregisterClient(self, **kwargs):
+        self.sendMessageToBack(MessageObject(
+            "unregisterClient", **kwargs))
+
+
+
+class QShmemClientProcess(QShmemProcess):
+    """Like QShmemProcess, but uses a common master process
+    """
+
+    """
+    def c__setMasterProcess(self, 
+            ipc_index = None,
+            n_buffer = None,
+            image_dimensions = None,
+            shmem_name = None):
+    """
+    def c__setMasterProcess(self, ipc_index = None):
+        # get shmem parameters from master process frontend
+        self.ipc_index = ipc_index
+        self.eventfd, self.master_pipe = singleton.ipc.get1(self.ipc_index)
+        self.server = ShmemRGBServer(
+            name            =self.shmem_name_server,
+            n_ringbuffer    =self.n_buffer,   # size of ring buffer
+            width           =self.image_dimensions[0],
+            height          =self.image_dimensions[1],
+            verbose         =self.shmem_verbose
+            )        
+        self.server.useEventFd(self.eventfd) # activate eventfd API
+        singleton.ipc.set(ipc_index)
+
+
+    def c__unsetMasterProcess(self):
+        # singleton.ipc.release(self.ipc_index) # not here
+        self.server = None
+        self.master_pipe = None
+        self.eventfd = None
+
+    # ****
+
+    def __init__(self, name = "QShmemClientProcess", **kwargs):
+        super().__init__(name = name, **kwargs)
+        self.shmem_name_server = "valkkashmemserver"+str(id(self))
+        # parameterInitCheck(QShmemClientProcess.parameter_defs, kwargs, self)
+        self.ipc_index = None # used at the frontend
+        
+        
+    def preRun_(self):
+        self.logger.debug("preRun_")
+        self.c__deactivate() # init variables
+        self.c__unsetMasterProcess()
+
+    def postRun_(self):
+        """Clear shmem variables
+        """
+        self.c__deactivate()
+        self.c__unsetMasterProcess()
+
+        
+    def run(self):
+        self.preRun_()
+        while self.loop:
+            if self.listening:
+                self.cycle_()
+                self.readPipes__(timeout = 0) # timeout = 0 == just poll
+            else:
+                self.readPipes__(timeout = self.timeout) # timeout of 1 sec
+
+        self.postRun_()
+        # indicate front end qt thread to exit
+        self.back_pipe.send(None)
+        self.logger.debug("bye!")
+
+
+    def cycle_(self):
+        """Receives frame from the shmem client and sends them for further
+        processing to a master process
+        """
+        # get rgb frame from the filterchain
+        index, meta = self.client.pullFrame()
+        if (index is None):
+            self.logger.debug("Client timed out..")
+            return
+        
+        self.logger.debug("Client index, size = %s", index)
+        data = self.client.shmem_list[index][0:meta.size]
+        img = data.reshape(
+            (meta.height, meta.width, 3))
+        # forward rgb frame to master process (yolo etc.)
+        self.logger.debug("cycle_: got frame %s", img.shape)
+
+        if self.server is not None:
+            self.logger.debug("cycle_ : pushing to server")
+            self.server.pushFrame(
+                img,
+                meta.slot,
+                meta.mstimestamp
+            )
+            # receive results from master process
+            message = self.master_pipe.recv()
+            print("reply from master process:", message)
+
+
+    # *** frontend ***
+
+    def setMasterProcess(self, master_process = None):
+        # ipc_index, n_buffer, image_dimensions, shmem_name # TODO
+        self.ipc_index = singleton.ipc.reserve()
+
+        # first, create the server
+        self.sendMessageToBack(MessageObject(
+            "setMasterProcess", 
+            ipc_index = self.ipc_index))
+
+        # this will create the client:
+        master_process.registerClient(
+            ipc_index = self.ipc_index,
+            n_buffer = self.n_buffer,
+            image_dimensions = self.image_dimensions,
+            shmem_name = self.shmem_name_server)
+        
+
+    def unsetMasterProcess(self, master_process):
+        self.sendMessageToBack(MessageObject(
+            "unsetMasterProcess"
+        ))
+        master_process.unregisterClient(
+            ipc_index = self.ipc_index
+        )
+        singleton.ipc.release(self.ipc_index)
+        self.ipc_index = None
+
+    """
+    def activate(self, **kwargs):
+        self.sendMessageToBack(MessageObject(
+            "activate", **kwargs))
                 
     def deactivate(self):
         self.sendMessageToBack(MessageObject(
             "deactivate"))
         
     def ping(self, message = ""):
+        #Test call
         self.sendMessageToBack(MessageObject("ping", message = message))
-
+    """
 
 
 def test_process(mvision_process_class):
@@ -252,17 +575,223 @@ class MyGui(QtWidgets.QMainWindow):
 
 
 def test1():
-    p = QShmemProcess("test")
+    p = QShmemProcess("test", n_buffer=10, image_dimensions=(1920//4, 1080//4))
     p.setDebug()
     p.start()
     time.sleep(5)
-    p.activate(n_buffer=10, image_dimensions=(1920//4, 1080//4), shmem_name="test123")
+    p.activate()
     time.sleep(5)
     p.deactivate()
     time.sleep(5)
-    p.activate(n_buffer=10, image_dimensions=(1920//4, 1080//4), shmem_name="test123")
+    p.activate()
     time.sleep(5)
     p.stop()
+
+
+def test2():
+    import numpy
+
+    shmem_name = "kokkelis"
+    n_buffer = 10
+    image_dimensions = (400, 300)
+    server = ShmemRGBServer(
+        name            =shmem_name,
+        n_ringbuffer    =n_buffer,   # size of ring buffer
+        width           =image_dimensions[0],
+        height          =image_dimensions[1],
+        verbose         =True
+        )
+
+    p = QShmemProcess("test", 
+        n_buffer=n_buffer, 
+        image_dimensions=image_dimensions, 
+        shmem_verbose = True, 
+        shmem_name=shmem_name)
+    
+    p.setDebug()
+    p.start()
+    p.activate()
+
+    img = numpy.zeros((300, 400, 3), dtype = numpy.uint8)
+
+    for i in range(5):
+        img[:,:,:] = i
+        server.pushFrame(
+            img,
+            1,
+            123
+        )
+        time.sleep(0.2)
+
+    p.deactivate()
+
+    for i in range(50):
+        img[:,:,:] = i
+        server.pushFrame(
+            img,
+            1,
+            123
+        )
+        # time.sleep(0.2)
+
+    p.activate()
+
+    for i in range(15):
+        img[:,:,:] = i
+        server.pushFrame(
+            img,
+            1,
+            123
+        )
+        time.sleep(0.1)
+
+    p.stop()
+
+
+
+def test3():
+    """One client, one master process
+    """
+    import numpy
+
+    shmem_name = "kokkelis"
+    n_buffer = 10
+    image_dimensions = (400, 300)
+    server = ShmemRGBServer(
+        name            =shmem_name,
+        n_ringbuffer    =n_buffer,   # size of ring buffer
+        width           =image_dimensions[0],
+        height          =image_dimensions[1],
+        verbose         =True
+        )
+    
+    p = QShmemClientProcess("test", 
+        n_buffer=n_buffer, 
+        image_dimensions=image_dimensions, 
+        shmem_verbose = True, 
+        shmem_name=shmem_name)
+    
+    p.setDebug()
+    p.start()
+
+    pm = QShmemMasterProcess("master_test")
+    pm.setDebug()
+    pm.start()
+
+    """
+    p.activate(n_buffer=n_buffer, 
+        image_dimensions=image_dimensions, 
+        shmem_name=shmem_name)
+    """
+    p.activate()
+
+    img = numpy.zeros((300, 400, 3), dtype = numpy.uint8)
+    for i in range(10):
+        img[:,:,:] = i
+        server.pushFrame(
+            img,
+            1,
+            123
+        )
+        time.sleep(0.1)
+
+    print("\nConnecting master process\n")
+
+    p.setMasterProcess(pm)
+
+    for i in range(10):
+        img[:,:,:] = i
+        server.pushFrame(
+            img,
+            1,
+            123
+        )
+        time.sleep(0.1)
+
+    p.unsetMasterProcess(pm)
+
+    p.stop()
+    pm.stop()
+
+
+
+def test4():
+    """Two clients, one master process
+    """
+    import numpy
+
+    shmem_name1 = "kokkelis1"
+    n_buffer1 = 10
+    image_dimensions1 = (400, 300)
+    server1 = ShmemRGBServer(
+        name            =shmem_name1,
+        n_ringbuffer    =n_buffer1,   # size of ring buffer
+        width           =image_dimensions1[0],
+        height          =image_dimensions1[1],
+        verbose         =True
+        )
+    p1 = QShmemClientProcess("test1", 
+        n_buffer=n_buffer1, 
+        image_dimensions=image_dimensions1, 
+        shmem_verbose = True, 
+        shmem_name=shmem_name1)
+    
+    shmem_name2 = "kokkelis2"
+    n_buffer2 = 10
+    image_dimensions2 = (400, 300)
+    server2 = ShmemRGBServer(
+        name            =shmem_name2,
+        n_ringbuffer    =n_buffer2,   # size of ring buffer
+        width           =image_dimensions2[0],
+        height          =image_dimensions2[1],
+        verbose         =True
+        )
+    p2 = QShmemClientProcess("test2", 
+        n_buffer=n_buffer2, 
+        image_dimensions=image_dimensions2, 
+        shmem_verbose = True, 
+        shmem_name=shmem_name2)
+    
+    p1.setDebug()
+    p1.start()
+    p2.setDebug()
+    p2.start()
+    
+    pm = QShmemMasterProcess("master_test")
+    pm.setDebug()
+    pm.start()
+    """
+    p.activate(n_buffer=n_buffer, 
+        image_dimensions=image_dimensions, 
+        shmem_name=shmem_name)
+    """
+    p1.activate()
+    p2.activate()
+    
+    img = numpy.zeros((300, 400, 3), dtype = numpy.uint8)
+    for i in range(10):
+        img[:,:,:] = i
+        server1.pushFrame(img, 1, 123)
+        server2.pushFrame(img, 2, 123)
+        time.sleep(0.1)
+
+    print("\nConnecting master process\n")
+    p1.setMasterProcess(pm)
+    p2.setMasterProcess(pm)
+    
+    for i in range(10):
+        img[:,:,:] = i
+        server1.pushFrame(img, 1, 123)
+        server2.pushFrame(img, 2, 123)
+        time.sleep(0.1)
+
+    p1.unsetMasterProcess(pm)
+    p2.unsetMasterProcess(pm)
+
+    p1.stop()
+    p2.stop()
+    
+    pm.stop()
 
 
 def main():
@@ -274,4 +803,8 @@ def main():
 
 if (__name__ == "__main__"):
     # main()
-    test1()
+    # test1()
+    # test2()
+    # test3()
+    test4()
+    

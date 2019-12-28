@@ -205,6 +205,7 @@ class MVisionProcess(QShmemProcess):
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
         self.logger.info("cycle_ starts")
+        """
         index, isize = self.client.pull()
         if (index is None):
             self.logger.info("Client timed out..")
@@ -215,10 +216,24 @@ class MVisionProcess(QShmemProcess):
             img = data.reshape(
                 (self.image_dimensions[1], self.image_dimensions[0], 3))
             result = self.analyzer(img)
-            
-            if (result != ""):
-                self.send_out__(MessageObject("text", message = result))
-                # self.sendSignal_(name="text", message=result)
+        """
+        index, meta = self.client.pullFrame()
+        if (index is None):
+            self.logger.debug("Client timed out..")
+            return
+        
+        self.logger.debug("Client index = %s", index)
+        if meta.size < 1:
+            return
+
+        data = self.client.shmem_list[index][0:meta.size]
+        img = data.reshape(
+            (meta.height, meta.width, 3))
+        self.logger.debug("got frame %s", img.shape)
+        result = self.analyzer(img) # does something .. returns something ..
+        if (result != ""):
+            self.send_out__(MessageObject("text", message = result))
+            # self.sendSignal_(name="text", message=result)
 
     
     # *** create a widget for this machine vision module ***

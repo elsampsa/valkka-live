@@ -12,10 +12,9 @@ System requirements
 - Nvidia or Intel graphics card (ATI has not been tested)
 - A graphics card driver supporting OpenGL 3+
 - For up-to-date hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
-- An up-to-date valkka-core library
-    
-    - For Ubuntu-based distros, an automatic installation is provided
-    - If you need to compile from source, refer to `valkka-examples <https://elsampsa.github.io/valkka-examples/_build/html/index.html>`_
+- An up-to-date valkka-core library 
+- For Ubuntu-based distros, an automatic installation is provided
+- If you need to compile from source, refer to `valkka-examples <https://elsampsa.github.io/valkka-examples/_build/html/index.html>`_
 
 
 Installing
@@ -36,6 +35,9 @@ After that, install (or update) with:
     valkka-tune
 
 (the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)
+
+Be also aware of `some issues <https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#installing
+>`_ regarding to numpy and OpenCV installation
     
 In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 
@@ -49,11 +51,11 @@ Finally, run with
 
     valkka-live
     
-Before running, you might also want to move as many processes to core 0 as possible with
-
-::
-
-    valkka-move-ps
+.. Before running, you might also want to move as many processes to core 0 as possible with
+..
+.. ::
+..
+..   valkka-move-ps
     
   
 If and when the program crashes (with "dangling" machine vision python multiprocesses), remember to clean the table with
