@@ -245,13 +245,65 @@ class MVisionContainer(VideoContainer):
         self.video.update()
         
         
-    def close(self):
-        super().close() # calls clearDevice
+    def clearProcess(self):
+        if self.mvision_process is None:
+            return
         tag = self.mvision_class.tag
         singleton.process_map[tag].append(self.mvision_process) # .. and recycle it
         print(self.pre, "close: process_map=", singleton.process_map)
         self.mvision_process = None
+
+
+    def close(self):
+        super().close() # calls clearDevice
+        self.clearProcess()
+
+
+
+class MVisionClientContainer(MVisionContainer):
+    """Like the mother class, but does client/master process handling
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if self.mvision_process is None:
+            self.mvision_master_process = None
+            return
+
+        master_tag = self.mvision_process.master
+
+        try:
+            queue = singleton.master_process_map[master_tag]
+        except KeyError:
+            self.clearProcess()
+            self.mvision_master_process = None
+            return
         
+        try:
+            self.mvision_master_process = queue.pop()
+        except IndexError:
+            self.clearProcess()
+            self.mvision_master_process = None
+            return
+        
+        self.mvision_process.setMasterProcess(self.mvision_master_process)
+
+
+    def clearMasterProcess(self):
+        if self.mvision_master_process is None:
+            return
+        self.mvision_process.unsetMasterProcess()
+        master_tag = self.mvision_master_process.tag
+        singleton.master_process_map[master_tag].append(self.mvision_master_process)
+        self.mvision_master_process = None
+
+
+    def close(self):
+        super().close()
+        self.clearMasterProcess()
+        
+
 
 class MyGui(QtWidgets.QMainWindow):
 

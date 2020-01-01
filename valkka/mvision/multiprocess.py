@@ -241,11 +241,19 @@ class QShmemMasterProcess(QShmemProcess):
         self.logger.debug("c__registerClient: fd=%s", fd)
         self.rlis.append(fd)
 
+        if len(self.clients) == 1:
+            self.logger.debug("c__registerClient: first client registered")
+            self.firstClientRegistered_()
+
 
     def c__unregisterClient(self, ipc_index = None):
         client = self.clients.pop(ipc_index)
+        self.clients_by_fd.pop(client.fd)
         self.rlis.remove(client.fd)
-    
+        if len(self.clients) == 0:
+            self.logger.debug("c__unregisterClient: last client unregistered")
+            self.lastClientUnregistered_()
+
 
     parameter_defs = {
         }
@@ -267,7 +275,15 @@ class QShmemMasterProcess(QShmemProcess):
         """Clear shmem variables
         """
         self.clients = {}
+        self.lastClientUnregistered_()
 
+
+    def firstClientRegistered_(self):
+        pass
+
+    def lastClientUnregistered_(self):
+        pass
+    
 
     def run(self):
         self.preRun_()
@@ -288,8 +304,6 @@ class QShmemMasterProcess(QShmemProcess):
                 reply = self.handleFrame_(client.shmem_client)
                 client.pipe.send(reply)
 
-                
-
         self.postRun_()
         # indicate front end qt thread to exit
         self.back_pipe.send(None)
@@ -297,9 +311,7 @@ class QShmemMasterProcess(QShmemProcess):
 
 
     def handleFrame_(self, shmem_client):
-        """Receives frames from the shmem client and does something with them
-
-        Typically launch qt signals
+        """Receives frames from the shmem client.  Reply with results
         """
         index, meta = shmem_client.pullFrame()
         if meta.size < 1:
@@ -372,6 +384,7 @@ class QShmemClientProcess(QShmemProcess):
         self.shmem_name_server = "valkkashmemserver"+str(id(self))
         # parameterInitCheck(QShmemClientProcess.parameter_defs, kwargs, self)
         self.ipc_index = None # used at the frontend
+        self.master_process = None
         
         
     def preRun_(self):
@@ -434,6 +447,7 @@ class QShmemClientProcess(QShmemProcess):
 
     def setMasterProcess(self, master_process = None):
         # ipc_index, n_buffer, image_dimensions, shmem_name # TODO
+        self.master_process = master_process
         self.ipc_index = singleton.ipc.reserve()
 
         # first, create the server
@@ -449,15 +463,26 @@ class QShmemClientProcess(QShmemProcess):
             shmem_name = self.shmem_name_server)
         
 
-    def unsetMasterProcess(self, master_process):
+    def unsetMasterProcess(self): # , master_process):
+        if self.master_process is None:
+            self.logger.warning("unsetMasterProcess: none set")
+            return
+
         self.sendMessageToBack(MessageObject(
             "unsetMasterProcess"
         ))
-        master_process.unregisterClient(
+        self.master_process.unregisterClient(
             ipc_index = self.ipc_index
         )
         singleton.ipc.release(self.ipc_index)
         self.ipc_index = None
+        self.master_process = None
+
+
+    def requestStop(self):
+        self.unsetMasterProcess()
+        super().requestStop()
+    
 
     """
     def activate(self, **kwargs):

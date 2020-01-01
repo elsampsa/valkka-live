@@ -30,7 +30,7 @@ import logging
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.live.multiprocess import MessageObject
-from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.mvision.multiprocess import QShmemMasterProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger, getFreeGPU_MB
 
@@ -93,9 +93,9 @@ class YoloV3Analyzer(Analyzer):
 
 
 
-class MVisionProcess(QShmemProcess):
+class MVisionMasterProcess(QShmemMasterProcess):
     """
-    YOLO v3 object detector
+    YOLO v3 object detector master process
     
     See:
     
@@ -103,19 +103,14 @@ class MVisionProcess(QShmemProcess):
     
     """
     
-    name = "YOLO v3 object detector"
-    tag = "yolov3"
+    name = "YOLO v3 object detector master"
+    tag = "yolo3master"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
+    max_clients = 4
     
     required_mb = 2700      # required GPU memory in MB
     
-    # For each outgoing signal, create a Qt signal with the same name.  The
-    # frontend Qt thread will read processes communication pipe and emit these
-    # signals.
-    class Signals(QtCore.QObject):
-        objects = QtCore.Signal(object)
-        bboxes  = QtCore.Signal(object)
-
+    
     parameter_defs = {
         "verbose": (bool, False)
     }
@@ -130,7 +125,7 @@ class MVisionProcess(QShmemProcess):
         self.analyzer = None
         
     def postRun_(self):
-        if (self.analyzer): self.analyzer.close() # release any resources acquired by the analyzer
+        if (self.analyzer is not None): self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
         
         
@@ -147,45 +142,33 @@ class MVisionProcess(QShmemProcess):
         else:
             return True
         
-    def postActivate_(self):
-        """Whatever you need to do after creating the shmem client
-        """
+
+    def firstClientRegistered_(self):
         if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3Analyzer(verbose = self.verbose)
         else:
             self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
-            
-        
-    def preDeactivate_(self):
-        """Whatever you need to do prior to deactivating the shmem client
-        """
-        if (self.analyzer): self.analyzer.close()
-        self.analyzer = None
         
 
-    def cycle_(self):
-        lis=[]
-        self.logger.debug("cycle_ starts")
-        """ old API
-        index, isize = self.client.pull()
-        if (index is None):
-            self.logger.debug("Client timed out..")
-            pass
-        else:
-            self.logger.debug("Client index, size = %s, %s", index, isize)
-            data = self.client.shmem_list[index]
-            img = data.reshape(
-                (self.image_dimensions[1], self.image_dimensions[0], 3))
+    def lastClientUnregistered_(self):
+        if (self.analyzer): self.analyzer.close()
+        self.analyzer = None
+            
+
+    def handleFrame_(self, shmem_client):
+        """Receives frames from the shmem client and does something with them
+
+        This routine returns:
+        - None
+        - A list
+            - a tuple
+                (nametag, x, y, w, h)
+            - string
         """
-        index, meta = self.client.pullFrame()
-        if (index is None):
-            self.logger.debug("Client timed out..")
-            return
-        
-        self.logger.debug("Client index = %s", index)
+        index, meta = shmem_client.pullFrame()
         if (meta.size < 1) or (self.analyzer is None):
-            return
+            return None
 
         data = self.client.shmem_list[index][0:meta.size]
         img = data.reshape(
@@ -203,14 +186,12 @@ class MVisionProcess(QShmemProcess):
         ('truck', 91, 476, 684, 81, 168),
         ('bicycle', 99, 99, 589, 124, 447)
         ]
-        """
-        
-        object_list=[]
+        """        
         bbox_list=[]
         for l in lis:
-            object_list.append(l[0])
             # """
             bbox_list.append((
+                l[0], # name tag
                 l[2]/img.shape[1],  # from pixels to fractional coordinates
                 l[3]/img.shape[1],
                 l[4]/img.shape[0],
@@ -219,36 +200,10 @@ class MVisionProcess(QShmemProcess):
             # """
             
         if (hasattr(self, "warning_message")):
-            object_list.append(self.warning_message)
+            bbox_list.append(self.warning_message)
   
-        # print("YoloV3",bbox_list)
-        #if (len(lis)>0):
-        # self.sendSignal_(name="objects", object_list=object_list)
-        # self.sendSignal_(name="bboxes",  bbox_list=bbox_list)
-        self.send_out__(MessageObject("objects", object_list = object_list))
-        self.send_out__(MessageObject("bboxes", bbox_list = bbox_list))
-        
+        return bbox_list # will be forwarded through pipes to the correct client process
 
-    # *** create a widget for this machine vision module ***
-    def getWidget(self):
-        """Some ideas for your widget:
-        - Textual information (alert, license place number)
-        - Check boxes : if checked, send e-mail to your mom when the analyzer spots something
-        - .. or send an sms to yourself
-        - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
-        """
-        self.widget = QtWidgets.QTextEdit()
-        self.widget.setStyleSheet(style.detector_test)
-        self.widget.setReadOnly(True)
-        self.signals.objects.connect(self.objects_slot)
-        return self.widget
-    
-    def objects_slot(self, message_object):
-        txt=""
-        for o in message_object["object_list"]:
-            txt += str(o) + "\n"
-        self.widget.setText(txt)
-        
         
 def test1():
     """Dummy-testing the analyzer
@@ -277,12 +232,13 @@ def test2():
 def test3():
     """Test the multiprocess
     """
-    import time
-    test_process(MVisionProcess)
+    # test_process(MVisionProcess)
+    pass
 
     
 def test4():
-    test_with_file(MVisionProcess)
+    # test_with_file(MVisionProcess)
+    pass
 
 
 def main():

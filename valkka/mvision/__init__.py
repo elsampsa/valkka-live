@@ -9,11 +9,13 @@ try:
 except Exception as e:
     print("valkka.mvision.__init__ : could not import module movement : '"+str(e)+"'")
 
+"""
 try: 
     from .import alpr
 except Exception as e:
     print("valkka.mvision.__init__ : could not import module alpr : '"+str(e)+"'")
-    
+"""
+
 try:
     from .import nix
 except Exception as e:
@@ -34,3 +36,12 @@ try:
 except Exception as e:
     print("valkka.mvision.__init__ : could not import module yolo3tiny : '"+str(e)+"'")
 
+try:
+    from .import yolo3client
+except Exception as e:
+    print("valkka.mvision.__init__ : could not import module yolo3client : '"+str(e)+"'")
+
+try:
+    from .import yolo3master
+except Exception as e:
+    print("valkka.mvision.__init__ : could not import module yolo3master : '"+str(e)+"'")

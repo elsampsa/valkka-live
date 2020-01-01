@@ -135,8 +135,10 @@ def scanMVisionClasses():
             else:
                 # print(m)
                 mvision_modules.append(m)
-
-    mvision_classes = []
+ 
+    mvision_classes = [] # stand-alone analyzers
+    mvision_client_classes = [] # client analyzers that use a master process
+    mvision_master_classes = [] # master processes (typically yolo)
 
     for m in mvision_modules:
         # print(m)
@@ -150,26 +152,52 @@ def scanMVisionClasses():
                 # modules that have the following name pattern: "valkka.mvision*."
                 p = re.compile("valkka\.mvision\S*\.")
                 if p.match(name):
-                    # print("mvision scan: ", name)
+                    print("mvision scan: ", name)
                     try:
                         submodule = importlib.import_module(name)
                     except ModuleNotFoundError:
                         print("mvision scan: could not import", name)
                         continue
+
                     if (hasattr(submodule, "MVisionProcess")): # do we have a class valkka.mvision*.*.base.MVisionProcess ?
                         mvisionclass = getattr(submodule, "MVisionProcess")
                         if (hasattr(mvisionclass, "name")
                             and hasattr(mvisionclass, "tag")
                             and hasattr(mvisionclass, "max_instances")): # does that class has these members?
                             name = getattr(mvisionclass, "name")
-                            print("mvision scan: found machine vision class with name, tag and max_instances")
+                            print("mvision scan: found machine vision class with name, tag and max_instances", name)
                             mvision_classes.append(mvisionclass)
                         else:
-                            print("mvision scan: submodule",name,"missing members (name, tag or max_instances)")
-                    else:
-                        print("mvision scan: submodule",name,"missing MVisionProcess")
+                            print("mvision scan: submodule",submodule,"missing members (name, tag or max_instances)")
 
-    return mvision_classes
+                    elif (hasattr(submodule, "MVisionClientProcess")):
+                        mvisionclass = getattr(submodule, "MVisionClientProcess")
+                        if (hasattr(mvisionclass, "name")
+                            and hasattr(mvisionclass, "tag")
+                            and hasattr(mvisionclass, "master")): # does that class has these members?
+                            name = getattr(mvisionclass, "name")
+                            print("mvision scan: found client machine vision class with name, tag and master instances", name)
+                            mvision_client_classes.append(mvisionclass)
+                        else:
+                            print("mvision scan: submodule",submodule,"missing members (name, tag or master)")
+
+                    elif (hasattr(submodule, "MVisionMasterProcess")):
+                        mvisionclass = getattr(submodule, "MVisionMasterProcess")
+                        if (hasattr(mvisionclass, "name")
+                            and hasattr(mvisionclass, "tag")
+                            and hasattr(mvisionclass, "max_instances")
+                            and hasattr(mvisionclass, "max_clients")):
+                            name = getattr(mvisionclass, "name")
+                            print("mvision scan: found master machine vision class", name)
+                            mvision_master_classes.append(mvisionclass)
+                        else:
+                            print("mvision scan: submodule",submodule,"missing members (name, tag or max_instances or max_clients)")
+
+                    else:
+                        print("mvision scan: submodule",submodule,"missing MVisionProcess")
+
+
+    return mvision_classes, mvision_client_classes, mvision_master_classes
 
 
 def getH264V4l2(verbose=False):

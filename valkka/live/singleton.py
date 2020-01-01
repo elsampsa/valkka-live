@@ -30,6 +30,8 @@ devices_by_id = {}
 
 # process map for different analyzers
 process_map = {}
+client_process_map = {}
+master_process_map = {}
 
 # QThread for interprocess communication
 # thread = None
