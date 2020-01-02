@@ -119,6 +119,7 @@ class MVisionMasterProcess(QShmemMasterProcess):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(self.__class__.name)
         self.analyzer = None
+        self.setDebug()
 
     def preRun_(self):
         super().preRun_()
@@ -145,7 +146,8 @@ class MVisionMasterProcess(QShmemMasterProcess):
 
     def firstClientRegistered_(self):
         if (self.requiredGPU_MB(self.required_mb)):
-            self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+            # self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+            self.analyzer = None # debug
         else:
             self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
@@ -167,10 +169,13 @@ class MVisionMasterProcess(QShmemMasterProcess):
             - string
         """
         index, meta = shmem_client.pullFrame()
+        print("index, meta.size, meta.height, meta.width, prod", index, meta.size, meta.height, meta.width, meta.height*meta.width*3)
+        return []
+
         if (meta.size < 1) or (self.analyzer is None):
             return None
 
-        data = self.client.shmem_list[index][0:meta.size]
+        data = shmem_client.shmem_list[index][0:meta.size]
         img = data.reshape(
             (meta.height, meta.width, 3))
         lis = self.analyzer(img)

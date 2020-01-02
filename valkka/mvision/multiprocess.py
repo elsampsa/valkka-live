@@ -62,9 +62,9 @@ class QShmemProcess(QMultiProcess):
         shmem_name:str = None):
     
         # if not defined, use default values
-        if n_buffer is None: n_buffer = self.n_buffer
-        if image_dimensions is None: image_dimensions = self.image_dimensions
-        if shmem_name is None: shmem_name = self.shmem_name
+        # if n_buffer is None: n_buffer = self.n_buffer
+        # if image_dimensions is None: image_dimensions = self.image_dimensions
+        # if shmem_name is None: shmem_name = self.shmem_name
 
         self.logger.debug("c__activate")
         self.listening = True
@@ -78,6 +78,11 @@ class QShmemProcess(QMultiProcess):
             mstimeout   =int(self.timeout*1000),
             verbose     =self.shmem_verbose
             )
+
+        self.shmem_name = shmem_name
+        self.n_buffer = n_buffer
+        self.image_dimensions = image_dimensions
+        
         self.postActivate_()
         
 
@@ -92,20 +97,23 @@ class QShmemProcess(QMultiProcess):
     # ****
 
     parameter_defs = {
-        "n_buffer"          : (int, 10),
-        "image_dimensions"  : (tuple, (1920//4, 1080//4)),
+        # "n_buffer"          : (int, 10),
+        # "image_dimensions"  : (tuple, (1920//4, 1080//4)),
+        # "image_dimensions"  : tuple,
         "shmem_verbose"     : (bool, False),
-        "shmem_name"        : None
+        # "shmem_name"        : None
         }
 
     def __init__(self, name = "QShmemProcess", **kwargs):
         super().__init__(name)
         parameterInitCheck(QShmemProcess.parameter_defs, kwargs, self)
+        """
         if self.shmem_name is None:
             self.shmem_name = "valkkashmemclient"+str(id(self))
         else:
             assert(isinstance(self.shmem_name, str))
         self.shmem_name_default = self.shmem_name
+        """
 
 
     def preRun_(self):
@@ -176,6 +184,11 @@ class QShmemProcess(QMultiProcess):
     # *** frontend ***
 
     def activate(self, **kwargs):
+        # save values to front-end also:
+        self.shmem_name = kwargs["shmem_name"]
+        self.n_buffer = kwargs["n_buffer"]
+        self.image_dimensions = kwargs["image_dimensions"]
+        # this sets the values at back-end:
         self.sendMessageToBack(MessageObject(
             "activate", **kwargs))
 
@@ -360,6 +373,7 @@ class QShmemClientProcess(QShmemProcess):
         # get shmem parameters from master process frontend
         self.ipc_index = ipc_index
         self.eventfd, self.master_pipe = singleton.ipc.get1(self.ipc_index)
+        # self.n_buffer etc. have been set by a call to c__activate
         self.server = ShmemRGBServer(
             name            =self.shmem_name_server,
             n_ringbuffer    =self.n_buffer,   # size of ring buffer
@@ -456,6 +470,7 @@ class QShmemClientProcess(QShmemProcess):
             ipc_index = self.ipc_index))
 
         # this will create the client:
+        # self.n_buffer etc. have been set by call to self.activate
         master_process.registerClient(
             ipc_index = self.ipc_index,
             n_buffer = self.n_buffer,

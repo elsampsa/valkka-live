@@ -55,6 +55,7 @@ class MVisionClientProcess(QShmemClientProcess):
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(self.__class__.name)
+        self.setDebug()
 
     def preRun_(self):
         super().preRun_()
@@ -72,7 +73,7 @@ class MVisionClientProcess(QShmemClientProcess):
             return
         
         self.logger.debug("Client index = %s", index)
-        if (meta.size < 1) or (self.analyzer is None):
+        if meta.size < 1:
             return
 
         data = self.client.shmem_list[index][0:meta.size]

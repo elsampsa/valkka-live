@@ -105,23 +105,28 @@ class MVisionContainer(VideoContainer):
         
         self.verbose = True
         
-        try:
-            queue = singleton.process_map[tag]
-        except KeyError:
-            self.mvision_process = None
-            return
-        
-        try:
-            self.mvision_process = queue.pop()
-        except IndexError:
-            self.mvision_process = None
-            return
-    
+        self.mvision_process = self.getProcess(tag)
+        if self.mvision_process is None: return
+
         self.analyzer_window = self.AnalyzerWindow()
         self.analyzer_window.setVisible(False)
         self.signals.right_double_click.connect(self.right_double_click_slot)
 
     
+    def getProcess(self, tag):
+        try:
+            queue = singleton.process_map[tag]
+        except KeyError:
+            return None
+        
+        try:
+            mvision_process = queue.pop()
+        except IndexError:
+            return None
+
+        return mvision_process
+    
+
     def serialize(self):
         """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
         """
@@ -160,6 +165,7 @@ class MVisionContainer(VideoContainer):
         self.report("setDevice :", device)
         
         if (self.mvision_process == None):
+            self.report("setDevice : no mvision process")
             return
         
         if (not device and not self.device): # None can be passed as an argument when the device has not been set yet
@@ -192,12 +198,8 @@ class MVisionContainer(VideoContainer):
             self.mvision_widget.setParent(self.main_widget)
             self.main_layout.addWidget(self.mvision_widget)
             
-            self.mvision_process.activate(
-                n_buffer         = constant.shmem_n_buffer,
-                image_dimensions = constant.shmem_image_dimensions,
-                shmem_name       = self.shmem_name
-                )
-                
+            self.activate()
+
             # singleton.thread.addProcess(self.mvision_process)
             
             # is there a signal giving the bounding boxes..?  let's connect it
@@ -205,7 +207,15 @@ class MVisionContainer(VideoContainer):
                 print(self.pre, "setDevice : connecting bboxes signal")
                 self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
             
+
+    def activate(self):
+        self.mvision_process.activate(
+                n_buffer         = constant.shmem_n_buffer,
+                image_dimensions = constant.shmem_image_dimensions,
+                shmem_name       = self.shmem_name
+                )
             
+
     def set_bounding_boxes_slot(self, message_object):
         if (self.device):
             bbox_list = message_object["bbox_list"]
@@ -272,31 +282,63 @@ class MVisionClientContainer(MVisionContainer):
             return
 
         master_tag = self.mvision_process.master
+        self.mvision_master_process = self.getMasterProcess(master_tag)
+        if self.mvision_master_process is None: 
+            self.clearProcess()
+            return
 
+        # self.mvision_process.setMasterProcess(self.mvision_master_process)
+
+
+    def getProcess(self, tag):
         try:
-            queue = singleton.master_process_map[master_tag]
+            queue = singleton.client_process_map[tag]
         except KeyError:
-            self.clearProcess()
-            self.mvision_master_process = None
-            return
-        
+            return None
         try:
-            self.mvision_master_process = queue.pop()
+            mvision_process = queue.pop()
         except IndexError:
-            self.clearProcess()
-            self.mvision_master_process = None
-            return
-        
-        self.mvision_process.setMasterProcess(self.mvision_master_process)
+            return None
+        return mvision_process
 
+
+    def clearProcess(self):
+        if self.mvision_process is None:
+            return
+        self.mvision_process.unsetMasterProcess()        
+        tag = self.mvision_class.tag
+        singleton.client_process_map[tag].append(self.mvision_process) # .. and recycle it
+        # print(self.pre, "close: process_map=", singleton.process_map)
+        self.mvision_process = None
+
+    
+    def getMasterProcess(self, tag):
+        try:
+            queue = singleton.master_process_map[tag]
+        except KeyError:
+            return None
+        try:
+            mvision_process = queue.pop()
+        except IndexError:
+            return None
+        return mvision_process
+    
 
     def clearMasterProcess(self):
         if self.mvision_master_process is None:
             return
-        self.mvision_process.unsetMasterProcess()
         master_tag = self.mvision_master_process.tag
         singleton.master_process_map[master_tag].append(self.mvision_master_process)
         self.mvision_master_process = None
+
+
+    def activate(self):
+        self.mvision_process.activate(
+            n_buffer         = constant.shmem_n_buffer,
+            image_dimensions = constant.shmem_image_dimensions,
+            shmem_name       = self.shmem_name
+            )
+        self.mvision_process.setMasterProcess(self.mvision_master_process)
 
 
     def close(self):

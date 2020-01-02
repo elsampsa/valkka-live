@@ -79,7 +79,7 @@ config_skeleton={ # TODO: do we need this, really?
 
 # shared memory ring-buffer and image sizes
 shmem_n_buffer = 10
-shmem_image_dimensions = (1920 // 2, 1080 // 2)
+shmem_image_dimensions = (1920//4, 1080//4)
 shmem_image_interval = 1000
 
 # minimum size for video root widget
