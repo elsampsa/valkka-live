@@ -207,7 +207,8 @@ class QShmemProcess(QMultiProcess):
 
 class QShmemMasterProcess(QShmemProcess):
 
-
+    max_clients = 999 # how many clients can register to this master process
+    
     class Client:
         def __init__(self, fd = None, pipe = None, shmem_client = None):
             self.fd = fd
@@ -258,6 +259,8 @@ class QShmemMasterProcess(QShmemProcess):
             self.logger.debug("c__registerClient: first client registered")
             self.firstClientRegistered_()
 
+        self.logger.debug("c__registerClient: number of clients is %s", len(self.clients))
+
 
     def c__unregisterClient(self, ipc_index = None):
         client = self.clients.pop(ipc_index)
@@ -275,6 +278,7 @@ class QShmemMasterProcess(QShmemProcess):
     def __init__(self, name = "QShmemMasterProcess", **kwargs):
         super().__init__(name)
         parameterInitCheck(QShmemMasterProcess.parameter_defs, kwargs, self)
+        self.n_clients = 0 # a front-end variable
 
 
     def preRun_(self):
@@ -348,13 +352,31 @@ class QShmemMasterProcess(QShmemProcess):
     # *** frontend ***
 
     def registerClient(self, **kwargs):
+        # keep the books on number of clients at frontend as well
+        self.n_clients += 1
+        if self.n_clients > self.max_clients:
+            self.logger.warning("no more clients available: max is %s", self.max_clients)
+            self.n_clients = self.max_clients
+            return
         self.sendMessageToBack(MessageObject(
             "registerClient", **kwargs))
+        self.logger.debug("registerClient: frontend: number of clients is %s", self.n_clients)
 
 
     def unregisterClient(self, **kwargs):
+        self.n_clients -= 1
+        if self.n_clients < 1:
+            self.n_clients = 0
         self.sendMessageToBack(MessageObject(
             "unregisterClient", **kwargs))
+        self.logger.debug("unregisterClient: frontend: number of clients is %s", self.n_clients)
+
+
+
+    def available(self):
+        """Has available space for clients or not
+        """
+        return self.n_clients < self.max_clients
 
 
 

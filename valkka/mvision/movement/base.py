@@ -33,6 +33,49 @@ from valkka.live.multiprocess import MessageObject
 from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger
+from valkka.live.qt.widget import SimpleVideoWidget
+
+
+class MovementVideoWidget(SimpleVideoWidget):
+    """Receives QPixMaps to a slot & draws them
+
+    TODO: mouse gestures, draw lines, boxes, etc.
+    """
+    class Signals(QtCore.QObject):
+        update_analyzer_parameters = QtCore.Signal(object)
+        
+    def __init__(self, def_pixmap = None, parent = None):
+        super().__init__(def_pixmap = def_pixmap, parent = parent)
+        self.signals = self.Signals()
+
+    def drawWidget(self, qp):
+        super().drawWidget(qp) # draws the bitmap on the background
+        # TODO: draw something more
+
+    def initVars(self):
+        self.on = False
+
+    def handle_move(self, info):
+        print("MovementVideoWidget: handle_move")
+
+    def handle_left_single_click(self, info):
+        self.on = not self.on
+        if self.on:
+            self.setTracking()
+        else:
+            self.unSetTracking()
+
+    def handle_right_single_click(self, info):
+        print("MovementVideoWidget: handle_right_single_click: sending parameters to analyzer")
+        self.signals.update_analyzer_parameters.emit({"some_new":"parameters"})
+        # pass
+
+    def handle_left_double_click(self, info):
+        pass
+
+    def handle_right_double_click(self, info):
+        pass
+
 
 
 class MovementDetector(Analyzer):
@@ -161,7 +204,8 @@ class MVisionProcess(QShmemProcess):
     name = "Simple Movement Detector" # NOTE: this class member is required, so that Valkka Live can find the class
     tag  = "movement" # NOTE: name identifying the detector group
     max_instances = 5 # NOTE: how many detectors belonging to the same group can be instantiated
-    
+    analyzer_video_widget_class = MovementVideoWidget # use this widget class to define parameters for your machine vision (line crossing, zone intrusion, etc.)
+
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
@@ -171,6 +215,11 @@ class MVisionProcess(QShmemProcess):
         start_move = QtCore.Signal()
         stop_move = QtCore.Signal()
     #"""
+
+    # backend method
+
+    def c__updateAnalyzerParameters(self, **kwargs):
+        print("Movement mvision: got analyzer parameters", kwargs)
 
     parameter_defs = {
         "verbose" : (bool, False),
@@ -264,6 +313,24 @@ class MVisionProcess(QShmemProcess):
         self.signals.start_move.connect(lambda : widget.setText("MOVEMENT START"))
         self.signals.stop_move. connect(lambda : widget.setText("MOVEMENT STOP"))
         return widget
+
+
+    def connectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.connect(
+            self.updateAnalyzerParameters)
+
+    def disconnectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.disconnect(
+            self.updateAnalyzerParameters)
+        
+
+    # *** frontend ***
+
+    def updateAnalyzerParameters(self, kwargs):
+        print("updateAnalyzerParameters", kwargs)
+        self.sendMessageToBack(MessageObject(
+            "updateAnalyzerParameters", **kwargs))
+
         
     
     

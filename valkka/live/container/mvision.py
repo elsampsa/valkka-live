@@ -40,13 +40,15 @@ class MVisionContainer(VideoContainer):
     """
     class AnalyzerWindow(QtWidgets.QMainWindow):
 
-        def __init__(self, parent = None):
+        def __init__(self, parent = None, analyzer_video_widget_class = SimpleVideoWidget):
             super().__init__()
             self.w = QtWidgets.QWidget(self)
             self.setCentralWidget(self.w)
             self.lay = QtWidgets.QVBoxLayout(self.w)
             # self.video = SimpleVideoWidget(parent = self.w)
-            self.video = LineCrossingVideoWidget(parent = self.w)
+            # self.video = LineCrossingVideoWidget(parent = self.w)
+            self.video = analyzer_video_widget_class(parent = self.w)
+            self.signals = self.video.signals # alias
             self.lay.addWidget(self.video)
             self.filterchain = None
 
@@ -108,8 +110,18 @@ class MVisionContainer(VideoContainer):
         self.mvision_process = self.getProcess(tag)
         if self.mvision_process is None: return
 
-        self.analyzer_window = self.AnalyzerWindow()
-        self.analyzer_window.setVisible(False)
+        self.analyzer_widget_connected = False
+        if hasattr(self.mvision_process, "analyzer_video_widget_class"):
+            # the machine vision class may declare what video widget it wants to use to define the machine vision parameters (line crossing, zone intrusion, etc.)
+            self.analyzer_video_widget = self.AnalyzerWindow(analyzer_video_widget_class = self.mvision_process.analyzer_video_widget_class)
+            if hasattr(self.mvision_process, "connectAnalyzerWidget"):
+                self.mvision_process.connectAnalyzerWidget(self.analyzer_video_widget)
+                self.analyzer_widget_connected = True
+                # TODO: init analyzer parameters by sending a signal & serialize analyzer parameters
+        else:
+            self.analyzer_video_widget = self.AnalyzerWindow()
+
+        self.analyzer_video_widget.setVisible(False)
         self.signals.right_double_click.connect(self.right_double_click_slot)
 
     
@@ -226,7 +238,7 @@ class MVisionContainer(VideoContainer):
 
     def right_double_click_slot(self):
         if self.filterchain:
-            self.analyzer_window.activate(self.filterchain)
+            self.analyzer_video_widget.activate(self.filterchain)
 
 
             
@@ -240,7 +252,7 @@ class MVisionContainer(VideoContainer):
         if (self.mvision_process==None):
             return
         
-        self.analyzer_window.close()
+        self.analyzer_video_widget.close()
 
         self.filterchain.delViewPort(self.viewport)
         self.filterchain.releaseShmem(self.shmem_name)
@@ -261,6 +273,8 @@ class MVisionContainer(VideoContainer):
         tag = self.mvision_class.tag
         singleton.process_map[tag].append(self.mvision_process) # .. and recycle it
         print(self.pre, "close: process_map=", singleton.process_map)
+        if self.analyzer_widget_connected:
+            self.mvision_process.disconnectAnalyzerWidget(self.analyzer_video_widget)
         self.mvision_process = None
 
 
@@ -313,16 +327,7 @@ class MVisionClientContainer(MVisionContainer):
 
     
     def getMasterProcess(self, tag):
-        try:
-            queue = singleton.master_process_map[tag]
-        except KeyError:
-            return None
-        try:
-            mvision_process = queue.pop()
-        except IndexError:
-            return None
-        return mvision_process
-    
+        return singleton.get_avail_master_process(tag)
 
     def clearMasterProcess(self):
         if self.mvision_master_process is None:

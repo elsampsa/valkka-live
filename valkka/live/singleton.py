@@ -33,6 +33,20 @@ process_map = {}
 client_process_map = {}
 master_process_map = {}
 
+
+def get_avail_master_process(tag):
+    global master_process_map
+    try:
+        queue = master_process_map[tag]
+    except KeyError:
+        return None
+    # return master process that still has space for clients
+    for process in queue: 
+        if process.available():
+            return process
+    return None
+
+
 # QThread for interprocess communication
 # thread = None
 

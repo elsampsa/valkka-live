@@ -899,11 +899,11 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def makeMvisionClientSlot(self, cl):
-        # TODO: check there is a master process available
+        # TODO: add the possibility to not to generate this automatically (can check mvision class attribute)
         def slot_func():
             if ( (cl.tag in singleton.client_process_map) and len(singleton.client_process_map[cl.tag]) > 0 ):
                 master_tag = cl.master
-                if ( (master_tag in singleton.master_process_map) and len(singleton.master_process_map[master_tag]) > 0 ):
+                if singleton.get_avail_master_process(master_tag) is not None:
                     cont = container.VideoContainerNxM(
                         parent            = None,
                         gpu_handler       = self.gpu_handler,
@@ -921,7 +921,7 @@ class MyGui(QtWidgets.QMainWindow):
                     cont.signals.closing.connect(self.rem_grid_container_slot)
                     self.containers_grid.append(cont)
                 else:
-                    QtWidgets.QMessageBox.about(self,"Enough!","Can't instantiate more master processes for this detector)")    
+                    QtWidgets.QMessageBox.about(self,"Enough!","Can't instantiate more master processes for this detector")    
             else: 
                 QtWidgets.QMessageBox.about(self,"Enough!","Can't instantiate more detectors of this type (max number is "+str(cl.max_instances)+")")     
         setattr(self, cl.name+"_slot", slot_func)
