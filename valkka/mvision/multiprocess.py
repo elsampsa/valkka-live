@@ -317,9 +317,14 @@ class QShmemMasterProcess(QShmemProcess):
 
             for fd in rlis:
                 self.logger.debug("run: handling %s", fd)
-                client = self.clients_by_fd[fd]
-                reply = self.handleFrame_(client.shmem_client)
-                client.pipe.send(reply)
+                # an fd removed from clients_by_fd might still be in rlis... routeMainPipe__ => c__unregisterClient => clients_by_fd modified
+                try:
+                    client = self.clients_by_fd[fd]
+                except KeyError:
+                    pass
+                else:
+                    reply = self.handleFrame_(client.shmem_client)
+                    client.pipe.send(reply)
 
         self.postRun_()
         # indicate front end qt thread to exit
@@ -534,6 +539,111 @@ class QShmemClientProcess(QShmemProcess):
         #Test call
         self.sendMessageToBack(MessageObject("ping", message = message))
     """
+
+
+class MVisionBaseProcess(QShmemProcess):
+
+
+    def __init__(self, **kwargs):
+        self.parameters = {}
+        super().__init__(**kwargs)
+
+
+    # *** common back-end methods for machine vision processes ***
+
+    def c__updateAnalyzerParameters(self, **kwargs):
+        print("Movement mvision: got analyzer parameters", kwargs)
+
+    
+    def connectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.connect(
+            self.updateAnalyzerParameters)
+
+    def disconnectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.disconnect(
+            self.updateAnalyzerParameters)
+        
+
+    # *** common frontend methods for machine vision processes ***
+
+
+    # *** create a widget for this machine vision module ***
+    def getWidget(self):
+        """Some ideas for your widget:
+        - Textual information (alert, license place number)
+        - Check boxes : if checked, send e-mail to your mom when the analyzer spots something
+        - .. or send an sms to yourself
+        - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
+        """
+        widget = QtWidgets.QLabel("nada de nada")
+        # widget.setStyleSheet(style.detector_test)
+        #self.signals.start_move.connect(lambda : widget.setText("MOVEMENT START"))
+        #self.signals.stop_move. connect(lambda : widget.setText("MOVEMENT STOP"))
+        return widget
+
+
+    def getAnalyzerParameters(self):
+        return self.parameters
+
+
+    def updateAnalyzerParameters(self, kwargs):
+        self.parameters = kwargs
+        print("updateAnalyzerParameters", kwargs)
+        self.sendMessageToBack(MessageObject(
+            "updateAnalyzerParameters", **kwargs))
+
+
+
+class MVisionClientBaseProcess(QShmemClientProcess):
+
+    def __init__(self, **kwargs):
+        self.parameters = {}
+        super().__init__(**kwargs)
+
+    # *** common back-end methods for machine vision processes ***
+
+    def c__updateAnalyzerParameters(self, **kwargs):
+        print("Movement mvision: got analyzer parameters", kwargs)
+
+    
+    def connectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.connect(
+            self.updateAnalyzerParameters)
+
+    def disconnectAnalyzerWidget(self, analyzer_video_widget):
+        analyzer_video_widget.signals.update_analyzer_parameters.disconnect(
+            self.updateAnalyzerParameters)
+        
+
+    # *** common frontend methods for machine vision processes ***
+
+
+    # *** create a widget for this machine vision module ***
+    def getWidget(self):
+        """Some ideas for your widget:
+        - Textual information (alert, license place number)
+        - Check boxes : if checked, send e-mail to your mom when the analyzer spots something
+        - .. or send an sms to yourself
+        - You can include the cv2.imshow window to the widget to see how the analyzer proceeds
+        """
+        widget = QtWidgets.QLabel("nada de nada")
+        # widget.setStyleSheet(style.detector_test)
+        #self.signals.start_move.connect(lambda : widget.setText("MOVEMENT START"))
+        #self.signals.stop_move. connect(lambda : widget.setText("MOVEMENT STOP"))
+        return widget
+
+
+    def updateAnalyzerParameters(self, kwargs):
+        self.parameters = kwargs
+        print("updateAnalyzerParameters", kwargs)
+        self.sendMessageToBack(MessageObject(
+            "updateAnalyzerParameters", **kwargs))
+
+    def getAnalyzerParameters(self):
+        return self.parameters
+
+
+
 
 
 def test_process(mvision_process_class):

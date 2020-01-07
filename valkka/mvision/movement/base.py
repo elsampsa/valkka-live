@@ -30,7 +30,7 @@ import logging
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.live.multiprocess import MessageObject
-from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.mvision.multiprocess import test_process, test_with_file, MVisionBaseProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger
 from valkka.live.qt.widget import SimpleVideoWidget
@@ -41,12 +41,9 @@ class MovementVideoWidget(SimpleVideoWidget):
 
     TODO: mouse gestures, draw lines, boxes, etc.
     """
-    class Signals(QtCore.QObject):
-        update_analyzer_parameters = QtCore.Signal(object)
         
     def __init__(self, def_pixmap = None, parent = None):
         super().__init__(def_pixmap = def_pixmap, parent = parent)
-        self.signals = self.Signals()
 
     def drawWidget(self, qp):
         super().drawWidget(qp) # draws the bitmap on the background
@@ -185,7 +182,7 @@ class MovementDetector(Analyzer):
 
 
 
-class MVisionProcess(QShmemProcess):
+class MVisionProcess(MVisionBaseProcess):
     """ NOTE: the name of the class must always be MVisionProcess, so that Valkka Live can find the class
     
     This is a python multiprocess that runs on the background in its own isolated memory space.
@@ -203,6 +200,7 @@ class MVisionProcess(QShmemProcess):
     
     name = "Simple Movement Detector" # NOTE: this class member is required, so that Valkka Live can find the class
     tag  = "movement" # NOTE: name identifying the detector group
+    auto_menu = True # append automatically to valkka live machine vision menu or not
     max_instances = 5 # NOTE: how many detectors belonging to the same group can be instantiated
     analyzer_video_widget_class = MovementVideoWidget # use this widget class to define parameters for your machine vision (line crossing, zone intrusion, etc.)
 
@@ -218,9 +216,6 @@ class MVisionProcess(QShmemProcess):
 
     # backend method
 
-    def c__updateAnalyzerParameters(self, **kwargs):
-        print("Movement mvision: got analyzer parameters", kwargs)
-
     parameter_defs = {
         "verbose" : (bool, False),
         "deadtime": (int, 1)
@@ -228,7 +223,7 @@ class MVisionProcess(QShmemProcess):
 
     def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(name)
+        super().__init__(name = name)
         
 
     def preRun_(self):
@@ -255,7 +250,6 @@ class MVisionProcess(QShmemProcess):
         """
         pass
         
-
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
         self.logger.debug("cycle_ starts")
@@ -314,25 +308,6 @@ class MVisionProcess(QShmemProcess):
         self.signals.stop_move. connect(lambda : widget.setText("MOVEMENT STOP"))
         return widget
 
-
-    def connectAnalyzerWidget(self, analyzer_video_widget):
-        analyzer_video_widget.signals.update_analyzer_parameters.connect(
-            self.updateAnalyzerParameters)
-
-    def disconnectAnalyzerWidget(self, analyzer_video_widget):
-        analyzer_video_widget.signals.update_analyzer_parameters.disconnect(
-            self.updateAnalyzerParameters)
-        
-
-    # *** frontend ***
-
-    def updateAnalyzerParameters(self, kwargs):
-        print("updateAnalyzerParameters", kwargs)
-        self.sendMessageToBack(MessageObject(
-            "updateAnalyzerParameters", **kwargs))
-
-        
-    
     
 def test1():
     """Dummy-testing the movement analyzer

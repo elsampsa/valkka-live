@@ -75,6 +75,7 @@ class MVisionContainer(VideoContainer):
                 self.thread.signals.pixmap.disconnect(self.video.set_pixmap_slot)
                 self.filterchain.releaseShmemQt(self.shmem_name)
                 self.thread.stop()
+                self.filterchain = None
                 
 
     parameter_defs = {
@@ -252,6 +253,7 @@ class MVisionContainer(VideoContainer):
         if (self.mvision_process==None):
             return
         
+        # if self.analyzer_video_widget.visible:
         self.analyzer_video_widget.close()
 
         self.filterchain.delViewPort(self.viewport)

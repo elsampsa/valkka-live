@@ -65,7 +65,8 @@ class MVisionProcess(BaseProcess):
     name = "YOLO v2 object detector"
     tag = "yolov2"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
-    
+    auto_menu = True # append automatically to valkka live machine vision menu or not
+
     required_mb = 1500      # required GPU memory in MB
     
     def postActivate_(self):

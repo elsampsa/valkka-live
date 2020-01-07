@@ -31,7 +31,7 @@ import logging
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.live.multiprocess import MessageObject
-from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.mvision.multiprocess import test_process, test_with_file, MVisionBaseProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger
 from valkka.mvision.tools import getModulePath
@@ -150,11 +150,12 @@ class ExternalDetector(Analyzer):
 
 
 
-class MVisionProcess(QShmemProcess):
+class MVisionProcess(MVisionBaseProcess):
     """A multiprocess that uses stdin, stdout and the filesystem to communicate with an external machine vision program
     """
     name = "Stdin, stdout and filesystem example"
     tag  = "nix"
+    auto_menu = True # append automatically to valkka live machine vision menu or not
     max_instances = 3
     
     # The (example) process that gets executed.  You can find it in the module directory
@@ -174,7 +175,7 @@ class MVisionProcess(QShmemProcess):
 
     def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(name)
+        super().__init__(name = name)
         self.analyzer = None
         
     def preRun_(self):

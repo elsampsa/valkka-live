@@ -29,17 +29,18 @@ import logging
 
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.live.multiprocess import MessageObject
-from valkka.mvision.multiprocess import QShmemClientProcess, test_process, test_with_file
+from valkka.mvision.multiprocess import test_process, test_with_file, MVisionClientBaseProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger
 
 
-class MVisionClientProcess(QShmemClientProcess):
+class MVisionClientProcess(MVisionClientBaseProcess):
 
     name = "YOLO v3 client"
     tag = "yolo3client"
     max_instances = 5
     master = "yolo3master" # name tag of the required master process
+    auto_menu = True # append automatically to valkka live machine vision menu or not
     
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these
@@ -54,7 +55,7 @@ class MVisionClientProcess(QShmemClientProcess):
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name)
+        super().__init__(name = self.__class__.name)
         self.setDebug()
 
     def preRun_(self):
@@ -92,7 +93,7 @@ class MVisionClientProcess(QShmemClientProcess):
             # receive results from master process
             replies = self.master_pipe.recv()
             print("reply from master process:", replies)
-            if replies is None: return
+            if replies is None: return None
 
         """
         reply can be:

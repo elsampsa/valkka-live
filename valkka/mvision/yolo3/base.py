@@ -30,7 +30,7 @@ import logging
 from valkka.api2 import parameterInitCheck, typeCheck
 from valkka.mvision.base import Analyzer
 from valkka.live.multiprocess import MessageObject
-from valkka.mvision.multiprocess import QShmemProcess, test_process, test_with_file
+from valkka.mvision.multiprocess import test_process, test_with_file, MVisionBaseProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger, getFreeGPU_MB
 
@@ -93,7 +93,7 @@ class YoloV3Analyzer(Analyzer):
 
 
 
-class MVisionProcess(QShmemProcess):
+class MVisionProcess(MVisionBaseProcess):
     """
     YOLO v3 object detector
     
@@ -106,7 +106,8 @@ class MVisionProcess(QShmemProcess):
     name = "YOLO v3 object detector"
     tag = "yolov3"
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
-    
+    auto_menu = True # append automatically to valkka live machine vision menu or not
+
     required_mb = 2700      # required GPU memory in MB
     
     # For each outgoing signal, create a Qt signal with the same name.  The
@@ -122,7 +123,7 @@ class MVisionProcess(QShmemProcess):
 
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        super().__init__(self.__class__.name)
+        super().__init__(name = self.__class__.name)
         self.analyzer = None
 
     def preRun_(self):

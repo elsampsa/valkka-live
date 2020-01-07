@@ -49,8 +49,13 @@ class SimpleVideoWidget(QtWidgets.QWidget):
 
     TODO: mouse gestures, draw lines, boxes, etc.
     """
+    class Signals(QtCore.QObject):
+        update_analyzer_parameters = QtCore.Signal(object)
+    
+
     def __init__(self, def_pixmap = None, parent = None):
         super().__init__(parent)
+        self.signals = self.Signals()
         self.pre = "SimpleVideoWidget : "
         self.painter = QtGui.QPainter()
         self.pixmap = def_pixmap

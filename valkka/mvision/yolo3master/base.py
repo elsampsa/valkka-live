@@ -65,8 +65,8 @@ class YoloV3Analyzer(Analyzer):
     def init(self):
         # from darknet.api2.error import WeightMissingError
         from darknet.api2.predictor import get_YOLOv3_Predictor, get_YOLOv3_Tiny_Predictor, get_YOLOv2_Predictor
-        self.predictor = get_YOLOv3_Predictor()
-        # self.predictor = get_YOLOv3_Tiny_Predictor()
+        # self.predictor = get_YOLOv3_Predictor()
+        self.predictor = get_YOLOv3_Tiny_Predictor()
         # self.predictor = get_YOLOv2_Predictor()
         self.reset()
         
@@ -146,8 +146,8 @@ class MVisionMasterProcess(QShmemMasterProcess):
 
     def firstClientRegistered_(self):
         if (self.requiredGPU_MB(self.required_mb)):
-            # self.analyzer = YoloV3Analyzer(verbose = self.verbose)
-            self.analyzer = None # debug
+            self.analyzer = YoloV3Analyzer(verbose = self.verbose)
+            # self.analyzer = None # debug
         else:
             self.warning_message = "WARNING: not enough GPU memory!"
             self.analyzer = None
@@ -170,7 +170,7 @@ class MVisionMasterProcess(QShmemMasterProcess):
         """
         index, meta = shmem_client.pullFrame()
         print("index, meta.size, meta.height, meta.width, prod", index, meta.size, meta.height, meta.width, meta.height*meta.width*3)
-        return []
+        # return [] # debugging
 
         if (meta.size < 1) or (self.analyzer is None):
             return None
