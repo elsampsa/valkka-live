@@ -56,7 +56,7 @@ class MVisionClientProcess(MVisionClientBaseProcess):
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(name = self.__class__.name)
-        self.setDebug()
+        # self.setDebug()
 
     def preRun_(self):
         super().preRun_()
@@ -92,7 +92,7 @@ class MVisionClientProcess(MVisionClientBaseProcess):
             )
             # receive results from master process
             replies = self.master_pipe.recv()
-            print("reply from master process:", replies)
+            self.logger.debug("reply from master process: %s", replies)
             if replies is None: return None
 
         """

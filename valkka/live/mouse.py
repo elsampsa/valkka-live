@@ -82,8 +82,10 @@ class MouseClickContext:
         # print("MouseClickContext:",e.button())
         self.info.button = e.button()
         # self.info.events.append(e)
-        self.info.event = e  # save the event..
-        self.info.pos = e.globalPos()
+        self.info.event = e  # save the event.. # but this get deleted when used with PySide2 ..?
+        self.info.globalPos = e.globalPos()
+        self.info.pos = e.pos()
+        
 
     def atReleaseEvent(self, e):
         dt = time.time() - self.t

@@ -602,7 +602,8 @@ class MyGui(QtWidgets.QMainWindow):
                     # self.process_avail[tag] = num
                     for n in range(0, num):
                         print("startProcesses: spanning", tag, n)
-                        verbose = True
+                        # verbose = True
+                        verbose = singleton.mvision_verbose
                         p = mvision_class(verbose = verbose)
                         # p.start()
                         p.go()

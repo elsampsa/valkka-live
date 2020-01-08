@@ -23,6 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import time
+import math
 from valkka.live.qt.tools import numpy2QPixmap
 from valkka.live.mouse import MouseClickContext
 from valkka.api2 import ShmemRGBClient
@@ -167,9 +168,11 @@ class SimpleVideoWidget(QtWidgets.QWidget):
 
 
 class LineCrossingVideoWidget(SimpleVideoWidget):
-    """Receives QPixMaps to a slot & draws them
+    """An example how to implement a video widget to control parameters for a line crossing detector
 
-    TODO: mouse gestures, draw lines, boxes, etc.
+    1. Left click initiates the process: now a line is being drawn
+    2. Next left click finishes the line
+    3. Third left click defines the line normal
     """
     def __init__(self, def_pixmap = None, parent = None):
         super().__init__(def_pixmap = def_pixmap, parent = parent)
@@ -179,26 +182,104 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         # TODO: draw something more
 
     def initVars(self):
-        self.on = False
+        self.state = 0
+        self.p0 = None
+        self.p1 = None
+        self.p2 = None
+        self.unSetTracking()
+
 
     def handle_move(self, info):
         print("handle_move")
 
+
     def handle_left_single_click(self, info):
-        self.on = not self.on
-        if self.on:
+        """info is a custom object with member "pos" having the MouseEvent.pos()
+
+        member "event" has the MouseEvent
+        """
+
+        print("handle_left_single_click, state=", self.state)
+        if self.state == 0: # nothing clicked yet.  start line definition
             self.setTracking()
-        else:
-            self.unSetTracking()
+            self.state = 1
+            self.p0 = info.pos
+        elif self.state == 1: # finish line definition. start normal definition
+            self.state = 2
+        elif self.state == 2: # finish normal definition
+            # TODO: send parameters to machine vision 
+            self.initVars()
+
 
     def handle_right_single_click(self, info):
-        pass
+        # cancel definition
+        self.initVars()
+
 
     def handle_left_double_click(self, info):
         pass
 
+
     def handle_right_double_click(self, info):
         pass
+
+
+    def handle_move(self, e):
+        """handle_move receives the complete MouseEvent
+        """
+        if self.state == 0:
+            return # this should not happen..
+        elif self.state == 1: # line definition going on
+            print("line def")
+            self.p1 = e.pos() # https://doc.qt.io/qt-5/qmouseevent.html#globalPos
+            self.repaint()
+        elif self.state == 2: # normal definition going on
+            print("normal def")
+            self.p2 = e.pos()
+            self.repaint()
+
+
+    def drawWidget(self, qp):
+        """Draw lines on top of the bitmal
+        """
+        if self.state >= 1 and self.p1 is not None:
+            # https://doc.qt.io/qt-5/qpainter.html#drawLine-2
+            # print("drawWidget: p0 = ", self.p0)
+            # print("drawWidget: p1 = ", self.p1)
+            qp.drawLine(self.p0, self.p1)
+
+        if self.state >= 2 and self.p1 is not None and self.p2 is not None:
+            qp.drawLine(self.p1, self.p2) # debug
+
+
+            n0 = self.p0 + (self.p1 - self.p0) / 2 # starting point of the normal
+            """
+            v = p0 -> p1
+            w = p1 -> p2
+
+            subtract from w its projection to v
+
+            w := w - (w * v0)v0
+            """
+            v = self.p1 - self.p0
+            # v0 = v / math.sqrt(QtCore.QPoint.dotProduct(v, v)) # unit vector # works like shit
+            # TODO: a problem: floats turn into integers (pixels) => rounding errors
+            le = math.sqrt(v.x()*v.x() + v.y()*v.y())
+            v0 = v / le
+            print(v, le, v0)
+
+            qp.drawLine(self.p2, self.p2 + v0*100) # debug
+            # qp.drawLine(self.p2, self.p2 + v) # debug
+            
+            w = self.p2 - self.p1
+            w = w - QtCore.QPoint.dotProduct(w, v0) * v0
+            qp.drawLine(n0, n0 + w)
+
+        if self.pixmap is None:
+            # print("no pixmap")
+            return
+        qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
+        
 
 
 
@@ -291,17 +372,15 @@ class MyGui(QtWidgets.QMainWindow):
     self.setCentralWidget(self.w)
     self.lay = QtWidgets.QVBoxLayout(self.w)
 
-    self.video = SimpleVideoWidget(parent=self.w)
+    # self.video = SimpleVideoWidget(parent=self.w)
+    self.video = LineCrossingVideoWidget(parent=self.w)
     self.lay.addWidget(self.video)
     
     
   def openValkka(self):
-    """TODO:
-
-    - A simple filterchain for testing SimpleVideoWidget
-    """
-    
+    pass
   
+
   def closeValkka(self):
     pass
   

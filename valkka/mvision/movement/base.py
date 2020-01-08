@@ -33,7 +33,7 @@ from valkka.live.multiprocess import MessageObject
 from valkka.mvision.multiprocess import test_process, test_with_file, MVisionBaseProcess
 from valkka.live import style
 from valkka.live.tools import getLogger, setLogger
-from valkka.live.qt.widget import SimpleVideoWidget
+from valkka.live.qt.widget import SimpleVideoWidget, LineCrossingVideoWidget
 
 
 class MovementVideoWidget(SimpleVideoWidget):
@@ -202,7 +202,8 @@ class MVisionProcess(MVisionBaseProcess):
     tag  = "movement" # NOTE: name identifying the detector group
     auto_menu = True # append automatically to valkka live machine vision menu or not
     max_instances = 5 # NOTE: how many detectors belonging to the same group can be instantiated
-    analyzer_video_widget_class = MovementVideoWidget # use this widget class to define parameters for your machine vision (line crossing, zone intrusion, etc.)
+    # analyzer_video_widget_class = MovementVideoWidget # use this widget class to define parameters for your machine vision (line crossing, zone intrusion, etc.)
+    analyzer_video_widget_class = LineCrossingVideoWidget # testing this one ..
 
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these

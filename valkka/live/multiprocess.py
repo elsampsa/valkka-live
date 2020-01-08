@@ -76,7 +76,7 @@ class QFrontThread(QtCore.QThread):
     """A QThread that is used to read messages MessageObjects coming from multiprocess & turning them into Qt signals
     """
     def __init__(self, signals, pipe):
-        self.pre = __name__ + ".QFrontThread"
+        self.pre = __name__ + "." + self.__class__.__name__
         self.logger = getLogger(self.pre)
         super().__init__()
         self.signals = signals

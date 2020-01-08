@@ -21,6 +21,11 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 from valkka.live.local import ValkkaLocalDir
 
+# adjust mvision process verbosities
+# mvision_verbose = True
+mvision_verbose = False
+
+
 # The datamodel.DataModel instance:
 data_model = None
 

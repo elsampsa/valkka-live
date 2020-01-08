@@ -119,7 +119,7 @@ class MVisionMasterProcess(QShmemMasterProcess):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(self.__class__.name)
         self.analyzer = None
-        self.setDebug()
+        # self.setDebug()
 
     def preRun_(self):
         super().preRun_()
@@ -169,7 +169,7 @@ class MVisionMasterProcess(QShmemMasterProcess):
             - string
         """
         index, meta = shmem_client.pullFrame()
-        print("index, meta.size, meta.height, meta.width, prod", index, meta.size, meta.height, meta.width, meta.height*meta.width*3)
+        self.logger.debug("index %s, meta.size %s, meta.height %s, meta.width %s, prod %s", index, meta.size, meta.height, meta.width, meta.height*meta.width*3)
         # return [] # debugging
 
         if (meta.size < 1) or (self.analyzer is None):
