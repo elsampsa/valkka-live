@@ -211,6 +211,7 @@ class MVisionProcess(MVisionBaseProcess):
     #"""
     class Signals(QtCore.QObject):
         pong = QtCore.Signal(object)
+        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
         start_move = QtCore.Signal()
         stop_move = QtCore.Signal()
     #"""
@@ -240,16 +241,6 @@ class MVisionProcess(MVisionBaseProcess):
         self.analyzer.close() # release any resources acquired by the analyzer
         super().postRun_()
         
-    
-    def postActivate_(self):
-        """Whatever you need to do after creating the shmem client
-        """
-        pass
-        
-    def preDeactivate_(self):
-        """Whatever you need to do prior to deactivating the shmem client
-        """
-        pass
         
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
@@ -285,6 +276,15 @@ class MVisionProcess(MVisionBaseProcess):
         """
         self.logger.debug("got frame %s", img.shape)
         result = self.analyzer(img)
+
+        if self.qt_server is not None:
+            self.logger.info("pushing frame to server")
+            self.qt_server.pushFrame(
+                img,
+                meta.slot,
+                meta.mstimestamp
+            )
+
         # NOTE: you could use and combine several analyzers here, say first see if there is movement and then do the rest
         # print(self.pre,">>>",data[0:10])
         if (result == MovementDetector.state_same):

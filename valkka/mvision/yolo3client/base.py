@@ -46,6 +46,8 @@ class MVisionClientProcess(MVisionClientBaseProcess):
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
     class Signals(QtCore.QObject):
+        pong = QtCore.Signal(object) # demo outgoing signal
+        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
         objects = QtCore.Signal(object)
         bboxes  = QtCore.Signal(object)
 
@@ -104,6 +106,14 @@ class MVisionClientProcess(MVisionClientBaseProcess):
                 (nametag, x, y, w, h)
             - string
         """
+        if self.qt_server is not None:
+            self.logger.info("pushing frame to server")
+            self.qt_server.pushFrame(
+                img,
+                meta.slot,
+                meta.mstimestamp
+            )
+
         object_list = []
         bbox_list = []
         for reply in replies:

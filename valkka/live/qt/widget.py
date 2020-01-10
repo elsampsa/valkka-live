@@ -23,10 +23,44 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import time
-import math
+# import math
+import numpy
 from valkka.live.qt.tools import numpy2QPixmap
 from valkka.live.mouse import MouseClickContext
 from valkka.api2 import ShmemRGBClient
+
+
+def point2vec(point):
+    return numpy.array([point.x(), point.y()])
+
+def vec2point(vec):
+    return QtCore.QPoint(int(vec[0]), int(vec[1]))
+
+
+def point2vecRel(point, widget):
+    scale = numpy.array([widget.width(), widget.height()])
+    return point2vec(point) / scale
+
+
+def vec2pointAbs(vec, widget):
+    scale = numpy.array([widget.width(), widget.height()])
+    return vec2point(vec * scale)
+
+
+def vec2Abs(vec, widget):
+    scale = numpy.array([widget.width(), widget.height()])
+    return vec * scale
+
+def vec2Rel(vec, widget):
+    scale = numpy.array([widget.width(), widget.height()])
+    return vec / scale
+
+def invertY(vec, shift = 0):
+    return numpy.array([vec[0], shift - vec[1]])
+
+
+
+
 
 
 class FormWidget(QtWidgets.QWidget):
@@ -60,7 +94,11 @@ class SimpleVideoWidget(QtWidgets.QWidget):
         self.pre = "SimpleVideoWidget : "
         self.painter = QtGui.QPainter()
         self.pixmap = def_pixmap
-        self.mouse_click_ctx = MouseClickContext(self.mouseGestureHandler)
+        self.mouse_click_ctx = MouseClickContext(
+            self.mouseGestureHandler,
+            t_double_click = 0
+        )
+
         self.initVars()
 
     def initVars(self):
@@ -176,6 +214,9 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
     """
     def __init__(self, def_pixmap = None, parent = None):
         super().__init__(def_pixmap = def_pixmap, parent = parent)
+        # self.lines = []
+        self.line = None
+        self.unitnormal = None
 
     def drawWidget(self, qp):
         super().drawWidget(qp) # draws the bitmap on the background
@@ -198,23 +239,30 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
 
         member "event" has the MouseEvent
         """
-
         print("handle_left_single_click, state=", self.state)
         if self.state == 0: # nothing clicked yet.  start line definition
+            # self.lines = []
+            self.line = None
+            self.unitnormal = None
             self.setTracking()
             self.state = 1
             self.p0 = info.pos
         elif self.state == 1: # finish line definition. start normal definition
             self.state = 2
         elif self.state == 2: # finish normal definition
-            # TODO: send parameters to machine vision 
             self.initVars()
+            # WARNING: y-direction is inverted
+            self.signals.update_analyzer_parameters.emit({
+                "line"         : [invertY(self.line[0], shift = 1), invertY(self.line[1], shift = 1)],
+                "unitnormal"   : invertY(self.unitnormal)
+            })
 
 
     def handle_right_single_click(self, info):
         # cancel definition
         self.initVars()
-
+        self.signals.update_analyzer_parameters.emit({
+            })
 
     def handle_left_double_click(self, info):
         pass
@@ -230,11 +278,11 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         if self.state == 0:
             return # this should not happen..
         elif self.state == 1: # line definition going on
-            print("line def")
+            # print("line def")
             self.p1 = e.pos() # https://doc.qt.io/qt-5/qmouseevent.html#globalPos
             self.repaint()
         elif self.state == 2: # normal definition going on
-            print("normal def")
+            # print("normal def")
             self.p2 = e.pos()
             self.repaint()
 
@@ -242,17 +290,32 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
     def drawWidget(self, qp):
         """Draw lines on top of the bitmal
         """
+        qp.setPen(QtGui.QPen(QtCore.Qt.cyan, 5))
+
+        if self.pixmap is not None:
+            qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
+
         if self.state >= 1 and self.p1 is not None:
             # https://doc.qt.io/qt-5/qpainter.html#drawLine-2
             # print("drawWidget: p0 = ", self.p0)
             # print("drawWidget: p1 = ", self.p1)
-            qp.drawLine(self.p0, self.p1)
-
+            # qp.drawLine(self.p0, self.p1)
+            # self.lines = [QtCore.QLineF(self.p0, self.p1)]
+            """
+            self.lines = [
+                ( point2vecRel(self.p0, self), point2vecRel(self.p1, self) ) 
+            ]
+            """
+            self.line = ( point2vecRel(self.p0, self), point2vecRel(self.p1, self) )
+            
         if self.state >= 2 and self.p1 is not None and self.p2 is not None:
-            qp.drawLine(self.p1, self.p2) # debug
+            # qp.drawLine(self.p1, self.p2) # debug
 
-
-            n0 = self.p0 + (self.p1 - self.p0) / 2 # starting point of the normal
+            p0 = point2vec(self.p0)
+            p1 = point2vec(self.p1)
+            p2 = point2vec(self.p2)
+            n0 = p0 + (p1 - p0) / 2
+            # n0 = self.p0 + (self.p1 - self.p0) / 2 # starting point of the normal
             """
             v = p0 -> p1
             w = p1 -> p2
@@ -261,27 +324,49 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
 
             w := w - (w * v0)v0
             """
-            v = self.p1 - self.p0
-            # v0 = v / math.sqrt(QtCore.QPoint.dotProduct(v, v)) # unit vector # works like shit
-            # TODO: a problem: floats turn into integers (pixels) => rounding errors
-            le = math.sqrt(v.x()*v.x() + v.y()*v.y())
-            v0 = v / le
-            print(v, le, v0)
+            v = p1 - p0
+            le = numpy.sqrt(numpy.dot(v,v))
+            if le == 0:
+                v = numpy.array([0,0])
+            else:
+                v0 = v / le
+            # print(p0, p1, n0, v, le, v0) # [165  56] [310  91] [ 237.5   73.5] [145  35] 149.164338902 [ 0.97208221  0.23464053]
+            # qp.drawLine(self.p2, self.p2 + vec2point(v0*100)) # debug
+            w = p2 - p1
+            w = w - numpy.dot(w, v0) * v0
+            # qp.drawLine(vec2point(n0), vec2point(n0 + w))
+            # self.lines = [QtCore.QLineF(self.p0, self.p1), QtCore.QLineF(vec2point(n0), vec2point(n0 + w))]
 
-            qp.drawLine(self.p2, self.p2 + v0*100) # debug
-            # qp.drawLine(self.p2, self.p2 + v) # debug
+            # self.line = (vec2Rel(p0, self), vec2Rel(p1, self))
+            w_rel = vec2Rel(w, self)
+            le = numpy.dot(w_rel,w_rel)
+            if le == 0:
+                self.unitnormal = numpy.array([0,0])
+            else:
+                self.unitnormal = w_rel / numpy.sqrt(numpy.dot(w_rel,w_rel))
+            """
+            self.lines = [
+                ( vec2Rel(p0, self), vec2Rel(p1, self) ),
+                ( vec2Rel(n0, self), vec2Rel(n0 + w, self) )
+            ]
+            """
+
+        """
+        for line in self.lines:
+            qp.drawLine(vec2pointAbs(line[0], self), vec2pointAbs(line[1], self))
+        """
+        if self.line is not None:
+            midpoint = self.line[0] + 0.5 * (self.line[1] - self.line[0])
+            qp.drawLine(vec2pointAbs(self.line[0], self), vec2pointAbs(self.line[1], self))
+            if self.unitnormal is not None:
+                # print("unit normal:", self.unitnormal)
+                qp.drawLine(
+                    vec2pointAbs(midpoint, self),
+                    vec2pointAbs(midpoint + self.unitnormal/10, self)
+                )
+
+                
             
-            w = self.p2 - self.p1
-            w = w - QtCore.QPoint.dotProduct(w, v0) * v0
-            qp.drawLine(n0, n0 + w)
-
-        if self.pixmap is None:
-            # print("no pixmap")
-            return
-        qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
-        
-
-
 
 class VideoShmemThread(QtCore.QThread):
     """A Thread that creates a Valkka shmem client, reads frames from it & fires them as qt signals

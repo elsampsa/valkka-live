@@ -152,9 +152,9 @@ class MultiForkFilterchain(BaseFilterchain):
         "shmem_n_buffer"         : (int, 10),
         "shmem_image_interval"   : (int, 1000),
         
-        "movement_interval" : (int, 1000),
+        "movement_interval" : (int, 100), # pass frames at 10 fps
         "movement_treshold" : (float, 0.01),
-        "movement_duration" : (int, 5000)
+        "movement_duration" : (int, 30000) # when movement starts, pass through frames during 30 secs
     }
 
     def __init__(self, **kwargs):

@@ -72,6 +72,7 @@ class MVisionProcess(BaseProcess):
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
+        super().postActivate_()
         if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3TinyAnalyzer(verbose = self.verbose)
         else:

@@ -166,6 +166,8 @@ class MVisionProcess(MVisionBaseProcess):
     # signals.
     #"""
     class Signals(QtCore.QObject):
+        pong = QtCore.Signal(object)
+        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
         text = QtCore.Signal(object)
     #"""
 
@@ -189,6 +191,7 @@ class MVisionProcess(MVisionBaseProcess):
     def postActivate_(self):
         """Create temporary file for image dumps and the analyzer itself
         """
+        super().postActivate_()
         self.tmpfile = os.path.join(constant.tmpdir,"valkka-"+str(os.getpid())) # e.g. "/tmp/valkka-10968" 
         self.analyzer = ExternalDetector(
             executable = self.executable,
@@ -200,6 +203,7 @@ class MVisionProcess(MVisionBaseProcess):
     def preDeactivate_(self):
         """Whatever you need to do prior to deactivating the shmem client
         """
+        super().preDeactivate_()
         if (self.analyzer): self.analyzer.close()
         self.analyzer = None
     
@@ -232,6 +236,15 @@ class MVisionProcess(MVisionBaseProcess):
             (meta.height, meta.width, 3))
         self.logger.debug("got frame %s", img.shape)
         result = self.analyzer(img) # does something .. returns something ..
+
+        if self.qt_server is not None:
+            self.logger.info("pushing frame to server")
+            self.qt_server.pushFrame(
+                img,
+                meta.slot,
+                meta.mstimestamp
+            )
+
         if (result != ""):
             self.send_out__(MessageObject("text", message = result))
             # self.sendSignal_(name="text", message=result)

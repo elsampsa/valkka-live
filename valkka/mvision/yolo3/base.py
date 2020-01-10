@@ -114,6 +114,8 @@ class MVisionProcess(MVisionBaseProcess):
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
     class Signals(QtCore.QObject):
+        pong = QtCore.Signal(object)
+        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
         objects = QtCore.Signal(object)
         bboxes  = QtCore.Signal(object)
 
@@ -151,6 +153,7 @@ class MVisionProcess(MVisionBaseProcess):
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
+        super().postActivate_()
         if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3Analyzer(verbose = self.verbose)
         else:
@@ -161,6 +164,7 @@ class MVisionProcess(MVisionBaseProcess):
     def preDeactivate_(self):
         """Whatever you need to do prior to deactivating the shmem client
         """
+        super().preDeactivate_()
         if (self.analyzer): self.analyzer.close()
         self.analyzer = None
         
@@ -192,6 +196,14 @@ class MVisionProcess(MVisionBaseProcess):
         img = data.reshape(
             (meta.height, meta.width, 3))
         lis = self.analyzer(img)
+
+        if self.qt_server is not None:
+            self.logger.info("pushing frame to server")
+            self.qt_server.pushFrame(
+                img,
+                meta.slot,
+                meta.mstimestamp
+            )
 
         """
         print("img.shape=",img.shape)

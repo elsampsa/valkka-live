@@ -88,6 +88,9 @@ class MouseClickContext:
         
 
     def atReleaseEvent(self, e):
+        if self.t_double_click == 0:
+            self.callback(self.info)
+            return
         dt = time.time() - self.t
         if (dt > self.t_long_click):  # a "long" click
             self.info.flong = True

@@ -152,6 +152,7 @@ class QMultiProcess(Process):
         self.logger = getLogger(self.pre)
         super().__init__()
         self.signals = self.Signals()
+        print("class, signals:", self.__class__.__name__, self.signals)
         self.front_pipe, self.back_pipe = Pipe() # incoming messages
         self.qt_front_thread = QFrontThread(self.signals, self.front_pipe)
         self.loop = True
