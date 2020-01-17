@@ -152,7 +152,7 @@ class MultiForkFilterchain(BaseFilterchain):
         "shmem_n_buffer"         : (int, 10),
         "shmem_image_interval"   : (int, 1000),
         
-        "movement_interval" : (int, 100), # pass frames at 10 fps
+        # "movement_interval" : (int, 100), # pass frames at 10 fps # USE shmem_image_interval
         "movement_treshold" : (float, 0.01),
         "movement_duration" : (int, 30000) # when movement starts, pass through frames during 30 secs
     }
@@ -460,7 +460,8 @@ class MultiForkFilterchain(BaseFilterchain):
         self.sws_filter = core.SwScaleFrameFilter("sws_scale_" + str(self.slot), self.width, self.height, self.sws_fork_filter)
         self.sws_gate = core.GateFrameFilter("sws_gate_" + str(self.slot), self.sws_filter)
         self.movement_filter = core.MovementFrameFilter("movement_" + str(self.slot), 
-                self.movement_interval,
+                # self.movement_interval,
+                self.shmem_image_interval,
                 self.movement_treshold,
                 self.movement_duration,
                 self.sws_gate

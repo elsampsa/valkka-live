@@ -82,6 +82,7 @@ class QFrontThread(QtCore.QThread):
         self.signals = signals
         self.pipe = pipe
         self.loop = True
+        self.setDebug()
 
 
     def setDebug(self):

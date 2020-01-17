@@ -100,6 +100,7 @@ class MovementDetector(Analyzer):
         # checks that kwargs is consistent with parameter_defs.  Attaches
         # parameters as attributes to self
         parameterInitCheck(self.parameter_defs, kwargs, self)
+        self.setDebug()
         if self.debug:
             self.logger.warning("Enabling OpenCV high-gui.  That requires opencv installed with apt-get.  Otherwise, get ready for a segfault..")
         self.init()
@@ -226,6 +227,7 @@ class MVisionProcess(MVisionBaseProcess):
     def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(name = name)
+        self.setDebug()
         
 
     def preRun_(self):
@@ -259,10 +261,10 @@ class MVisionProcess(MVisionBaseProcess):
         """
         index, meta = self.client.pullFrame()
         if (index is None):
-            self.logger.debug("Client timed out..")
+            self.logger.debug("cycle_ : client timed out..")
             return
         
-        self.logger.debug("Client index = %s", index)
+        self.logger.debug("cycle_ : client index = %s", index)
         if meta.size < 1:
             return
 
@@ -274,11 +276,11 @@ class MVisionProcess(MVisionBaseProcess):
         cv2.imshow("openCV_window",img)
         cv2.waitKey(1)
         """
-        self.logger.debug("got frame %s", img.shape)
+        self.logger.debug("cycle_ : got frame %s", img.shape)
         result = self.analyzer(img)
 
         if self.qt_server is not None:
-            self.logger.info("pushing frame to server")
+            self.logger.info("cycle_ : pushing frame to server")
             self.qt_server.pushFrame(
                 img,
                 meta.slot,

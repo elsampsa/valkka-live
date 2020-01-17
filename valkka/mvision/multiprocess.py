@@ -602,30 +602,30 @@ class MVisionBaseProcess(QShmemProcess):
 
     # *** common frontend methods for machine vision processes ***
 
-    def connectAnalyzerWindow(self, analyzer_window):
-        analyzer_window.video.signals.update_analyzer_parameters.connect(
+    def connectAnalyzerWidget(self, analyzer_widget):
+        analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        print("connectAnalyzerWindow: signals:", self.signals)
+        print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
-            analyzer_window.setShmem_slot
+            analyzer_widget.setShmem_slot
         )
-        analyzer_window.signals.show.connect(
+        analyzer_widget.signals.show.connect(
             self.requestQtShmemServer
         )
-        analyzer_window.signals.close.connect(
+        analyzer_widget.signals.close.connect(
             self.releaseQtShmemServer
         )
         
-    def disconnectAnalyzerWindow(self, analyzer_window):
-        analyzer_window.video.signals.update_analyzer_parameters.disconnect(
+    def disconnectAnalyzerWidget(self, analyzer_widget):
+        analyzer_widget.video.signals.update_analyzer_parameters.disconnect(
             self.updateAnalyzerParameters)
         self.signals.shmem_server.disconnect(
-            analyzer_window.setShmem_slot
+            analyzer_widget.setShmem_slot
         )
-        analyzer_window.signals.show.disconnect(
+        analyzer_widget.signals.show.disconnect(
             self.requestQtShmemServer
         )
-        analyzer_window.signals.close.disconnect(
+        analyzer_widget.signals.close.disconnect(
             self.releaseQtShmemServer
         )
 
@@ -725,30 +725,30 @@ class MVisionClientBaseProcess(QShmemClientProcess):
         pass
 
     
-    def connectAnalyzerWindow(self, analyzer_window):
-        analyzer_window.video.signals.update_analyzer_parameters.connect(
+    def connectAnalyzerWidget(self, analyzer_widget):
+        analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        print("connectAnalyzerWindow: signals:", self.signals)
+        print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
-            analyzer_window.setShmem_slot
+            analyzer_widget.setShmem_slot
         )
-        analyzer_window.signals.show.connect(
+        analyzer_widget.signals.show.connect(
             self.requestQtShmemServer
         )
-        analyzer_window.signals.close.connect(
+        analyzer_widget.signals.close.connect(
             self.releaseQtShmemServer
         )
         
-    def disconnectAnalyzerWindow(self, analyzer_window):
-        analyzer_window.video.signals.update_analyzer_parameters.disconnect(
+    def disconnectAnalyzerWidget(self, analyzer_widget):
+        analyzer_widget.video.signals.update_analyzer_parameters.disconnect(
             self.updateAnalyzerParameters)
         self.signals.shmem_server.disconnect(
-            analyzer_window.setShmem_slot
+            analyzer_widget.setShmem_slot
         )
-        analyzer_window.signals.show.disconnect(
+        analyzer_widget.signals.show.disconnect(
             self.requestQtShmemServer
         )
-        analyzer_window.signals.close.disconnect(
+        analyzer_widget.signals.close.disconnect(
             self.releaseQtShmemServer
         )
         
@@ -800,7 +800,7 @@ def test_process(mvision_process_class):
     p.stop()
     
 
-def test_with_file(mvision_class):
+def test_with_file(mvision_process_class):
     """Test the analyzer process with files
     
     They must be encoded and muxed correctly, i.e., with:
@@ -812,15 +812,16 @@ def test_with_file(mvision_class):
     """
     import time
     from valkka.mvision.file import FileGUI
+
     ps = mvision_process_class()
     
     app = QtWidgets.QApplication(["mvision test"])
     fg = FileGUI(
         mvision_process         = ps, 
-        shmem_name              ="test_studio_file",
+        shmem_name              = "test_studio_file",
         shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    =1000,
-        shmem_ringbuffer_size   =5
+        shmem_image_interval    = 1000,
+        shmem_ringbuffer_size   = 5
         )
     fg.show()
     app.exec_()

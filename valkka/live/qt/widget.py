@@ -104,6 +104,24 @@ class SimpleVideoWidget(QtWidgets.QWidget):
     def initVars(self):
         pass
 
+
+    def parametersToMvision(self) -> dict:
+        """Internal parameters of this analyzer widget to something that\
+        is understood by the associated machine vision process
+
+        Must use json-seriazable objects
+        """
+        return {
+            "some" : "parameters"
+            }
+
+
+    def mvisionToParameters(self, dic: dict):
+        """Inverse of parametersToMVision
+        """
+        pass
+
+
     def paintEvent(self, e):
         # http://zetcode.com/gui/pyqt5/painting/
         self.painter.begin(self)
@@ -215,8 +233,8 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
     def __init__(self, def_pixmap = None, parent = None):
         super().__init__(def_pixmap = def_pixmap, parent = parent)
         # self.lines = []
-        self.line = None
-        self.unitnormal = None
+        self.line = None # tuple of two 2D numpy vectors
+        self.unitnormal = None # a 2D numpy vector
 
     def drawWidget(self, qp):
         super().drawWidget(qp) # draws the bitmap on the background
@@ -228,6 +246,30 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         self.p1 = None
         self.p2 = None
         self.unSetTracking()
+
+
+
+    def parametersToMvision(self) -> dict:
+        """Internal parameters of this analyzer widget to something that\
+        is understood by the associated machine vision process
+
+        WARNING: y-direction is inverted
+
+        Must use json-seriazable objects
+        """
+        return {
+            "line"         : [invertY(self.line[0], shift = 1).tolist(), invertY(self.line[1], shift = 1).tolist()],
+            "unitnormal"   : invertY(self.unitnormal).tolist(),
+            "line_"        : [self.line[0].tolist(), self.line[1].tolist()],
+            "unitnormal_"  : self.unitnormal.tolist()
+            }
+
+
+    def mvisionToParameters(self, dic: dict):
+        """Inverse of parametersToMVision
+        """
+        self.line = (numpy.array(dic["line_"][0]), numpy.array(dic["line_"][1]))
+        self.unitnormal = numpy.array(dic["unitnormal_"])
 
 
     def handle_move(self, info):
@@ -251,18 +293,18 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
             self.state = 2
         elif self.state == 2: # finish normal definition
             self.initVars()
-            # WARNING: y-direction is inverted
-            self.signals.update_analyzer_parameters.emit({
-                "line"         : [invertY(self.line[0], shift = 1), invertY(self.line[1], shift = 1)],
-                "unitnormal"   : invertY(self.unitnormal)
-            })
+            self.signals.update_analyzer_parameters.emit(
+                self.parametersToMvision()
+                )
 
 
     def handle_right_single_click(self, info):
         # cancel definition
         self.initVars()
+        """ # nopes
         self.signals.update_analyzer_parameters.emit({
             })
+        """
 
     def handle_left_double_click(self, info):
         pass
@@ -434,6 +476,90 @@ class VideoShmemThread(QtCore.QThread):
     def waitStop(self):
         self.wait()
     
+
+# class AnalyzerWindow(QtWidgets.QMainWindow):
+class AnalyzerWidget(QtWidgets.QWidget):
+    """
+    - Runs a VideoShmemThread that reads frames from shmem
+    - ..frames from shmem => self.video.set_pixmap_slot
+    - self.video is a custom analyzer video widget class (i.e. for defining lines, areas, etc.) that is encapsulated into this QMainWindow
+    """
+
+    class Signals(QtCore.QObject):
+        show = QtCore.Signal()
+        close = QtCore.Signal()
+
+    def __init__(self, parent = None, analyzer_video_widget_class = SimpleVideoWidget):
+        super().__init__(parent)
+
+        self.w = QtWidgets.QWidget(self)
+        self.main_lay = QtWidgets.QVBoxLayout(self)
+        self.main_lay.addWidget(self.w)
+        #self.setCentralWidget(self.w)
+        
+        self.lay = QtWidgets.QVBoxLayout(self.w)
+        # self.video = SimpleVideoWidget(parent = self.w)
+        # self.video = LineCrossingVideoWidget(parent = self.w)
+        self.video = analyzer_video_widget_class(parent = self.w)
+        # self.signals = self.video.signals # alias
+        self.signals = self.Signals()
+        self.lay.addWidget(self.video)
+        self.thread_ = None # woops.. thread seems to be a member of QWidget..!
+
+
+    def parametersToMvision(self) -> dict:
+        return self.video.parametersToMvision()
+
+
+    def mvisionToParameters(self, dic: dict):
+        self.video.mvisionToParameters(dic)
+
+
+    def activate(self, geom = None):
+        self.setVisible(True)
+        if geom:
+            self.setGeometry(geom)
+
+
+    def showEvent(self, e):
+        print("AnalyzerWindow: showEvent")
+        # request shmem server from mvision process
+        self.signals.show.emit()
+        e.accept()
+
+
+    def closeEvent(self, e):
+        # TODO: why this is not fired?
+        print("AnalyzerWindow: closeEvent: thread_", self.thread_)
+        if self.thread_ is not None:
+            self.thread_.stop()
+            self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
+            self.thread_ = None
+        # release shmem server from mvision
+        self.signals.close.emit()
+        e.accept()
+
+
+    # def setShmem_slot(self, shmem_name, shmem_n_buffer, width, height):
+    def setShmem_slot(self, kwargs):
+        """ Called after the mvision process has established a shmem server
+        drag'n'drop => setDevice => MVisionProcess.activate => MVisionProcess.c__activate => should establish shmem server
+        => MVisionProcess.send_out_(MessageObject) => get's converted into a Qt signal that is connected to this method
+        """
+        shmem_name = kwargs["shmem_name"]
+        shmem_n_buffer = kwargs["shmem_n_buffer"]
+        width = kwargs["width"]
+        height = kwargs["height"]
+        self.thread_ = VideoShmemThread(
+                shmem_name,
+                shmem_n_buffer,
+                width,
+                height
+            )
+        self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
+        self.thread_.start()
+        print("AnalyzerWindow: setShmem_slot: thread_", self.thread_)
+
 
 
 class MyGui(QtWidgets.QMainWindow):

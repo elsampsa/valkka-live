@@ -31,101 +31,21 @@ from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
 from valkka.live.tools import classToName, nameToClass
 from valkka.mvision import multiprocess
-from valkka.live.qt.widget import SimpleVideoWidget, LineCrossingVideoWidget, VideoShmemThread
-
+# from valkka.live.qt.widget import SimpleVideoWidget, LineCrossingVideoWidget, VideoShmemThread
+from valkka.live.qt.widget import AnalyzerWidget
 
 
 class MVisionContainer(VideoContainer):
     """This class starts an analyzer process and passes it the correct shmem identifier
     """
-    class AnalyzerWindow(QtWidgets.QMainWindow):
-
-        class Signals(QtCore.QObject):
-            show = QtCore.Signal()
-            close = QtCore.Signal()
-
-        def __init__(self, parent = None, analyzer_video_widget_class = SimpleVideoWidget):
-            super().__init__()
-            self.w = QtWidgets.QWidget(self)
-            self.setCentralWidget(self.w)
-            self.lay = QtWidgets.QVBoxLayout(self.w)
-            # self.video = SimpleVideoWidget(parent = self.w)
-            # self.video = LineCrossingVideoWidget(parent = self.w)
-            self.video = analyzer_video_widget_class(parent = self.w)
-            # self.signals = self.video.signals # alias
-            self.signals = self.Signals()
-            self.lay.addWidget(self.video)
-            self.filterchain = None
-            self.thread_ = None # woops.. thread seems to be a member of QWidget..!
-
-
-        def activate(self, filterchain):
-            self.filterchain = filterchain
-            """# move this to VideoWidget & the server to analyzer: we want to see the realtime analysis performed by OpenCV
-            self.shmem_name, self.shmem_n_buffer, self.width, self.height = filterchain.getShmemQt()
-            self.thread_ = VideoShmemThread(
-                    self.shmem_name,
-                    self.shmem_n_buffer,
-                    self.width,
-                    self.height
-                )
-            self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
-            self.thread_.start()
-            """
-            self.setVisible(True)
-
-
-        def showEvent(self, e):
-            print("AnalyzerWindow: showEvent")
-            # request shmem server from mvision process
-            self.signals.show.emit()
-
-
-        def closeEvent(self, e):
-            print("AnalyzerWindow: closeEvent")
-            if self.filterchain is not None:
-                """
-                self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
-                self.filterchain.releaseShmemQt(self.shmem_name)
-                self.thread_.stop()
-                """
-                self.filterchain = None
-            print("AnalyzerWindow: closeEvent: thread_", self.thread_)
-            if self.thread_ is not None:
-                self.thread_.stop()
-                self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
-                self.thread_ = None
-            # release shmem server from mvision
-            self.signals.close.emit()
-
-
-        # def setShmem_slot(self, shmem_name, shmem_n_buffer, width, height):
-        def setShmem_slot(self, kwargs):
-            """ Called after the mvision process has established a shmem server
-            drag'n'drop => setDevice => MVisionProcess.activate => MVisionProcess.c__activate => should establish shmem server
-            => MVisionProcess.send_out_(MessageObject) => get's converted into a Qt signal that is connected to this method
-            """
-            shmem_name = kwargs["shmem_name"]
-            shmem_n_buffer = kwargs["shmem_n_buffer"]
-            width = kwargs["width"]
-            height = kwargs["height"]
-            self.thread_ = VideoShmemThread(
-                    shmem_name,
-                    shmem_n_buffer,
-                    width,
-                    height
-                )
-            self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
-            self.thread_.start()
-            print("AnalyzerWindow: setShmem_slot: thread_", self.thread_)
-
-
+    
     parameter_defs = {
         #"parent_container"  : None,                 # RootVideoContainer or child class
         #"filterchain_group" : FilterChainGroup,     # Filterchain manager class
         #"n_xscreen"         : (int,0),              # x-screen index
         #"device_id"         : (int, -1),            # optional: the unique id of this video stream
-        "mvision_class"     : None,                  # Either a class instance, or a complete string of the module.class, for example : valkka_mvision.movement.base.MVisionProcess
+        "mvision_class"      : None,                  # Either a class instance, or a complete string of the module.class, for example : valkka_mvision.movement.base.MVisionProcess
+        "mvision_parameters" : None,
         # non-seriazable parameters:
         # "thread"            : None,                 # thread that watches the multiprocesses communication pipes # NEW: now at singleton
         # "process_map"       : (dict,{}),            # NEW: now at singleton
@@ -153,25 +73,30 @@ class MVisionContainer(VideoContainer):
         self.mvision_process = self.getProcess(tag)
         if self.mvision_process is None: return
 
-        self.analyzer_window_connected = False
+        self.analyzer_widget_connected = False
         if hasattr(self.mvision_process, "analyzer_video_widget_class"):
             # the machine vision class may declare what video widget it wants to use to define the machine vision parameters (line crossing, zone intrusion, etc.)
-            self.analyzer_window = self.AnalyzerWindow(
+            self.analyzer_widget = AnalyzerWidget(
                 analyzer_video_widget_class = self.mvision_process.analyzer_video_widget_class
                 )
             # if hasattr(self.mvision_process, "connectAnalyzerWidget"):
-            # self.mvision_process.connectAnalyzerWidget(self.analyzer_window)
-            # self.analyzer_window_connected = True
+            # self.mvision_process.connectAnalyzerWidget(self.analyzer_widget)
+            # self.analyzer_widget_connected = True
             # TODO: init analyzer parameters by sending a signal & serialize analyzer parameters
         else:
-            self.analyzer_window = self.AnalyzerWindow()
+            self.analyzer_widget = AnalyzerWidget()
 
-        self.mvision_process.connectAnalyzerWindow(self.analyzer_window)
-        self.analyzer_window_connected = True
-        # self.mvision_process.connectShmem(self.analyzer_window) # do in connectAnalyzerWidget
+        self.mvision_process.connectAnalyzerWidget(self.analyzer_widget)
+        self.analyzer_widget_connected = True
+        # self.mvision_process.connectShmem(self.analyzer_widget) # do in connectAnalyzerWidget
 
-        self.analyzer_window.setVisible(False)
+        self.analyzer_widget.setVisible(False)
         self.signals.right_double_click.connect(self.right_double_click_slot)
+
+        if self.mvision_parameters:
+            self.mvision_process.updateAnalyzerParameters(self.mvision_parameters)
+            self.analyzer_widget.mvisionToParameters(self.mvision_parameters)
+
 
     
     def getProcess(self, tag):
@@ -192,8 +117,9 @@ class MVisionContainer(VideoContainer):
         """Return a dict of parameters that the parent object needs to de-serialize & instantiate this object
         """
         return {
-            "mvision_class" : classToName(self.mvision_class),
-            "device_id" : self.getDeviceId()
+            "mvision_class"             : classToName(self.mvision_class),
+            "device_id"                 : self.getDeviceId(),
+            "mvision_parameters"        : self.mvision_process.getAnalyzerParameters()
             }
     
     def makeWidget(self, parent=None):
@@ -269,6 +195,11 @@ class MVisionContainer(VideoContainer):
                 self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
             
 
+    def setFile(self, fname):
+        # TODO: when testing mvision classes with a file
+        pass
+
+
     def activate(self):
         self.mvision_process.activate(
                 n_buffer         = constant.shmem_n_buffer,
@@ -288,7 +219,10 @@ class MVisionContainer(VideoContainer):
 
     def right_double_click_slot(self):
         if self.filterchain:
-            self.analyzer_window.activate(self.filterchain)
+            self.analyzer_widget.activate(
+                # self.filterchain,
+                self.main_widget.geometry()
+                )
             # self.mvision_process.requestQtShmemServer()
 
 
@@ -303,8 +237,8 @@ class MVisionContainer(VideoContainer):
         if (self.mvision_process==None):
             return
         
-        # if self.analyzer_window.visible:
-        self.analyzer_window.close()
+        # if self.analyzer_widget.visible:
+        self.analyzer_widget.close()
 
         self.filterchain.delViewPort(self.viewport)
         self.filterchain.releaseShmem(self.shmem_name)
@@ -325,8 +259,8 @@ class MVisionContainer(VideoContainer):
         tag = self.mvision_class.tag
         singleton.process_map[tag].append(self.mvision_process) # .. and recycle it
         print(self.pre, "close: process_map=", singleton.process_map)
-        if self.analyzer_window_connected:
-            self.mvision_process.disconnectAnalyzerWindow(self.analyzer_window)
+        if self.analyzer_widget_connected:
+            self.mvision_process.disconnectAnalyzerWidget(self.analyzer_widget)
         self.mvision_process = None
 
 

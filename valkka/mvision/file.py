@@ -27,7 +27,9 @@ import os
 from valkka.api2 import LiveThread, FileThread, OpenGLThread, ValkkaProcess, ShmemClient
 from valkka.api2 import ShmemFilterchain1
 from valkka.api2 import parameterInitCheck
-from valkka.mvision.multiprocess import QValkkaShmemProcess2, QValkkaThread
+from valkka.mvision.multiprocess import QShmemProcess
+from valkka.live.qt.widget import AnalyzerWidget
+from valkka.live import tools
 
 pre = "mvision.file : "
 
@@ -41,15 +43,28 @@ class FileGUI(QtWidgets.QMainWindow):
 
     def __init__(self, 
                  mvision_process, 
+                 # mvision_class, # TODO: use the mvision container infra..?
                  shmem_image_interval = 1000, 
                  shmem_ringbuffer_size = 10, 
                  shmem_image_dimensions = (1920 // 2, 1080 // 2),
                  shmem_name="test"):
         
         super().__init__()
-        assert(issubclass(mvision_process.__class__, QValkkaShmemProcess2))
+        assert(issubclass(mvision_process.__class__, QShmemProcess))
         
         self.mvision_process        = mvision_process
+        self.mvision_master_process = None
+
+        if hasattr(self.mvision_process,"master"):
+            # find master process if required .. a bit cumbersome..
+            mvision_classes, mvision_client_classes, mvision_master_classes =\
+                tools.scanMVisionClasses() # scans for submodules in namespace valkka.mvision.*
+            master_classes_by_tag = {}
+            for cl in mvision_master_classes:
+                master_classes_by_tag[cl.tag] = cl
+            self.mvision_master_process = master_classes_by_tag[self.mvision_process.master]()
+
+        # self.mvision_class          = mvision_class,
         self.shmem_image_interval   = shmem_image_interval
         self.shmem_ringbuffer_size  = shmem_ringbuffer_size
         self.shmem_image_dimensions = shmem_image_dimensions
@@ -64,6 +79,10 @@ class FileGUI(QtWidgets.QMainWindow):
         self.widget_lay.addWidget(self.mvision_widget)
         
         self.openValkka()
+
+        if len(sys.argv) > 2:
+            self.open_file_button_slot(fname_ = sys.argv[2])
+
 
     def initVars(self):
         self.mode = "file"
@@ -133,15 +152,15 @@ class FileGUI(QtWidgets.QMainWindow):
         self.infotext = QtWidgets.QLabel("info text", self.lowest)
         self.lowestlay.addWidget(self.infotext)
 
+        
 
-    def openValkka(self):
-        self.thread = QValkkaThread() # the thread that's watching the mvision_processes
-        self.thread.start()
-        
-        self.mvision_process.start()
-        self.thread.addProcess(self.mvision_process)
-        
-        # """
+    def openValkka(self):        
+        self.mvision_process.go()
+
+        if self.mvision_master_process:
+            self.mvision_master_process.go()
+            self.mvision_process.setMasterProcess(self.mvision_master_process)
+
         self.livethread = LiveThread(         # starts live stream services (using live555)
             name="live_thread",
             verbose=False
@@ -174,10 +193,25 @@ class FileGUI(QtWidgets.QMainWindow):
         )
 
         shmem_name, n_buffer, shmem_image_dimensions = self.chain.getShmemPars()
+
         self.video = QtWidgets.QWidget(self.video_area)
+        
+        if hasattr(self.mvision_process, "analyzer_video_widget_class"):
+            # the machine vision class may declare what video widget it wants to use to define the machine vision parameters (line crossing, zone intrusion, etc.)
+            self.analyzer_widget = AnalyzerWidget(
+                parent = self.video_area,
+                analyzer_video_widget_class = self.mvision_process.analyzer_video_widget_class
+                )
+        else:
+            self.analyzer_widget = AnalyzerWidget(parent = self.video_area)
+        
+        self.mvision_process.connectAnalyzerWidget(self.analyzer_widget)
+        self.analyzer_widget.activate()
+
         self.win_id = int(self.video.winId())
 
         self.video_lay.addWidget(self.video, 0, 0)
+        self.video_lay.addWidget(self.analyzer_widget, 0, 1)
         self.token = self.openglthread.connect(slot = 1, window_id = self.win_id)
 
         self.chain.decodingOn()  # tell the decoding thread to start its job
@@ -190,28 +224,40 @@ class FileGUI(QtWidgets.QMainWindow):
         
         
     def closeValkka(self):
-        # """
+        if self.mvision_master_process:
+            self.mvision_process.unsetMasterProcess()
+        self.mvision_process.disconnectAnalyzerWidget(self.analyzer_widget)
         self.livethread.close()
         self.chain.close()
         self.chain = None
         self.openglthread.close()
-        # """
-        print(self.mvision_process)
-        self.thread.stop()
+
+        self.mvision_process.requestStop()
+        self.mvision_process.waitStop()
         
+        if self.mvision_master_process:
+            self.mvision_master_process.requestStop()
+            self.mvision_master_process.waitStop()
+        
+
 
     def closeEvent(self, e):
         print(pre, "closeEvent!")
         self.closeValkka()
-        super().closeEvent(e)
+        self.analyzer_widget.close() # wtf do we need this!
+        # super().closeEvent(e)
+        e.accept()
 
     # *** slot ****
 
-    def open_file_button_slot(self):
+    def open_file_button_slot(self, fname_ = None):
         if (self.slot_reserved):
             self.infotext.setText("Close the current file first")
             return
-        fname = QtWidgets.QFileDialog.getOpenFileName(filter="*.mkv")[0]
+        if not fname_:
+            fname = QtWidgets.QFileDialog.getOpenFileName(filter="*.mkv")[0]
+        else:
+            fname = fname_
         if (len(fname) > 0):
             print(pre, "open_file_button_slot: got filename", fname)
             self.chain.setFileContext(fname)

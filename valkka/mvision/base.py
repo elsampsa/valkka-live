@@ -55,9 +55,12 @@ class Analyzer(object):
         self.pre = self.__class__.__name__
         self.logger = getLogger(self.pre)
         if self.debug or self.verbose:
-            setLogger(self.logger, logging.DEBUG)
+            self.setDebug()
         # self.init() # do this in child classes only ..
 
+
+    def setDebug(self):
+        setLogger(self.logger, logging.DEBUG)
 
     def init(self):
         """Acquire any resources required by the analyzer.  Must always call reset

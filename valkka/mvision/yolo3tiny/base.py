@@ -35,6 +35,7 @@ pre = "valkka.mvision.yolo3tiny.base : "
 
 from valkka.mvision.yolo3 import YoloV3Analyzer
 from valkka.mvision.yolo3 import MVisionProcess as BaseProcess
+from valkka.mvision.multiprocess import test_process, test_with_file
 
 # if the following works, then darknet is available and the weights file has been downloaded ok
 from darknet.api2.constant import get_yolov2_weights_file, get_yolov3_weights_file, get_yolov3_tiny_weights_file
@@ -66,13 +67,12 @@ class MVisionProcess(BaseProcess):
     tag = "yolov3tiny"
     max_instances = 2       # just one instance allowed .. this is kinda heavy detector
     auto_menu = True # append automatically to valkka live machine vision menu or not
-
     required_mb = 150      # required GPU memory in MB
     
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client
         """
-        super().postActivate_()
+        # super().postActivate_() # nopes..! since we inherit from yolov3
         if (self.requiredGPU_MB(self.required_mb)):
             self.analyzer = YoloV3TinyAnalyzer(verbose = self.verbose)
         else:

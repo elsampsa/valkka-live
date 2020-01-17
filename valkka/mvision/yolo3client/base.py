@@ -58,7 +58,7 @@ class MVisionClientProcess(MVisionClientBaseProcess):
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(name = self.__class__.name)
-        # self.setDebug()
+        self.setDebug()
 
     def preRun_(self):
         super().preRun_()
@@ -83,7 +83,10 @@ class MVisionClientProcess(MVisionClientBaseProcess):
         img = data.reshape(
             (meta.height, meta.width, 3))
 
+        scale = numpy.array([meta.height, meta.width])
         self.logger.debug("cycle_: got frame %s", img.shape)
+
+        img_ = img.copy()
 
         if self.server is not None:
             self.logger.debug("cycle_ : pushing to server")
@@ -95,7 +98,36 @@ class MVisionClientProcess(MVisionClientBaseProcess):
             # receive results from master process
             replies = self.master_pipe.recv()
             self.logger.debug("reply from master process: %s", replies)
-            if replies is None: return None
+            if replies is not None:
+                object_list = []
+                bbox_list = []
+                for reply in replies:
+                    if isinstance(reply, str):
+                        object_list.append(reply)
+                    else:
+                        tag = reply[0]
+                        x = reply[1]
+                        w = reply[2]
+                        y = reply[3]
+                        h = reply[4]
+
+                        object_list.append(tag)
+                        bbox_list.append((x, w, y, h))
+                        # cv2.rectangle(image, start_point, end_point, color, thickness)
+                        start = (int(x * meta.width), int(y * meta.height))
+                        end = (int( (x + w) * meta.width), int( (y + h) * meta.height))
+                        """
+                        print("x,y,w,h",x,y,w,h)
+                        print("width, height", meta.width, meta.height)
+                        print("start", start)
+                        print("end", end)
+                        """
+                        color = (255, 0, 0)
+                        img_ = cv2.rectangle(img_, start, end, color, 3)
+                        cv2.putText(img_, tag, start, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
+
+                self.send_out__(MessageObject("objects", object_list = object_list))
+                self.send_out__(MessageObject("bboxes", bbox_list = bbox_list))
 
         """
         reply can be:
@@ -109,24 +141,11 @@ class MVisionClientProcess(MVisionClientBaseProcess):
         if self.qt_server is not None:
             self.logger.info("pushing frame to server")
             self.qt_server.pushFrame(
-                img,
+                img_,
                 meta.slot,
                 meta.mstimestamp
             )
 
-        object_list = []
-        bbox_list = []
-        for reply in replies:
-            if isinstance(reply, str):
-                object_list.append(reply)
-            else:
-                object_list.append(reply[0])
-                bbox_list.append((reply[1], reply[2], reply[3], reply[4]))
-
-        # TODO: do here anything you need to do with the bbox coordinates
-        self.send_out__(MessageObject("objects", object_list = object_list))
-        self.send_out__(MessageObject("bboxes", bbox_list = bbox_list))
-        
 
     # *** create a widget for this machine vision module ***
     def getWidget(self):
@@ -164,11 +183,11 @@ def test3():
     """Test the multiprocess
     """
     import time
-    test_process(MVisionProcess)
+    test_process(MVisionClientProcess)
 
     
 def test4():
-    test_with_file(MVisionProcess)
+    test_with_file(MVisionClientProcess)
 
 
 def main():
