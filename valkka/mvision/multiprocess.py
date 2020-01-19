@@ -549,7 +549,7 @@ class MVisionBaseProcess(QShmemProcess):
 
 
     def __init__(self, **kwargs):
-        self.parameters = {}
+        self.parameters = None
         self.qt_server = None
         super().__init__(**kwargs)
 
@@ -557,11 +557,12 @@ class MVisionBaseProcess(QShmemProcess):
     # *** common back-end methods for machine vision processes ***
 
     def c__updateAnalyzerParameters(self, **kwargs):
-        print("got analyzer parameters", kwargs)
+        self.logger.debug("got analyzer parameters %s", kwargs)
+        self.parameters = kwargs # update parameters at the backend
 
 
     def c__requestQtShmemServer(self, **kwargs):
-        print("shmem server requested")
+        self.logger.debug("shmem server requested")
         # should be called only after the shmem client has been instantiated
         self.shmem_name_qt_server = self.shmem_name + "_qt_server"
         self.qt_server = ShmemRGBServer(
@@ -582,7 +583,7 @@ class MVisionBaseProcess(QShmemProcess):
 
 
     def c__releaseQtShmemServer(self, **kwargs):
-        print("shmem server released")
+        self.logger.debug("shmem server released")
         self.qt_server = None
 
 
@@ -605,7 +606,7 @@ class MVisionBaseProcess(QShmemProcess):
     def connectAnalyzerWidget(self, analyzer_widget):
         analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        print("connectAnalyzerWidget: signals:", self.signals)
+        # print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
             analyzer_widget.setShmem_slot
         )
@@ -650,7 +651,7 @@ class MVisionBaseProcess(QShmemProcess):
 
     def updateAnalyzerParameters(self, kwargs):
         self.parameters = kwargs
-        print("updateAnalyzerParameters", kwargs)
+        self.logger.debug("updateAnalyzerParameters %s", kwargs)
         self.sendMessageToBack(MessageObject(
             "updateAnalyzerParameters", **kwargs))
 
@@ -682,11 +683,11 @@ class MVisionClientBaseProcess(QShmemClientProcess):
     # *** common back-end methods for machine vision processes ***
 
     def c__updateAnalyzerParameters(self, **kwargs):
-        print("Movement mvision: got analyzer parameters", kwargs)
+        self.logger.debug("Movement mvision: got analyzer parameters %s", kwargs)
 
 
     def c__requestQtShmemServer(self, **kwargs):
-        print("shmem server requested")
+        self.logger.debug("shmem server requested")
         # should be called only after the shmem client has been instantiated
         self.shmem_name_qt_server = self.shmem_name + "_qt_server"
         self.qt_server = ShmemRGBServer(
@@ -707,7 +708,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
 
 
     def c__releaseQtShmemServer(self, **kwargs):
-        print("shmem server released")
+        self.logger.debug("shmem server released")
         self.qt_server = None
 
 
@@ -728,7 +729,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
     def connectAnalyzerWidget(self, analyzer_widget):
         analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        print("connectAnalyzerWidget: signals:", self.signals)
+        # print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
             analyzer_widget.setShmem_slot
         )
@@ -773,7 +774,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
 
     def updateAnalyzerParameters(self, kwargs):
         self.parameters = kwargs
-        print("updateAnalyzerParameters", kwargs)
+        self.logger.debug("updateAnalyzerParameters %s", kwargs)
         self.sendMessageToBack(MessageObject(
             "updateAnalyzerParameters", **kwargs))
 

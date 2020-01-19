@@ -9,7 +9,7 @@ The basic user interface is simple and intuitive and is based on drag'n'dropping
 
 First, let's register some RTSP cameras.
 
-- Navigate to *Configuration / Manage Cameras*
+- Navigate to *Configuration / Configuration Dialog / Camera Configuration*
 - Choose a slot for the camera
 - Choose *RTSP Camera* from the drop-down menu
 - Type in the camera information (ip address, user, password, etc.)
@@ -17,7 +17,7 @@ First, let's register some RTSP cameras.
 - Press *SAVE*
 - Close the window from the upper-right (X) as usual
 
-You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in *Configuration / Memory Usage* as Valkka pre-reserves all resources
+You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in *Memory Configuration* tab, as Valkka pre-reserves all resources
 
 
 2. Viewing Cameras

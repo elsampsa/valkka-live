@@ -82,7 +82,7 @@ class QFrontThread(QtCore.QThread):
         self.signals = signals
         self.pipe = pipe
         self.loop = True
-        self.setDebug()
+        # self.setDebug()
 
 
     def setDebug(self):
@@ -164,7 +164,7 @@ class QMultiProcess(Process):
 
     def setDebug(self):
         setLogger(self.logger, logging.DEBUG)
-        self.qt_front_thread.setDebug()
+        # self.qt_front_thread.setDebug() # lets not do this..
 
 
     # **** backend ****

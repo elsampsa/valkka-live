@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta content="A python video surveillance program" name="description" />
+    <meta charset="utf-8" /><meta content="A python video surveillance program" name="description" />
 <meta content="opensource, python, video surveillance, video management, video analysis, machine vision, qt" name="keywords" />
 
     <title>Valkka Live &#8212; valkka_live  documentation</title>
@@ -18,7 +16,7 @@
     <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Intro" href="intro.html" />
+    <link rel="next" title="Getting started" href="requirements.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -40,17 +38,30 @@
 <style> .myright {font-size: 10pt; text-align: right;} </style><p class="myright"><em>Screenshot : Valkka Live running on Ubuntu 18 with Yolo object detection</em></p>
 <a class="reference internal image-reference" href="_images/screenshot_1.png"><img alt="_images/screenshot_1.png" src="_images/screenshot_1.png" style="width: 100%;" /></a>
 <p>Valkka Live is an OpenSource video surveillance and management program for Linux</p>
-<p><em>Some highlights of Valkka Live</em></p>
+<div class="section" id="some-highlights-of-valkka-live">
+<h2>Some highlights of Valkka Live<a class="headerlink" href="#some-highlights-of-valkka-live" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Written in Python3 -  hack the code, add custom alerts and machine vision modules</li>
-<li>Create custom graphical interfaces with Python3 and Qt</li>
-<li>Works with stock OnVif compliant IP cameras</li>
-<li>Designed for massive video streaming - view and analyze simultaneously a large number of IP cameras</li>
-<li>Streams are decoded once and only once: same stream can be passed to several machine vision routines without extra overhead</li>
-<li>Create video streaming desktop programs with advanced features using our commercial modules</li>
+<li><p>Written in Python3 -  hack the code, add your own machine vision modules as plug-ins</p></li>
+<li><p>Create custom graphical interfaces with Python3 and Qt</p></li>
+<li><p>Works with stock OnVif compliant IP cameras</p></li>
+<li><p>Designed for massive video streaming - view and analyze simultaneously a large number of IP cameras</p></li>
+<li><p>Streams are decoded once and only once: same stream can be passed to several machine vision routines without extra overhead</p></li>
 </ul>
 <p>Valkka Live is based on the <a class="reference external" href="https://elsampsa.github.io/valkka-examples/">valkka library</a>.</p>
 <p>For hardware and driver requirements, see <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/hardware.html">here</a>.</p>
+</div>
+<div class="section" id="what-can-you-do-with-valkka-live">
+<h2>What can you do with Valkka Live?<a class="headerlink" href="#what-can-you-do-with-valkka-live" title="Permalink to this headline">¶</a></h2>
+<p>Consider the following:</p>
+<ul class="simple">
+<li><p>You have tons of ip cameras</p></li>
+<li><p>You have all kinds of cool machine vision routines, which you have written in OpenCV and Tensorflow</p></li>
+<li><p>Now you want to create a production-grade software with a slick Qt interface, superb image quality and possibility for the user to interact and define parameters for your machine vision routines (say, define line crossing, zone intrusion, etc.)</p></li>
+<li><p>You also want to record events and evoke alerts in the user interface</p></li>
+</ul>
+<p>For a typical user-case, imagine a control room with a large amount of ip cameras, running machine vision for a facility of any kind (manufacturing, airport, etc.)</p>
+<p>Hacking Valkka Live, you can create such deployments even on a single GPU-equipped laptop</p>
+</div>
 <div class="section" id="quickstart">
 <span id="id1"></span><h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
 <p>We’ll be installing directly from github, so git is required:</p>
@@ -74,8 +85,22 @@
 </div>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Valkka Live</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#some-highlights-of-valkka-live">Some highlights of Valkka Live</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-can-you-do-with-valkka-live">What can you do with Valkka Live?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="requirements.html">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="manual.html">Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules.html">Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html">Copyright and License</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authors.html">Authors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="requirements.html#system-requirements">System requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="requirements.html#installing">Installing</a></li>
@@ -99,7 +124,6 @@
 <li class="toctree-l2"><a class="reference internal" href="modules.html#machine-vision-examples">Machine Vision Examples</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules.html#movement-detector">Movement Detector</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules.html#nix">Nix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules.html#openalpr">OpenALPR</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules.html#yolo-object-detection">Yolo Object Detection</a></li>
 </ul>
 </li>
@@ -115,9 +139,9 @@
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div>
 
@@ -158,8 +182,22 @@
   <li><a href="http://www.dasys.fi"><i class="fas fa-building"></i> Dasys Ltd.</a></li>
 </ul>
 <h3><a href="#">Table of Contents</a></h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Valkka Live</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#some-highlights-of-valkka-live">Some highlights of Valkka Live</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-can-you-do-with-valkka-live">What can you do with Valkka Live?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="requirements.html">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="manual.html">Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules.html">Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="license.html">Copyright and License</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authors.html">Authors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
@@ -169,13 +207,11 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -188,7 +224,7 @@
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

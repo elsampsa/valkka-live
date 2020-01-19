@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Modules &#8212; valkka_live  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -38,23 +36,21 @@
 <h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="machine-vision">
 <h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
+<p><em>Warning: version 0.12.0 has seen a major revision and reorganization in the multiprocessing architecture</em></p>
 <p>Once Valkka has decoded a frame from a certain camera, that decoded frame can be dumped to screen (to hundred windows if necessary) and passed to machine vision routines.  There is no overhead, as the stream from a certain camera is decoded only once.</p>
 <p>Decoded frames can be pushed to machine vision routines that are programmed at the python level.  You can easily construct your own too.  At the moment, there are two schemes of plugging-in a python machine vision module.</p>
 <p><strong>1. Using a python multiprocess.</strong>  Communication with the python multiprocess is done by passing frames through shared memory from the Valkka main process.</p>
 <blockquote>
 <div><ul class="simple">
-<li>Use this always when you can embed your routine as a python module</li>
-<li>Typical use-case: OpenCV</li>
+<li><p>Use this always when you can embed your routine as a python module</p></li>
+<li><p>Typical use-case: OpenCV</p></li>
 </ul>
 </div></blockquote>
 <p><strong>2. Using an external python program.</strong>  Frames are passed to the external program through the filesystem.  Other communication is done through stdin and stdout.</p>
 <blockquote>
 <div><ul>
-<li><p class="first">Use when your program is impossible to embed as a python module</p>
-</li>
-<li><p class="first">Say, when using keras machine vision running in a docker container</p>
-</li>
-<li><p class="first">Your program must conform to a certain base class, see:</p>
+<li><p>Use when your program is impossible to embed as a python module</p></li>
+<li><p>Your program must conform to a certain base class, see:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka_live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span><span class="n">example_process1</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
@@ -64,12 +60,14 @@
 <p>Each machine vision module appears as its own directory (the plugin scheme is indicated as well):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">live</span><span class="o">/</span><span class="n">valkka</span><span class="o">/</span><span class="n">mvision</span><span class="o">/</span>
 
-    <span class="n">movement</span><span class="o">/</span>           <span class="n">simple</span> <span class="n">movement</span> <span class="n">detector</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">nix</span><span class="o">/</span>                <span class="n">demo</span> <span class="n">detector</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">alpr</span><span class="o">/</span>               <span class="n">OpenALPR</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">yolo3</span><span class="o">/</span>              <span class="n">Yolo</span> <span class="n">v3</span> <span class="nb">object</span> <span class="n">detection</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">yolo3tiny</span><span class="o">/</span>          <span class="n">Yolo</span> <span class="n">v3</span> <span class="n">Tiny</span> <span class="nb">object</span> <span class="n">detection</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">yolo2</span><span class="o">/</span>              <span class="n">Yolo</span> <span class="n">v2</span> <span class="nb">object</span> <span class="n">detection</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">movement</span><span class="o">/</span>           <span class="n">simple</span> <span class="n">movement</span> <span class="n">detector</span>
+    <span class="n">nix</span><span class="o">/</span>                <span class="n">demo</span> <span class="n">detector</span><span class="p">,</span> <span class="n">using</span> <span class="n">an</span> <span class="n">external</span> <span class="n">python</span> <span class="n">program</span>
+    <span class="n">yolo3</span><span class="o">/</span>              <span class="n">Yolo</span> <span class="n">v3</span> <span class="nb">object</span> <span class="n">detection</span>
+    <span class="n">yolo3tiny</span><span class="o">/</span>          <span class="n">Yolo</span> <span class="n">v3</span> <span class="n">Tiny</span> <span class="nb">object</span> <span class="n">detection</span>
+    <span class="n">yolo2</span><span class="o">/</span>              <span class="n">Yolo</span> <span class="n">v2</span> <span class="nb">object</span> <span class="n">detection</span>
+
+    <span class="n">yolo3client</span><span class="o">/</span>        <span class="n">Yolo</span> <span class="n">client</span> <span class="n">process</span><span class="p">,</span> <span class="n">using</span> <span class="n">a</span> <span class="n">common</span> <span class="n">master</span> <span class="n">process</span>
+    <span class="n">yolo3master</span><span class="o">/</span>        <span class="n">Yolo</span> <span class="n">v3</span> <span class="n">Tiny</span> <span class="nb">object</span> <span class="n">detection</span><span class="p">,</span> <span class="k">for</span> <span class="n">multiple</span> <span class="n">client</span> <span class="n">using</span> <span class="n">a</span> <span class="n">common</span> <span class="n">master</span> <span class="n">process</span>
 </pre></div>
 </div>
 <p>You can create your own by copying any of the directories to a different name.  Then, study and edit the file <em>base.py</em> in that directory.  After that, you still have to register the module into:</p>
@@ -81,66 +79,38 @@
 <span class="n">python3</span> <span class="n">base</span><span class="o">.</span><span class="n">py</span> <span class="n">N</span>
 </pre></div>
 </div>
-<p>where <em>N</em> is the test number.  Test number 5 in particular, lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
-<p>Before taking a detailed look into the provided example modules, keep in mind that the scheme used here for passing frames among processes with POSIX shared memory and semaphores is ok if you need around 1 frame per second.</p>
-<p>This is sufficient for many applications.  However, if you want more serious a thing, say, 25 fps video analysis at higher resolution, you should implement your stuff at cpp level.  And only after that interface to Valkka (<a class="reference external" href="https://github.com/elsampsa/valkka-cpp-examples">this</a> could help).</p>
+<p>where <em>N</em> is the test number.  Test number 4 in particular, lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
 </div>
 <div class="section" id="machine-vision-examples">
 <h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Permalink to this headline">¶</a></h2>
-<p>Once you install the dependencies for each of the example modules listed below, they appear automagically in Valkka Live menu bar.</p>
-<p>If you’re running Ubuntu 18 (bionic), you can use this command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">valkka</span><span class="o">-</span><span class="n">bionic</span><span class="o">-</span><span class="n">install</span>
-</pre></div>
-</div>
-<p>to install dependencies of the machine vision modules (excluding Yolo object detection)</p>
 <div class="section" id="movement-detector">
 <h3>Movement Detector<a class="headerlink" href="#movement-detector" title="Permalink to this headline">¶</a></h3>
 <p>This is an extremely simple demo, using OpenCV.  It reports when there is movement.  A good basis for using your own, OpenCV based module.</p>
 <p>This module needs OpenCV installed.  See <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#opencv">here</a>.</p>
+<p>This one also demonstrates how to communicate machine vision parameters to your machine vision multiprocess: click on the “Define Analyzer” button, and you’ll see what is going on with the analysis</p>
+<p>By clicking on the appearing window, you can define a line and a normal direction for line-crossing.  The parameters are communicated to the multiprocess.  This is just to demo the process of sending parameters to your machine vision module / multiprocess (does nothing else).</p>
 </div>
 <div class="section" id="nix">
 <h3>Nix<a class="headerlink" href="#nix" title="Permalink to this headline">¶</a></h3>
 <p>Demonstrates how to send frames to an external process.</p>
 <p>Files are sent to a file in the “/tmp” directory, reading and writing frames is synchronized using communication through stdin and stdout.</p>
 </div>
-<div class="section" id="openalpr">
-<h3>OpenALPR<a class="headerlink" href="#openalpr" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="https://www.openalpr.com">OpenALPR</a> is a popular OpenSource library for automatic license plate recognition.  We provide a bridge to it.</p>
-<p>First of all <strong>DO NOT</strong> install the freemium OpenSource version available at the <a class="reference external" href="https://github.com/openalpr/openalpr">github repository</a>, as its outdated and buggy.  Instead, install the commercial version as instructed <a class="reference external" href="http://doc.openalpr.com/sdk.html">here</a>, i.e. like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="o">&lt;</span><span class="p">(</span><span class="n">curl</span> <span class="o">-</span><span class="n">s</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">deb</span><span class="o">.</span><span class="n">openalpr</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">install</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>You will also need a license key which you can get from here <a class="reference external" href="https://www.openalpr.com/on-premises.html">here</a>.  Place the key you obtain from the OpenALPR folks into</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">openalpr</span><span class="o">/</span><span class="n">license</span><span class="o">.</span><span class="n">conf</span>
-</pre></div>
-</div>
-<p>Confirm that OpenALPR works with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alpr</span> <span class="o">-</span><span class="n">c</span> <span class="n">eu</span> <span class="n">photo_of_your_car</span><span class="o">.</span><span class="n">jpg</span>
-</pre></div>
-</div>
-<p>In order to make this work with python, you still have to do this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s1">&#39;deb https://deb.openalpr.com/bionic/ bionic main&#39;</span> <span class="o">|</span> <span class="n">sudo</span> <span class="n">tee</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apt</span><span class="o">/</span><span class="n">sources</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">d</span><span class="o">/</span><span class="n">openalpr</span><span class="o">.</span><span class="n">list</span>
-<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
-<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">openalpr</span>
-</pre></div>
-</div>
-<p>(as for some reason that script provided by openalpr unsubscribes your from their repository)</p>
-<p>Confirm that the python bindings work with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ipython3</span>
-<span class="kn">from</span> <span class="nn">openalpr</span> <span class="k">import</span> <span class="n">Alpr</span>
-</pre></div>
-</div>
-<p>That’s it!  Now “License Plate Recognition” should appear under “Machine Vision” in Valkka Live</p>
-</div>
 <div class="section" id="yolo-object-detection">
 <h3>Yolo Object Detection<a class="headerlink" href="#yolo-object-detection" title="Permalink to this headline">¶</a></h3>
 <p>Once you have installed and tested <a class="reference external" href="https://github.com/elsampsa/darknet-python">our Darknet python bindings</a>, the Yolo 3 object detector will appear in the Machine Vision plug-in menu.</p>
 <p>Several Yolo versions are provided:</p>
 <ul class="simple">
-<li>Yolo v3 is the best, but a bit heavy, so it won’t work on a “commodity” laptop.  You need a hefty GPU with 2.5+ GB memory.</li>
-<li>Yolo v2 is almost as good as Yolo v3, but needs less memory on the GPU</li>
-<li>Yolo v3 Tiny works on the CPU as well and on a regular i7 laptop</li>
+<li><p>Yolo v3 is the best, but a bit heavy, so it won’t work on a “commodity” laptop.  You need a hefty GPU with 2.5+ GB memory.</p></li>
+<li><p>Yolo v2 is almost as good as Yolo v3, but needs less memory on the GPU</p></li>
+<li><p>Yolo v3 Tiny works on the CPU as well and on a regular i7 laptop</p></li>
 </ul>
+<p>You also have the option to use a single yolo instance (neural net) for several machine vision clients:</p>
+<ul class="simple">
+<li><p>Say, you have 3 yolo clients, each running zone intrusion analytics with object labels and boxes from yolo together with some heuristics, processing 10 fps</p></li>
+<li><p>Each one of those clients is feeding images to a common yolo master process that is capable of handling 30 fps</p></li>
+<li><p>Each client receives textual information (labels and boxes) from the common master process</p></li>
+</ul>
+<p>All of this is orchestrated under-the-hood using libValkka multiprocessing servers and clients</p>
 </div>
 </div>
 <div class="section" id="creating-packages">
@@ -198,7 +168,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#machine-vision-examples">Machine Vision Examples</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#movement-detector">Movement Detector</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nix">Nix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#openalpr">OpenALPR</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#yolo-object-detection">Yolo Object Detection</a></li>
 </ul>
 </li>
@@ -210,13 +179,11 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -229,7 +196,7 @@
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

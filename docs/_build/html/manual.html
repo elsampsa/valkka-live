@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Tutorial &#8212; valkka_live  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -41,50 +39,50 @@
 <h2>1. Manage Cameras<a class="headerlink" href="#manage-cameras" title="Permalink to this headline">¶</a></h2>
 <p>First, let’s register some RTSP cameras.</p>
 <ul class="simple">
-<li>Navigate to <em>Configuration / Manage Cameras</em></li>
-<li>Choose a slot for the camera</li>
-<li>Choose <em>RTSP Camera</em> from the drop-down menu</li>
-<li>Type in the camera information (ip address, user, password, etc.)</li>
-<li>Repeat for all cameras</li>
-<li>Press <em>SAVE</em></li>
-<li>Close the window from the upper-right (X) as usual</li>
+<li><p>Navigate to <em>Configuration / Configuration Dialog / Camera Configuration</em></p></li>
+<li><p>Choose a slot for the camera</p></li>
+<li><p>Choose <em>RTSP Camera</em> from the drop-down menu</p></li>
+<li><p>Type in the camera information (ip address, user, password, etc.)</p></li>
+<li><p>Repeat for all cameras</p></li>
+<li><p>Press <em>SAVE</em></p></li>
+<li><p>Close the window from the upper-right (X) as usual</p></li>
 </ul>
-<p>You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in <em>Configuration / Memory Usage</em> as Valkka pre-reserves all resources</p>
+<p>You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in <em>Memory Configuration</em> tab, as Valkka pre-reserves all resources</p>
 </div>
 <div class="section" id="viewing-cameras">
 <h2>2. Viewing Cameras<a class="headerlink" href="#viewing-cameras" title="Permalink to this headline">¶</a></h2>
 <p>Let’s see a list of installed cameras and view their live video</p>
 <ul class="simple">
-<li>Navigate to <em>View / Camera List</em>.  The camera list widget appears on screen</li>
-<li>Navigate to <em>View / Video Grid / 2x2</em>.  A 2x2 grid appears on the screen</li>
-<li>Drag and drop cameras from the camera list widget into the 2x2 grid</li>
-<li>You can open as many video grids on the screen as you please</li>
-<li>Note that even if you view the same video in multiple grids, the camera stream is decoded only once</li>
-<li>Note that you can also do drag and drop between video grids</li>
-<li>Double-clicking on the video, maximizes the video size</li>
-<li>Double-clicking again, restores the normal size</li>
+<li><p>Navigate to <em>View / Camera List</em>.  The camera list widget appears on screen</p></li>
+<li><p>Navigate to <em>View / Video Grid / 2x2</em>.  A 2x2 grid appears on the screen</p></li>
+<li><p>Drag and drop cameras from the camera list widget into the 2x2 grid</p></li>
+<li><p>You can open as many video grids on the screen as you please</p></li>
+<li><p>Note that even if you view the same video in multiple grids, the camera stream is decoded only once</p></li>
+<li><p>Note that you can also do drag and drop between video grids</p></li>
+<li><p>Double-clicking on the video, maximizes the video size</p></li>
+<li><p>Double-clicking again, restores the normal size</p></li>
 </ul>
 </div>
 <div class="section" id="removing-cameras">
 <h2>3. Removing Cameras<a class="headerlink" href="#removing-cameras" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Right-click on a video in the video grid</li>
-<li>Choose <em>Remove Camera</em></li>
+<li><p>Right-click on a video in the video grid</p></li>
+<li><p>Choose <em>Remove Camera</em></p></li>
 </ul>
 </div>
 <div class="section" id="saving-and-loading-the-layout">
 <h2>4. Saving and Loading the Layout<a class="headerlink" href="#saving-and-loading-the-layout" title="Permalink to this headline">¶</a></h2>
 <p>Camera views can be saved, and recovered for the next time when you use Valkka Live</p>
 <ul class="simple">
-<li>Navigate to <em>File / Save Window Layout</em>.  Now your view layout is saved</li>
-<li>When starting the program again, navigate to <em>File / Load Window Layout</em></li>
+<li><p>Navigate to <em>File / Save Window Layout</em>.  Now your view layout is saved</p></li>
+<li><p>When starting the program again, navigate to <em>File / Load Window Layout</em></p></li>
 </ul>
 </div>
 <div class="section" id="machine-vision">
 <h2>5. Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Open a machine vision terminal from the <em>Machine Vision</em> menu</li>
-<li>Drag’n drop a camera to that terminal</li>
+<li><p>Open a machine vision terminal from the <em>Machine Vision</em> menu</p></li>
+<li><p>Drag’n drop a camera to that terminal</p></li>
 </ul>
 </div>
 </div>
@@ -144,13 +142,11 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -163,7 +159,7 @@
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

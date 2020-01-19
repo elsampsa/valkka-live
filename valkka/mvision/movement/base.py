@@ -100,7 +100,7 @@ class MovementDetector(Analyzer):
         # checks that kwargs is consistent with parameter_defs.  Attaches
         # parameters as attributes to self
         parameterInitCheck(self.parameter_defs, kwargs, self)
-        self.setDebug()
+        # self.setDebug()
         if self.debug:
             self.logger.warning("Enabling OpenCV high-gui.  That requires opencv installed with apt-get.  Otherwise, get ready for a segfault..")
         self.init()
@@ -227,7 +227,7 @@ class MVisionProcess(MVisionBaseProcess):
     def __init__(self, name = "MVisionProcess", **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(name = name)
-        self.setDebug()
+        # self.setDebug()
         
 
     def preRun_(self):
@@ -247,18 +247,6 @@ class MVisionProcess(MVisionBaseProcess):
     def cycle_(self):
         # NOTE: enable this to see if your multiprocess is alive
         self.logger.debug("cycle_ starts")
-        """
-        index, isize = self.client.pull()
-        if (index is None):
-            self.logger.debug("Client timed out..")
-            pass
-        else:
-            self.logger.debug("Client index, size =",index, isize)
-            data = self.client.shmem_list[index]
-            img = data.reshape(
-                (self.image_dimensions[1], self.image_dimensions[0], 3))
-            result = self.analyzer(img)
-        """
         index, meta = self.client.pullFrame()
         if (index is None):
             self.logger.debug("cycle_ : client timed out..")
@@ -279,10 +267,30 @@ class MVisionProcess(MVisionBaseProcess):
         self.logger.debug("cycle_ : got frame %s", img.shape)
         result = self.analyzer(img)
 
+        img_ = img.copy()
+
+        if self.parameters:
+            # what we have in parameters, depends on the 
+            # analyzer video widget class, i.e. on the widget that
+            # interacts with the user for defining the machine vision parameters
+            # the class is defined in the class member "analyzer_video_widget_class"
+            # and instantiated by MVisionContainer
+            # here we're using
+            # valkka.live.qt.widget.LineCrossingVideoWidget
+            if "line" in self.parameters:
+                line = self.parameters["line"]
+                # print("line",line)
+                start = (int(line[0][0]*img_.shape[1]), int((line[0][1])*img_.shape[0]))
+                end =   (int(line[1][0]*img_.shape[1]), int((line[1][1])*img_.shape[0]))
+                # print("start", start)
+                # print("end",end)
+                # # cross-check the line defined in the interactive qt widget
+                cv2.line(img_, start, end, (0,255,0), 8)
+
         if self.qt_server is not None:
             self.logger.info("cycle_ : pushing frame to server")
             self.qt_server.pushFrame(
-                img,
+                img_,
                 meta.slot,
                 meta.mstimestamp
             )

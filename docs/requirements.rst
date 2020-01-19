@@ -36,8 +36,7 @@ After that, install (or update) with:
 
 (the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)
 
-Be also aware of `some issues <https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#installing
->`_ regarding to numpy and OpenCV installation
+Be also aware of `some issues <https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#installing>`_ regarding to numpy and OpenCV installation
     
 In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 

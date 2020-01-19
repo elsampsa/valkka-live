@@ -29,18 +29,32 @@ Valkka Live
     
 Valkka Live is an OpenSource video surveillance and management program for Linux 
 
-*Some highlights of Valkka Live*
+Some highlights of Valkka Live
+------------------------------
 
-- Written in Python3 -  hack the code, add custom alerts and machine vision modules
+- Written in Python3 -  hack the code, add your own machine vision modules as plug-ins
 - Create custom graphical interfaces with Python3 and Qt
 - Works with stock OnVif compliant IP cameras
 - Designed for massive video streaming - view and analyze simultaneously a large number of IP cameras
 - Streams are decoded once and only once: same stream can be passed to several machine vision routines without extra overhead
-- Create video streaming desktop programs with advanced features using our commercial modules
 
 Valkka Live is based on the `valkka library <https://elsampsa.github.io/valkka-examples/>`_.
 
 For hardware and driver requirements, see `here <https://elsampsa.github.io/valkka-examples/_build/html/hardware.html>`_.
+
+What can you do with Valkka Live?
+---------------------------------
+
+Consider the following:
+
+- You have tons of ip cameras
+- You have all kinds of cool machine vision routines, which you have written in OpenCV and Tensorflow
+- Now you want to create a production-grade software with a slick Qt interface, superb image quality and possibility for the user to interact and define parameters for your machine vision routines (say, define line crossing, zone intrusion, etc.)
+- You also want to record events and evoke alerts in the user interface
+
+For a typical user-case, imagine a control room with a large amount of ip cameras, running machine vision for a facility of any kind (manufacturing, airport, etc.)
+
+Hacking Valkka Live, you can create such deployments even on a single GPU-equipped laptop
 
 .. _quickstart:
 
@@ -87,7 +101,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   intro
+   index
    requirements
    manual
    faq

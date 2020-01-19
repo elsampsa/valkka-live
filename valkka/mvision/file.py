@@ -159,7 +159,6 @@ class FileGUI(QtWidgets.QMainWindow):
 
         if self.mvision_master_process:
             self.mvision_master_process.go()
-            self.mvision_process.setMasterProcess(self.mvision_master_process)
 
         self.livethread = LiveThread(         # starts live stream services (using live555)
             name="live_thread",
@@ -221,6 +220,10 @@ class FileGUI(QtWidgets.QMainWindow):
             image_dimensions        = self.shmem_image_dimensions, 
             shmem_name              = self.shmem_name  
         )
+
+        if self.mvision_master_process:
+            self.mvision_process.setMasterProcess(self.mvision_master_process)
+
         
         
     def closeValkka(self):

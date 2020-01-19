@@ -132,12 +132,16 @@ class MVisionContainer(VideoContainer):
             parent=self.main_widget,
             mouse_gesture_handler=self.mouseGestureHandler)
 
+        self.define_analyzer_button = QtWidgets.QPushButton("Define Analyzer", self.main_widget)
+        self.main_layout.addWidget(self.define_analyzer_button)
+
         self.main_layout.addWidget(self.video)
         self.video.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Expanding)
         
         self.video.signals.drop.connect(self.setDevice)
+        self.define_analyzer_button.clicked.connect(self.right_double_click_slot) # show the analyzer widget windows
         
         # this VideoContainer was initialized with a device id, so we stream the video now
         if self.device_id > -1:

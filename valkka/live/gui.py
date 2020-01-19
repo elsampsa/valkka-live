@@ -636,10 +636,6 @@ class MyGui(QtWidgets.QMainWindow):
         wait(singleton.master_process_map)
 
         
-
-
-        
-            
     # *** Valkka ***
         
     def openValkka(self):

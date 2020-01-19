@@ -58,10 +58,13 @@ class MVisionClientProcess(MVisionClientBaseProcess):
     def __init__(self, **kwargs):
         parameterInitCheck(self.parameter_defs, kwargs, self)
         super().__init__(name = self.__class__.name)
-        self.setDebug()
+        # self.setDebug()
 
     def preRun_(self):
         super().preRun_()
+        retval, self.baseline = cv2.getTextSize("A", cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+        print("retval, baseline", retval, self.baseline)
+
 
     def postRun_(self):
         super().postRun_()
@@ -106,25 +109,33 @@ class MVisionClientProcess(MVisionClientBaseProcess):
                         object_list.append(reply)
                     else:
                         tag = reply[0]
-                        x = reply[1]
-                        w = reply[2]
-                        y = reply[3]
-                        h = reply[4]
+                        x0 = reply[1] 
+                        x1 = reply[2]
+                        y0 = reply[3]
+                        y1 = reply[4]
 
                         object_list.append(tag)
-                        bbox_list.append((x, w, y, h))
-                        # cv2.rectangle(image, start_point, end_point, color, thickness)
-                        start = (int(x * meta.width), int(y * meta.height))
-                        end = (int( (x + w) * meta.width), int( (y + h) * meta.height))
+                        bbox_list.append((x0, x1, y0, y1))
+                        # yolo: origo at left lower corner
+                        y0 = 1 - y0 # numpy / opencv: origo at left upper corner
+                        y1 = 1 - y1
+
+                        # start: lower left corner of the box
+                        start = (int(x0 * meta.width), int(y0 * meta.height))
+                        # end: upper right corner of the box
+                        end = (int( x1 * meta.width), int( y1 * meta.height))
+                        
+                        linew = 3 # object box linewidth
+                        label = (int(x0 * meta.width), int(y1 * meta.height) + self.baseline + linew + 2) # object label coordinates
                         """
-                        print("x,y,w,h",x,y,w,h)
+                        print(">", x0, x1, y0, y1)
                         print("width, height", meta.width, meta.height)
                         print("start", start)
                         print("end", end)
                         """
                         color = (255, 0, 0)
-                        img_ = cv2.rectangle(img_, start, end, color, 3)
-                        cv2.putText(img_, tag, start, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
+                        img_ = cv2.rectangle(img_, start, end, color, linew)
+                        cv2.putText(img_, tag, label, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
 
                 self.send_out__(MessageObject("objects", object_list = object_list))
                 self.send_out__(MessageObject("bboxes", bbox_list = bbox_list))

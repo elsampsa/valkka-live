@@ -258,18 +258,19 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         Must use json-seriazable objects
         """
         return {
-            "line"         : [invertY(self.line[0], shift = 1).tolist(), invertY(self.line[1], shift = 1).tolist()],
-            "unitnormal"   : invertY(self.unitnormal).tolist(),
-            "line_"        : [self.line[0].tolist(), self.line[1].tolist()],
-            "unitnormal_"  : self.unitnormal.tolist()
+            # "line"         : [invertY(self.line[0], shift = 1).tolist(), invertY(self.line[1], shift = 1).tolist()],
+            "line"         : [self.line[0].tolist(), self.line[1].tolist()], # cv2 / numpy has the same coordinates
+            "unitnormal"   : self.unitnormal.tolist(),
+            # "line_"        : [self.line[0].tolist(), self.line[1].tolist()],
+            # "unitnormal_"  : self.unitnormal.tolist()
             }
 
 
     def mvisionToParameters(self, dic: dict):
         """Inverse of parametersToMVision
         """
-        self.line = (numpy.array(dic["line_"][0]), numpy.array(dic["line_"][1]))
-        self.unitnormal = numpy.array(dic["unitnormal_"])
+        self.line = (numpy.array(dic["line"][0]), numpy.array(dic["line"][1]))
+        self.unitnormal = numpy.array(dic["unitnormal"])
 
 
     def handle_move(self, info):
