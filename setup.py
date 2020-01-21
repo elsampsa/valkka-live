@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.11.0'
+version = '0.12.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
