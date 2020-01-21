@@ -362,7 +362,7 @@ class ValkkaFSConfigRow(Row):
         ColumnSpec(
             CheckBoxColumn, 
             key_name    = "record", 
-            label_name  = "Activate Recording",
+            label_name  = "Activate recording & playback",
             def_value   = False),
 
         ColumnSpec(

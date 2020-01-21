@@ -748,7 +748,12 @@ class MyGui(QtWidgets.QMainWindow):
         """
 
         # if no recording selected, set self.valkkafsmanager = None
-        self.valkkafsmanager = ValkkaFSManager(self.valkkafs)
+        self.valkkafsmanager = ValkkaFSManager(
+            self.valkkafs,
+            write = record, # True or False
+            read = record,
+            cache = record
+            )
         self.playback_controller = PlaybackController(valkkafs_manager = self.valkkafsmanager)
 
         self.filterchain_group = LiveFilterChainGroup(
