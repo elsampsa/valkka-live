@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    main.py
 @author  Sampsa Riikonen
 @date    2020
-@version 0.12.0 
+@version 0.12.1 
 @brief   
 """
 
@@ -28,7 +28,7 @@ from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import logging
 import argparse
 
-from valkka.counter.tools import typeCheck, dictionaryCheck, objectCheck, parameterInitCheck, noCheck, getLogger
+from valkka.live.tools import getLogger
 from valkka.live.local import ValkkaLocalDir
 from valkka.live import singleton
 
@@ -40,10 +40,10 @@ singleton.valkkafs_dir = ValkkaLocalDir("live","fs")
 """
 from valkka.live.gui import get_valkka_live_universe
 
-class MyGui(get_valkka_live_universe("counter")):
+class MyGui(get_valkka_live_universe("xxx")):
     
     def __init__(self, parent = None):
-        print("\n*** Welcome to Valkka Counter ***\n")
+        print("\n*** Welcome to xxx ***\n")
         super().__init__(parent)
 """
 
@@ -62,7 +62,7 @@ def process_cl_args():
     def str2bool(v):
         return v.lower() in ("yes", "true", "t", "1")
 
-    parser = argparse.ArgumentParser("valkka-counter")
+    parser = argparse.ArgumentParser("valkka-live")
     parser.register('type','bool',str2bool)    
     """
     parser.add_argument("command", action="store", type=str,                 

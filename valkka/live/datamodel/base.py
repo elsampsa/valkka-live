@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    datamodel.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.0 
+@version 0.12.1 
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 

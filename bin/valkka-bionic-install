@@ -1,11 +1,11 @@
 #!/bin/bash
 echo
-echo Installing OpenCV and OpenALPR for ubuntu 18 \(bionic\)
+# echo Installing OpenCV and OpenALPR for ubuntu 18 \(bionic\)
+echo Installing OpenCV for ubuntu 18 \(bionic\)
 echo
 sudo apt-get update
 sudo apt-get install -y python3-opencv
-echo 'deb https://deb.openalpr.com/bionic/ bionic main' | sudo tee /etc/apt/sources.list.d/openalpr.list
-sudo apt-get install -y openalpr libopenalpr-dev libalprstream-dev openalpr-video python3-openalpr
+# echo 'deb https://deb.openalpr.com/bionic/ bionic main' | sudo tee /etc/apt/sources.list.d/openalpr.list
+# sudo apt-get install -y openalpr libopenalpr-dev libalprstream-dev openalpr-video python3-openalpr
 # use the following command to see where openalp is coming from:
 # apt-cache policy openalpr
-# TODO: add our proprietary repo here as well

@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    nix.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.0 
+@version 0.12.1 
 @brief   Communicate with your machine vision analyzer through stdout, stdin and the filesystem
 """
 
