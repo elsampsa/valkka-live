@@ -24,7 +24,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import cute_mongo_forms
 from valkka.live.datamodel import DataModel
-from valkka.live import tools
+from valkka.live import tools, singleton
 
 
 class MyGui(QtWidgets.QMainWindow):
@@ -38,7 +38,7 @@ class MyGui(QtWidgets.QMainWindow):
 
   def initVars(self):
     # self.dm = DataModel()
-    self.dm = DataModel(directory = tools.getConfigDir())
+    self.dm = DataModel(directory = singleton.config_dir)
     # self.dm.clearAll()
     print(cute_mongo_forms.__file__)
 

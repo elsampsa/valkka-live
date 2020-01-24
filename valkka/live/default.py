@@ -22,24 +22,28 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from valkka.live import singleton
 
-memory_config = {
-    "msbuftime" : 100,
-    "n_720p"    : 20,
-    "n_1080p"   : 20,
-    "n_1440p"   : 10,
-    "n_4K"      : 5,
-    "bind"      : False,
-    "overwrite_timestamps" : False
+def get_memory_config():
+    memory_config = {
+        "msbuftime" : 100,
+        "n_720p"    : 20,
+        "n_1080p"   : 20,
+        "n_1440p"   : 10,
+        "n_4K"      : 5,
+        "bind"      : False,
+        "overwrite_timestamps" : False
+        }
+    return memory_config
+
+def get_valkkafs_config():
+    valkkafs_config = {
+        "dirname"    : singleton.valkkafs_dir.get(),
+        "n_blocks"   : 10,
+        "blocksize"  : 10,
+        "fs_flavor"  : "file",
+        "record"     : False,
+        "partition_uuid" : None
     }
+    return valkkafs_config
 
 fps = 25
-
-valkkafs_config = {
-    "dirname"    : singleton.valkkafs_dir.get(),
-    "n_blocks"   : 10,
-    "blocksize"  : 10,
-    "fs_flavor"  : "file",
-    "record"     : False,
-    "partition_uuid" : None
-}
 

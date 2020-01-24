@@ -31,11 +31,14 @@ import re
 import logging
 import copy
 from pydoc import locate
+from valkka.live.singleton import config_dir, valkkafs_dir
 
 loggers = {}
+"""
 home = os.path.expanduser("~")
 config_dir = os.path.join(home, ".valkka", "live")
 valkkafs_dir = os.path.join(home, ".valkka", "live", "fs")
+"""
 
 assert(sys.version_info.major >= 3)
 

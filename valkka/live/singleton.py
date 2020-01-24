@@ -19,15 +19,19 @@ You should have received a copy of the GNU Affero General Public License along w
 @version 0.12.0 
 @brief   
 """
-from valkka.live.local import ValkkaLocalDir
+
+test = None
 
 # adjust mvision process verbosities
 # mvision_verbose = True
 mvision_verbose = False
 
-
 # The datamodel.DataModel instance:
 data_model = None
+
+# local dirs
+config_dir = None
+valkkafs_dir = None
 
 # cached devices by id.  Update every now & then
 # key: id, value: device object
@@ -60,9 +64,6 @@ dx = 0
 dy = 0
 dw = 0
 dh = 0
-
-config_dir = ValkkaLocalDir("live")
-valkkafs_dir = ValkkaLocalDir("live","fs")
 
 def reCacheDevicesById():
     global data_model, devices_by_id

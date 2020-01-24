@@ -29,7 +29,7 @@ from cute_mongo_forms.db import SimpleCollection
 
 from valkka.live import default
 from valkka.live.form import SlotFormSet
-from valkka.live import constant, tools
+from valkka.live import constant, tools, singleton
 
 from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
 # from valkka.live.datamodel.layout_row import VideoContainerNxMRow, PlayVideoContainerNxMRow, CameraListWindowRow, MainWindowRow
@@ -244,16 +244,16 @@ class DataModel:
             ValkkaFSConfigRow,
             {
                 # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
-                "n_blocks"   : default.valkkafs_config["n_blocks"],
-                "blocksize"  : default.valkkafs_config["blocksize"],
-                "fs_flavor"  : default.valkkafs_config["fs_flavor"],
-                "record"     : default.valkkafs_config["record"],
-                "partition_uuid" : default.valkkafs_config["partition_uuid"]
+                "n_blocks"   : default.get_valkkafs_config()["n_blocks"],
+                "blocksize"  : default.get_valkkafs_config()["blocksize"],
+                "fs_flavor"  : default.get_valkkafs_config()["fs_flavor"],
+                "record"     : default.get_valkkafs_config()["record"],
+                "partition_uuid" : default.get_valkkafs_config()["partition_uuid"]
             })
 
 
     def writeDefaultMemoryConfig(self):
-        self.config_collection.new(MemoryConfigRow, default.memory_config)
+        self.config_collection.new(MemoryConfigRow, default.get_memory_config())
 
 
 
@@ -356,7 +356,7 @@ def test2():
     
     
 def test3():
-    dm = DataModel(directory = tools.getConfigDir())
+    dm = DataModel(directory = singleton.config_dir())
     dm.autoGenerateCameraCollection("192.168.1", 24, 100, "", "kokkelis/", "admin", "12345")
     dm.saveAll()
     dm.close()

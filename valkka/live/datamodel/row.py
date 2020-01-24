@@ -284,45 +284,45 @@ class MemoryConfigRow(Row):
             label_name="Buffering time (ms)",
             min_value=50,
             max_value=1000,
-            def_value=default.memory_config["msbuftime"]),
+            def_value=default.get_memory_config()["msbuftime"]),
         ColumnSpec(
             IntegerColumn,
             key_name="n_720p",
             label_name="Number of 720p streams",
             min_value=0,
             max_value=1024,
-            def_value=default.memory_config["n_720p"]),
+            def_value=default.get_memory_config()["n_720p"]),
         ColumnSpec(
             IntegerColumn,
             key_name="n_1080p",
             label_name="Number of 1080p streams",
             min_value=0,
             max_value=1024,
-            def_value=default.memory_config["n_1080p"]),
+            def_value=default.get_memory_config()["n_1080p"]),
         ColumnSpec(
             IntegerColumn,
             key_name="n_1440p",
             label_name="Number of 2K streams",
             min_value=0,
             max_value=1024,
-            def_value=default.memory_config["n_1440p"]),
+            def_value=default.get_memory_config()["n_1440p"]),
         ColumnSpec(
             IntegerColumn,
             key_name="n_4K",
             label_name="Number of 4K streams",
             min_value=0,
             max_value=1024,
-            def_value=default.memory_config["n_4K"]),
+            def_value=default.get_memory_config()["n_4K"]),
         ColumnSpec(
             CheckBoxColumn,
             key_name="bind",
             label_name="Bind decoding thread to single core",
-            def_value=default.memory_config["bind"]),
+            def_value=default.get_memory_config()["bind"]),
         ColumnSpec(
             CheckBoxColumn,
             key_name="overwrite_timestamps",
             label_name="Overwrite timestamps",
-            def_value=default.memory_config["overwrite_timestamps"])
+            def_value=default.get_memory_config()["overwrite_timestamps"])
     ]
 
 
@@ -371,7 +371,7 @@ class ValkkaFSConfigRow(Row):
             label_name  = "Blocksize (MB)",
             min_value   = 1,
             max_value   = 1024*1024*1024, # 1 GB
-            def_value   = default.valkkafs_config["blocksize"]), 
+            def_value   = default.get_valkkafs_config()["blocksize"]), 
 
         ColumnSpec(
             SpinBoxIntegerColumn,
@@ -379,7 +379,7 @@ class ValkkaFSConfigRow(Row):
             label_name  = "Number of Blocks",
             min_value   = 5,
             max_value   = 999999999,
-            def_value   = default.valkkafs_config["n_blocks"]), 
+            def_value   = default.get_valkkafs_config()["n_blocks"]), 
         # Calculate Total Size (MB)
 
         ColumnSpec(ConstantRadioButtonColumn, 

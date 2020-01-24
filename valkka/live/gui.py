@@ -22,9 +22,12 @@ You should have received a copy of the GNU Affero General Public License along w
 import imp
 import sys
 import pydoc
+import json
+import pickle
+from pprint import pprint, pformat
+import argparse
 
-from valkka.live import constant
-from valkka.live.tools import importerror
+from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 
 try:
     import valkka.core
@@ -32,25 +35,33 @@ except importerror:
     print(constant.valkka_core_not_found)
     raise SystemExit()
 
+from valkka.api2.logging import *
+from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError
+from valkka.api2.tools import parameterInitCheck
+from valkka import core # for logging
+"""
+core.setLogLevel_threadlogger(loglevel_crazy)
+core.setLogLevel_valkkafslogger(loglevel_debug)
+core.setLogLevel_avthreadlogger(loglevel_debug)
+core.setLogLevel_valkkafslogger(loglevel_debug)
+"""
+
+"""
+def get_valkka_live_universe(main_dir = "live"):
+    # imports inside this method, returns the MyGui class
+"""
+from valkka.live import singleton
+# print("singleton.test =", singleton.test)
+
+from valkka.live import constant
+from valkka.live.tools import importerror
+
 from valkka.live import version
 version.check() # checks the valkka version
 
-import json
-import pickle
-from pprint import pprint, pformat
-import argparse
-
-from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError
-# from valkka.api2.chains import ManagedFilterchain, ManagedFilterchain2, ViewPort
-from valkka.api2.tools import parameterInitCheck
-
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
-
-from valkka.live import singleton
 from valkka.live.menu import FileMenu, ViewMenu, ConfigMenu, AboutMenu
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import style, container, tools, constant
-from valkka.live.local import ValkkaLocalDir
 from valkka.live import default
 from valkka.live.cpu import CPUScheme
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
@@ -70,26 +81,19 @@ from valkka.live.cameralist import BasicView
 from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
 from valkka.live.chain.multifork import RecordType
 
-from valkka.api2.logging import *
-from valkka import core # for logging
-"""
-core.setLogLevel_threadlogger(loglevel_crazy)
-core.setLogLevel_valkkafslogger(loglevel_debug)
-core.setLogLevel_avthreadlogger(loglevel_debug)
-core.setLogLevel_valkkafslogger(loglevel_debug)
-"""
 
 pre = "valkka.live :"
 
-config_dir = singleton.config_dir
-valkkafs_dir = singleton.valkkafs_dir
-
 class MyGui(QtWidgets.QMainWindow):
+
+    #config_dir = setValkkaLocalDir("live", varname = "config_dir")
+    #valkkafs_dir = setValkkaLocalDir("live","fs", varname = "valkkafs_dir")
 
     def __init__(self, parent=None):
         """ctor
         """
         super(MyGui, self).__init__()
+        self.initDirs()
         self.initVars()
         self.initConfigFiles()
         self.readDB()
@@ -137,11 +141,16 @@ class MyGui(QtWidgets.QMainWindow):
         e.accept()
     
 
+    def initDirs(self):
+        self.config_dir = singleton.config_dir
+        self.valkkafs_dir = singleton.valkkafs_dir
+
+
     def initVars(self):
         """Define files & variables
         """
-        self.version_file = config_dir.getFile("version")
-        self.layout_file = config_dir.getFile("layout")
+        self.version_file = self.config_dir.getFile("version")
+        self.layout_file = self.config_dir.getFile("layout")
         
         # singleton.thread = None # a QThread that reads multiprocessing pipes
         
@@ -178,7 +187,7 @@ class MyGui(QtWidgets.QMainWindow):
         if self.first_start:  # first time program start
             # TODO: eula could be shown here
             print(pre, "initConfigFiles : first start")
-            config_dir.reMake()
+            self.config_dir.reMake()
             self.saveVersionNumber()
             # self.saveConfigFile()
             # self.saveWindowLayout() # clears window layout
@@ -188,7 +197,7 @@ class MyGui(QtWidgets.QMainWindow):
     def readDB(self):
         """Datamodel includes the following files: config.dat, devices.dat
         """
-        singleton.data_model = DataModel(directory = config_dir.get())
+        singleton.data_model = DataModel(directory = self.config_dir.get())
         # singleton.data_model = DataModel(directory = tools.getConfigDir())
         if (self.first_start):
             print(pre, "readDB : first start")
@@ -647,14 +656,14 @@ class MyGui(QtWidgets.QMainWindow):
         except StopIteration:
             print(pre, "Using default mem config")
             singleton.data_model.writeDefaultMemoryConfig()
-            memory_config = default.memory_config
+            memory_config = default.get_memory_config()
 
         try:
             valkkafs_config = next(singleton.data_model.valkkafs_collection.get({"classname" : ValkkaFSConfigRow.__name__}))
         except StopIteration:
             print(pre, "Using default valkkafs config")
             singleton.data_model.writeDefaultValkkaFSConfig()
-            valkkafs_config = default.valkkafs_config
+            valkkafs_config = default.get_valkkafs_config()
 
         n_frames = round(memory_config["msbuftime"] * default.fps / 1000.) # accumulated frames per buffering time = n_frames
 
@@ -734,7 +743,7 @@ class MyGui(QtWidgets.QMainWindow):
                 ValkkaFSConfigRow,
                 {
                     # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
-                    "n_blocks"       : default.valkkafs_config["n_blocks"],
+                    "n_blocks"       : default.get_valkkafs_config()["n_blocks"],
                     "blocksize"      : valkkafs_config["blocksize"],
                     "fs_flavor"      : valkkafs_config["fs_flavor"],
                     "record"         : record,
@@ -773,7 +782,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.filterchain_group_play = PlaybackFilterChainGroup(
             datamodel     = singleton.data_model,
             valkkafsmanager
-                          = self.valkkafsmanager,
+                        = self.valkkafsmanager,
             gpu_handler   = self.gpu_handler, 
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group_play.read()
@@ -986,6 +995,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
 
+
 def process_cl_args():
 
     def str2bool(v):
@@ -1023,8 +1033,10 @@ def main():
         print("libValkka verbosity set to fatal messages only")
         core.fatal_log_all()
 
+    MyGui = get_valkka_live_universe()
+
     if parsed_args.reset:
-        config_dir.reMake()
+        singleton.config_dir.reMake()
 
     app = QtWidgets.QApplication(["Valkka Live"])
     mg = MyGui()

@@ -40,7 +40,7 @@ setup(
     #
     entry_points={
         'console_scripts': [
-            'run-valkka-live = valkka.live.gui:main'
+            'run-valkka-live = valkka.live.main:main'
     ]
     },
 
@@ -55,7 +55,6 @@ setup(
         'valkka.live.qt',
         'valkka.mvision',
         'valkka.mvision.movement',
-        'valkka.mvision.alpr',
         'valkka.mvision.nix',
         'valkka.mvision.yolo3',
         'valkka.mvision.yolo2',
