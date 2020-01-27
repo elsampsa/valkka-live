@@ -23,6 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement
+from valkka.live import singleton
 
 """
 File  View    Configuration   Plugins   About
@@ -85,7 +86,7 @@ class PluginsMenu(QuickMenu):
 class AboutMenu(QuickMenu):
     title = "About"
     elements = [
-        QuickMenuElement(title="About Valkka Live")
+        QuickMenuElement(title="About Program")
     ]
 
 

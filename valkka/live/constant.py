@@ -20,6 +20,8 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Constant strings, etc.
 """
 
+program_name = "Valkka Live"
+
 valkka_core_not_found="""
 Valkka core module is not installed 
 

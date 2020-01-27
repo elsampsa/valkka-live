@@ -684,6 +684,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
 
     def c__updateAnalyzerParameters(self, **kwargs):
         self.logger.debug("Movement mvision: got analyzer parameters %s", kwargs)
+        self.parameters = kwargs # update parameters at the backend
 
 
     def c__requestQtShmemServer(self, **kwargs):

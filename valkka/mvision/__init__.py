@@ -1,5 +1,7 @@
 # __all__=["movement"]
 
+print("valkka live mvision import")
+
 from valkka.mvision.base import *
 from valkka.mvision.multiprocess import *
 

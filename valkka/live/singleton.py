@@ -20,7 +20,25 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   
 """
 
-test = None
+
+# **** Variables used to mod Valkka Live ****
+# test = None
+
+program_name = "Valkka Live"
+
+# local dirs
+config_dir = None
+valkkafs_dir = None
+
+# search for machine vision packages
+mvision_package_names = ["valkka.mvision"]
+
+# setters
+# *******************************************
+def addMvisionPackageName(name):
+    global mvision_package_names
+    mvision_package_names.append(name)
+# *******************************************
 
 # adjust mvision process verbosities
 # mvision_verbose = True
@@ -28,10 +46,6 @@ mvision_verbose = False
 
 # The datamodel.DataModel instance:
 data_model = None
-
-# local dirs
-config_dir = None
-valkkafs_dir = None
 
 # cached devices by id.  Update every now & then
 # key: id, value: device object

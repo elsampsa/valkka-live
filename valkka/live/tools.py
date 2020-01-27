@@ -115,30 +115,15 @@ def getConfigFile(fname):
     return os.path.join(config_dir, fname)
 
 
-def scanMVisionClasses():
+def scanMVisionClasses(names = ["valkka.mvision"]):
     mvision_modules = []
+    for name in names:
+        module = importlib.import_module(name)
+        # e.g. valkka.mvision.__init__.py is called
+        mvision_modules.append(module)
 
-    valkka = importlib.import_module("valkka")
-    for obj in pkgutil.iter_modules(valkka.__path__, valkka.__name__ + "."):
-        """
-        In Ubuntu 18, which uses python 3.6+ : https://docs.python.org/3.6/library/pkgutil.html#pkgutil.iter_modules : obj = ModuleInfo instance
-        In Ubuntu 16, which uses python 3.5 : https://docs.python.org/3.5/library/pkgutil.html#pkgutil.iter_modules  : obj = (module_finder, name, ispkg)
-        """
-        if obj.__class__ == tuple:
-            name = obj[1] # ubuntu 16 / python 3.5
-        else:
-            name = obj.name
+    print(mvision_modules)
 
-        if (name.find(".mvision")>-1): # AttributeError: 'tuple' object has no attribute 'name' ???
-            # print("mvision scan: >",p)
-            try:
-                m = importlib.import_module(name)
-            except importerror:
-                print("mvision scan: could not import", name)
-            else:
-                # print(m)
-                mvision_modules.append(m)
- 
     mvision_classes = [] # stand-alone analyzers
     mvision_client_classes = [] # client analyzers that use a master process
     mvision_master_classes = [] # master processes (typically yolo)
@@ -150,12 +135,14 @@ def scanMVisionClasses():
             # print("  ", key, dic[key])
             obj = dic[key]
             if isinstance(obj, types.ModuleType): # modules only
+                # # these are submodules, i.e. valkka.mvision = valkka.mvision.movement
+                # # they have been imported to to valkka.mvision namespace at valkka.mvision.__init__.py
                 # print("mvision scan:", obj)
                 name = obj.__name__
-                # modules that have the following name pattern: "valkka.mvision*."
-                p = re.compile("valkka\.mvision\S*\.")
+                # modules that have the following name pattern: "valkka.mvision.*"
+                p = re.compile(m.__name__ + ".\S*")
                 if p.match(name):
-                    print("mvision scan: ", name)
+                    print("mvision scan:", name)
                     try:
                         submodule = importlib.import_module(name)
                     except ModuleNotFoundError:
@@ -201,6 +188,7 @@ def scanMVisionClasses():
 
 
     return mvision_classes, mvision_client_classes, mvision_master_classes
+
 
 
 def getH264V4l2(verbose=False):
