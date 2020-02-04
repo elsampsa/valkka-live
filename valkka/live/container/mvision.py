@@ -25,7 +25,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 
 from valkka.live import singleton
 from valkka.api2.tools import parameterInitCheck
-from valkka.live.tools import filter_keys
+from valkka.live.tools import filter_keys, remove_keys
 from valkka.live.container.video import VideoContainer
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live import constant
@@ -40,15 +40,8 @@ class MVisionContainer(VideoContainer):
     """
     
     parameter_defs = {
-        #"parent_container"  : None,                 # RootVideoContainer or child class
-        #"filterchain_group" : FilterChainGroup,     # Filterchain manager class
-        #"n_xscreen"         : (int,0),              # x-screen index
-        #"device_id"         : (int, -1),            # optional: the unique id of this video stream
         "mvision_class"      : None,                  # Either a class instance, or a complete string of the module.class, for example : valkka_mvision.movement.base.MVisionProcess
         "mvision_parameters" : None,
-        # non-seriazable parameters:
-        # "thread"            : None,                 # thread that watches the multiprocesses communication pipes # NEW: now at singleton
-        # "process_map"       : (dict,{}),            # NEW: now at singleton
         "verbose"           : (bool, False)
     }
 
@@ -57,10 +50,21 @@ class MVisionContainer(VideoContainer):
         self.pre = self.__class__.__name__ + " : "
         # check for input parameters, attach them to this instance as
         # attributes
-        print("MVisionContainer: __init__: kwargs:", pformat(kwargs))
-        super().__init__(**filter_keys(super().parameter_defs.keys(), kwargs))
-        parameterInitCheck(MVisionContainer.parameter_defs, filter_keys(MVisionContainer.parameter_defs.keys(), kwargs), self)
-        
+        # print("MVisionContainer: __init__: kwargs:", pformat(kwargs))
+
+        # remove key-values of this child class & pass the rest to the superclass
+        super().__init__(**remove_keys(MVisionContainer.parameter_defs.keys(), 
+            kwargs))
+
+        # init internal variables for this child class
+        parameterInitCheck(MVisionContainer.parameter_defs, 
+            filter_keys(MVisionContainer.parameter_defs.keys(), kwargs), self)
+
+        # print(">>>", self.filterchain_group)
+        self.init()        
+
+
+    def init(self):
         if isinstance(self.mvision_class, str):
             self.mvision_class = nameToClass(self.mvision_class)
         
@@ -193,11 +197,22 @@ class MVisionContainer(VideoContainer):
 
             # singleton.thread.addProcess(self.mvision_process)
             
-            # is there a signal giving the bounding boxes..?  let's connect it
-            if hasattr(self.mvision_process.signals,"bboxes"):
-                print(self.pre, "setDevice : connecting bboxes signal")
-                self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
-            
+            self.connectSignals()
+
+
+    def connectSignals(self):
+        # is there a signal giving the bounding boxes..?  let's connect it
+        if hasattr(self.mvision_process.signals,"bboxes"):
+            print(self.pre, "connecting bboxes signal")
+            self.mvision_process.signals.bboxes.connect(self.set_bounding_boxes_slot)
+    
+
+    def disconnectSignals(self):
+        # is there a signal giving the bounding boxes..?  let's connect it
+        if hasattr(self.mvision_process.signals,"bboxes"):
+            print(self.pre, "disconnecting bboxes signal")
+            self.mvision_process.signals.bboxes.disconnect(self.set_bounding_boxes_slot)
+
 
     def setFile(self, fname):
         # TODO: when testing mvision classes with a file
@@ -234,7 +249,7 @@ class MVisionContainer(VideoContainer):
     def clearDevice(self):
         """Remove the current stream
         """
-        print(self.pre, "clearDevice: ")
+        #print(self.pre, "clearDevice: ")
         self.report("clearDevice")
         if not self.device:
             return
@@ -254,6 +269,8 @@ class MVisionContainer(VideoContainer):
         self.filterchain = None
         self.device = None
         
+        self.disconnectSignals()
+
         self.video.update()
         
         
@@ -295,6 +312,7 @@ class MVisionClientContainer(MVisionContainer):
 
 
     def getProcess(self, tag):
+        # print(self.pre, "getProcess: client_process_map0=", singleton.client_process_map)
         try:
             queue = singleton.client_process_map[tag]
         except KeyError:
@@ -303,6 +321,7 @@ class MVisionClientContainer(MVisionContainer):
             mvision_process = queue.pop()
         except IndexError:
             return None
+        # print(self.pre, "getProcess: client_process_map=", singleton.client_process_map)
         return mvision_process
 
 
@@ -311,8 +330,9 @@ class MVisionClientContainer(MVisionContainer):
             return
         self.mvision_process.unsetMasterProcess()        
         tag = self.mvision_class.tag
+        # print(self.pre, "clearProcess: client_process_map0=", singleton.client_process_map)
         singleton.client_process_map[tag].append(self.mvision_process) # .. and recycle it
-        # print(self.pre, "close: process_map=", singleton.process_map)
+        # print(self.pre, "clearProcess: client_process_map=", singleton.client_process_map)
         self.mvision_process = None
 
     

@@ -106,6 +106,9 @@ class QFrontThread(QtCore.QThread):
                 signal.emit() # no kwargs, so send signal without an object
             else:
                 signal.emit(obj.kwargs) # signal carries a dictionary
+        else:
+            self.logger.info("QFrontThread: no signal for %s.  Available signals: %s",
+                obj.command, self.signals)
 
 
 
@@ -221,6 +224,7 @@ class QMultiProcess(Process):
     def send_out__(self, obj):
         """Pickle obj & send to outgoing pipe
         """
+        # print("send_out__", obj)
         self.back_pipe.send(obj) # these are mapped to Qt signals
 
 

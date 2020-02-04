@@ -341,11 +341,26 @@ def parameterInitCheck(definitions, parameters, obj, undefined_ok=False):
 def filter_keys(keys, dic):
     """
     :param keys: allowed keys
-    :param dic : dictionary to be filtered
+    :param dic : dictionary
+
+    Only allowed keys are kept in the dictionary
     """
     out = {}
     for key in dic.keys():
         if (key in keys): # key is in allowed keys
+            out[key] = dic[key]
+    return out
+
+
+def remove_keys(keys, dic):
+    """
+    :param keys: keys to be removed
+    :param dic : dictionary
+
+    """
+    out = {}
+    for key in dic.keys():
+        if (key not in keys):
             out[key] = dic[key]
     return out
 

@@ -306,9 +306,9 @@ class QShmemMasterProcess(QShmemProcess):
         self.preRun_()
 
         while self.loop:
-            # self.logger.debug("run: select %s", self.rlis)
+            self.logger.debug("run: select %s", self.rlis)
             rlis, wlis, elis = safe_select(self.rlis, [], [], timeout = self.timeout)
-            # self.logger.debug("run: select done %s", rlis)
+            self.logger.debug("run: select done %s", rlis)
 
             if self.back_pipe in rlis:
                 rlis.remove(self.back_pipe)
@@ -448,6 +448,8 @@ class QShmemClientProcess(QShmemProcess):
                 self.readPipes__(timeout = 0) # timeout = 0 == just poll
             else:
                 self.readPipes__(timeout = self.timeout) # timeout of 1 sec
+
+            # print("QShmemClientProcess: alive")
 
         self.postRun_()
         # indicate front end qt thread to exit

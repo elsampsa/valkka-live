@@ -134,10 +134,11 @@ class MyGui(QtWidgets.QMainWindow):
         self.config_win.unSetPropagate()
         self.config_win.close()
 
-        self.closeValkka()
+        self.closeProcesses() # closes shmem clients
+
+        self.closeValkka() # closes filterchains that have shmem servers
         singleton.data_model.close()
         
-        self.closeProcesses()
         e.accept()
     
 
@@ -276,6 +277,9 @@ class MyGui(QtWidgets.QMainWindow):
 
             for cl in self.mvision_classes + self.mvision_client_classes:
                 if cl.auto_menu:
+                    # # instead: all visible in menus
+                    # # but if auto_menu is False, then must be connected
+                    # # manually .. actually, we'd need auto_connect switch.
                     el = QuickMenuElement(title = cl.name, method_name = cl.name)
                     mvision_elements.append(el)
 
@@ -415,6 +419,7 @@ class MyGui(QtWidgets.QMainWindow):
         for cl in self.mvision_classes + self.mvision_client_classes:
             slot_func_name = cl.name+"_slot"
             if hasattr(self, slot_func_name):
+                # print(">", cl.name)
                 getattr(self.mvisionmenu,cl.name).triggered.connect(getattr(self,slot_func_name))
 
 
@@ -503,11 +508,17 @@ class MyGui(QtWidgets.QMainWindow):
             ser = {"type": "CameraListWindow", "geom": getCorrectedGeom(self.camera_list_win)}
             container_list.append(ser)
 
+        self.serializeContainers_hook() # for your custom programs
+
         singleton.data_model.layout_collection.new(LayoutContainerRow, {"layout" : container_list})
 
         print(singleton.data_model.layout_collection)
         singleton.data_model.layout_collection.save()
         
+
+    def serializeContainers_hook():
+        pass
+
 
     def deSerializeContainers(self):
         """Re-creates containers, based on the list saved into layout_collection
@@ -574,7 +585,15 @@ class MyGui(QtWidgets.QMainWindow):
                 self.camera_list_win.setVisible(True)
                 self.camera_list_win.setGeometry(geom[0], geom[1], geom[2], geom[3])
 
-        
+        self.deSerializeContainers_hook()
+
+
+    
+    def deSerializeContainers_hook(self):
+        pass
+
+
+
     def closeContainers(self):
         print("gui: closeContainers: containers_grid =", self.containers_grid)
         for container in self.containers_grid:
@@ -626,10 +645,13 @@ class MyGui(QtWidgets.QMainWindow):
         
         
     def closeProcesses(self):
+        #print("closeProcesses: client map", singleton.client_process_map)
+        #print("closeProcesses: master map", singleton.master_process_map)
 
         def stop(process_map):
             for key in process_map:
                 for p in process_map[key]:
+                    # print("closeProcesses: stop:", p)
                     # p.stop()
                     p.requestStop()
 
@@ -807,6 +829,7 @@ class MyGui(QtWidgets.QMainWindow):
         # self.usbthread.close()
 
         print("Closing live & usb threads")
+        # close filterchains from beginning-to-end => threads first
         self.livethread.requestClose()
         self.usbthread.requestClose()
         self.livethread.waitClose()
@@ -878,7 +901,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def makeMvisionSlot(self, cl):
-        if cl.auto_menu == False:
+        if hasattr(cl, "auto_connect") and cl.auto_connect == False:
             return
         def slot_func():
             if ( (cl.tag in singleton.process_map) and (len(singleton.process_map[cl.tag])>0) ):
@@ -892,8 +915,6 @@ class MyGui(QtWidgets.QMainWindow):
                     child_class       = container.MVisionContainer,
                     child_class_pars  = {
                         "mvision_class": cl,
-                        # "thread"       : singleton.thread,
-                        # "process_map"  : singleton.process_map
                         }, 
                     )
                 cont.signals.closing.connect(self.rem_grid_container_slot)
@@ -904,7 +925,7 @@ class MyGui(QtWidgets.QMainWindow):
 
 
     def makeMvisionClientSlot(self, cl):
-        if cl.auto_menu == False:
+        if hasattr(cl, "auto_connect") and cl.auto_connect == False:
             return
         def slot_func():
             if ( (cl.tag in singleton.client_process_map) and len(singleton.client_process_map[cl.tag]) > 0 ):
@@ -920,8 +941,6 @@ class MyGui(QtWidgets.QMainWindow):
                         child_class       = container.MVisionClientContainer,
                         child_class_pars  = {
                             "mvision_class": cl,
-                            # "thread"       : singleton.thread,
-                            # "process_map"  : singleton.process_map
                             }, 
                         )
                     cont.signals.closing.connect(self.rem_grid_container_slot)

@@ -135,7 +135,7 @@ class SimpleVideoWidget(QtWidgets.QWidget):
         qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)
 
     def mousePressEvent(self, e):
-        print("VideoWidget: mousePress")
+        # print("VideoWidget: mousePress")
         self.mouse_click_ctx.atPressEvent(e)
         super().mousePressEvent(e)
         
@@ -171,25 +171,26 @@ class SimpleVideoWidget(QtWidgets.QWidget):
     def mouseGestureHandler(self, info):
         """This is the callback for MouseClickContext.  Passed to VideoWidget as a parameter
         """
-        print(self.pre, ": mouseGestureHandler: ")
+        verbose = False
+        if verbose: print(self.pre, ": mouseGestureHandler: ")
         # *** single click events ***
         if (info.fsingle):
-            print(self.pre, ": mouseGestureHandler: single click")
+            if verbose: print(self.pre, ": mouseGestureHandler: single click")
             if (info.button == QtCore.Qt.LeftButton):
-                print(self.pre, ": mouseGestureHandler: Left button clicked")
+                if verbose: print(self.pre, ": mouseGestureHandler: Left button clicked")
                 self.handle_left_single_click(info)
             elif (info.button == QtCore.Qt.RightButton):
-                print(self.pre, ": mouseGestureHandler: Right button clicked")
+                if verbose: print(self.pre, ": mouseGestureHandler: Right button clicked")
                 self.handle_right_single_click(info)
         # *** double click events ***
         elif (info.fdouble):
             if (info.button == QtCore.Qt.LeftButton):
-                print(
+                if verbose: print(
                     self.pre,
                     ": mouseGestureHandler: Left button double-clicked")
                 self.handle_left_double_click(info)
             elif (info.button == QtCore.Qt.RightButton):
-                print(
+                if verbose: print(
                     self.pre,
                     ": mouseGestureHandler: Right button double-clicked")
                 self.handle_right_double_click(info)
@@ -201,7 +202,8 @@ class SimpleVideoWidget(QtWidgets.QWidget):
         self.setMouseTracking(False)
 
     def handle_move(self, info):
-        print("handle_move")
+        # print("handle_move")
+        pass
 
     def handle_left_single_click(self, info):
         pass
@@ -253,8 +255,6 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         """Internal parameters of this analyzer widget to something that\
         is understood by the associated machine vision process
 
-        WARNING: y-direction is inverted
-
         Must use json-seriazable objects
         """
         return {
@@ -282,7 +282,7 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
 
         member "event" has the MouseEvent
         """
-        print("handle_left_single_click, state=", self.state)
+        # print("handle_left_single_click, state=", self.state)
         if self.state == 0: # nothing clicked yet.  start line definition
             # self.lines = []
             self.line = None
