@@ -99,6 +99,9 @@ def QCapsulate(widget, name, blocking = False, nude = False):
         def unSetPropagate(self):
             self.propagate = False
             
+        def getWidget(self):
+            return self.centralWidget() 
+
 
     win = QuickWindow(blocking = blocking, nude = nude)
     win.setCentralWidget(widget)

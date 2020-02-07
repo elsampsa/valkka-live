@@ -504,21 +504,44 @@ class MyGui(QtWidgets.QMainWindow):
 
         ser = {"type": "QMainWindow", "geom": getCorrectedGeom(self)}
         container_list.append(ser)
+        """
         if self.camera_list_win.isVisible():
             ser = {"type": "CameraListWindow", "geom": getCorrectedGeom(self.camera_list_win)}
             container_list.append(ser)
+        """
 
-        self.serializeContainers_hook() # for your custom programs
+        for widget_name in singleton.serializable_widgets:
+            # key: "camera_list_win"
+            # widget = self.camera_list_win
+            # geom = getCorrectedGeom(widget)
+            # ser = {"type" : key, "geom": geom}
+            # ser.update(widget.serialize())
+            print("serializeContainers:", widget_name)
+            if hasattr(self, widget_name):
+                print("serializeContainers: has", widget_name)
+                window = getattr(self, widget_name)
+                # the widget is actually QMainWindow instance
+                widget = window.getWidget()
+                ser = {
+                    "type"      : widget_name,
+                    "geom"      : getCorrectedGeom(window),
+                    "visible"   : widget.isVisible()
+                }
+                if hasattr(widget, "serialize"):
+                    ser.update(widget.serialize())
+                else:
+                    pass
+            else:
+                print("WARNING: could not find member", widget_name)
+                continue
+            print("serializeContainers: ser=", ser)
+            container_list.append(ser)
 
         singleton.data_model.layout_collection.new(LayoutContainerRow, {"layout" : container_list})
 
         print(singleton.data_model.layout_collection)
         singleton.data_model.layout_collection.save()
         
-
-    def serializeContainers_hook():
-        pass
-
 
     def deSerializeContainers(self):
         """Re-creates containers, based on the list saved into layout_collection
@@ -579,19 +602,28 @@ class MyGui(QtWidgets.QMainWindow):
             elif t == "QMainWindow":
                 geom = container_dic["geom"]
                 self.setGeometry(geom[0], geom[1], geom[2], geom[3])
-                
-            elif t == "CameraListWindow":
-                geom = container_dic["geom"]
-                self.camera_list_win.setVisible(True)
-                self.camera_list_win.setGeometry(geom[0], geom[1], geom[2], geom[3])
+                """    
+                elif t == "CameraListWindow":
+                    geom = container_dic["geom"]
+                    self.camera_list_win.setVisible(True)
+                    self.camera_list_win.setGeometry(geom[0], geom[1], geom[2], geom[3])
+                """
 
-        self.deSerializeContainers_hook()
-
-
-    
-    def deSerializeContainers_hook(self):
-        pass
-
+            elif t in singleton.serializable_widgets:
+                if hasattr(self, t):
+                    window = getattr(self, t)
+                    geom = container_dic["geom"]
+                    window.setGeometry(geom[0], geom[1], geom[2], geom[3])
+                    window.setVisible(container_dic["visible"])
+                    widget = window.getWidget()
+                    if hasattr(widget, "deSerialize"):
+                        method = getattr(widget, "deSerialize")
+                        method(container_dic)
+                    else:
+                        continue
+                else:
+                    print("deSerializeContainers: could not find widget", t)
+                    continue
 
 
     def closeContainers(self):

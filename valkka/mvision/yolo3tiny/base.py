@@ -67,7 +67,7 @@ class MVisionProcess(BaseProcess):
     tag = "yolov3tiny"
     max_instances = 2       # just one instance allowed .. this is kinda heavy detector
     auto_menu = True # append automatically to valkka live machine vision menu or not
-    required_mb = 150      # required GPU memory in MB
+    required_mb = 230      # required GPU memory in MB
     
     def postActivate_(self):
         """Whatever you need to do after creating the shmem client

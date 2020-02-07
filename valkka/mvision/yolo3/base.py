@@ -108,7 +108,7 @@ class MVisionProcess(MVisionBaseProcess):
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     auto_menu = True # append automatically to valkka live machine vision menu or not
 
-    required_mb = 2700      # required GPU memory in MB
+    required_mb = 2400      # required GPU memory in MB
     
     # For each outgoing signal, create a Qt signal with the same name.  The
     # frontend Qt thread will read processes communication pipe and emit these

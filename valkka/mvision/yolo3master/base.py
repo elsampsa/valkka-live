@@ -108,7 +108,7 @@ class MVisionMasterProcess(QShmemMasterProcess):
     max_instances = 1       # just one instance allowed .. this is kinda heavy detector
     max_clients = 4
     
-    required_mb = 2700      # required GPU memory in MB
+    required_mb = 230      # required GPU memory in MB .. this is tiny yolo
     
     
     parameter_defs = {

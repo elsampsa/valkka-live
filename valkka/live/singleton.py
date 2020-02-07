@@ -33,12 +33,20 @@ valkkafs_dir = None
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]
 
+# custom widgets whose geometry you can save & (de)serialize them.  Should have methods serialize & deSerialize
+serializable_widgets = ["camera_list_win"]
+
 # setters
 # *******************************************
 def addMvisionPackageName(name):
     global mvision_package_names
     mvision_package_names.append(name)
+
+def addSerializableWidget(name):
+    global serializable_widgets
+    serializable_widgets.append(name)
 # *******************************************
+
 
 # adjust mvision process verbosities
 # mvision_verbose = True
