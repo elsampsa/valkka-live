@@ -266,6 +266,7 @@ class QShmemMasterProcess(QShmemProcess):
         client = self.clients.pop(ipc_index)
         self.clients_by_fd.pop(client.fd)
         self.rlis.remove(client.fd)
+        client.pipe.send(None)
         if len(self.clients) == 0:
             self.logger.debug("c__unregisterClient: last client unregistered")
             self.lastClientUnregistered_()
