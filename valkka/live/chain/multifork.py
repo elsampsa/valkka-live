@@ -153,7 +153,8 @@ class MultiForkFilterchain(BaseFilterchain):
         "shmem_image_interval"   : (int, 1000),
         
         # "movement_interval" : (int, 100), # pass frames at 10 fps # USE shmem_image_interval
-        "movement_treshold" : (float, 0.01),
+        # "movement_treshold" : (float, 0.01),
+        "movement_treshold" : (float, 0.0), # pass always
         "movement_duration" : (int, 30000) # when movement starts, pass through frames during 30 secs
     }
 
