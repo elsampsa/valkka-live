@@ -136,7 +136,8 @@ class MultiForkFilterchain(BaseFilterchain):
         # LiveThread specific
         "recv_buffer_size"  : (int, 0),     # Operating system socket ringbuffer size in bytes # 0 means default
         "reordering_mstime" : (int, 0),     # Reordering buffer time for Live555 packets in MILLIseconds # 0 means default
-    
+        "request_tcp" : (bool, False),
+
         # these are for the AVThread instance:
         "n_basic"      : (int, 20),  # number of payload frames in the stack
         "n_setup"      : (int, 20),  # number of setup frames in the stack
@@ -352,6 +353,9 @@ class MultiForkFilterchain(BaseFilterchain):
             self.ctx.connection_type = core.LiveConnectionType_rtsp
         else:
             self.ctx.connection_type = core.LiveConnectionType_sdp  # this is an rtsp connection
+
+        if (self.request_tcp):
+            self.ctx.request_tcp = self.request_tcp
 
         self.ctx.address = self.address
         # stream address, i.e. "rtsp://.."

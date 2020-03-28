@@ -38,6 +38,8 @@ class RTSPCameraDevice:
         "password"  : str,
         "port"      : (str, ""),
         "tail"      : (str, ""),
+        "force_tcp" : (bool, False),
+
         "subaddress_main" : (str, ""),
         "live_main" : (bool, True),
         "rec_main"  : (bool, False),
@@ -71,6 +73,9 @@ class RTSPCameraDevice:
         if (len(self.subaddress_sub)>0):
             st += "/" + self.subaddress_main
         return st
+
+    def getForceTCP(self):
+        return self.force_tcp
 
     def getLabel(self):
         st = "rtsp://" + self.address
@@ -132,8 +137,6 @@ class USBCameraDevice:
     
     def getRecSlot(self):
         return (self.slot-1)*3+3
-
-
 
 
 class MyGui(QtWidgets.QMainWindow):
