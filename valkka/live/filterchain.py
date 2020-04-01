@@ -32,8 +32,8 @@ from valkka.api2.tools import parameterInitCheck
 from valkka.api2.valkkafs import ValkkaFSManager
 
 from valkka.live.datamodel.base import DataModel
-from valkka.live.datamodel.row import RTSPCameraRow, USBCameraRow
-from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+from valkka.live.datamodel.row import RTSPCameraRow, USBCameraRow, SDPFileRow
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice, SDPFileDevice
 
 from valkka import core
 
@@ -150,9 +150,15 @@ class LiveFilterChainGroup(FilterChainGroup):
             if classname == RTSPCameraRow.__name__:            
                 device = RTSPCameraDevice(**dic) # a neat object with useful methods
                 self.context_type = ContextType.live
+
             elif classname == USBCameraRow.__name__:
                 device = USBCameraDevice(**dic) # a neat object with useful methods
                 self.context_type = ContextType.usb
+
+            elif classname == SDPFileRow.__name__:            
+                device = SDPFileDevice(**dic) # a neat object with useful methods
+                self.context_type = ContextType.live
+
             else:
                 print(self.pre, "no context for classname", classname)
                 continue
@@ -264,11 +270,18 @@ class LiveFilterChainGroup(FilterChainGroup):
         
         # get filterchain init parameters that are compatible with RTSPCameraDevice input parameters
         if filterchain.context_type == ContextType.live:
-            pars = filterchain.getParDic(RTSPCameraDevice.parameter_defs)
-            device = RTSPCameraDevice(**pars)    
+
+            if "rtsp://" in filterchain.get_address(): # automatically generated getter for the address member (see multifork.py)
+                pars = filterchain.getParDic(RTSPCameraDevice.parameter_defs) # filter out relevant parameters for the device class
+                device = RTSPCameraDevice(**pars)
+            else:
+                pars = filterchain.getParDic(SDPFileDevice.parameter_defs)
+                device = SDPFileDevice(**pars)
+
         elif filterchain.context_type == ContextType.usb:
             pars = filterchain.getParDic(USBCameraDevice.parameter_defs)
             device = USBCameraDevice(**pars)
+
         else:
             device = None
 
@@ -306,6 +319,7 @@ class PlaybackFilterChainGroup(FilterChainGroup):
         self.chains = []
         self.context_type = None
         self.closed = False
+        # self.verbose = True
 
     
     def read(self):
@@ -324,9 +338,15 @@ class PlaybackFilterChainGroup(FilterChainGroup):
             if classname == RTSPCameraRow.__name__:            
                 device = RTSPCameraDevice(**dic) # a neat object with useful methods
                 self.context_type = ContextType.live
+
             elif classname == USBCameraRow.__name__:
                 device = USBCameraDevice(**dic) # a neat object with useful methods
                 self.context_type = ContextType.usb
+
+            elif classname == SDPFileRow.__name__:            
+                device = SDPFileDevice(**dic) # a neat object with useful methods
+                self.context_type = ContextType.live
+
             else:
                 print(self.pre, "no context for classname", classname)
                 continue
@@ -425,22 +445,23 @@ class PlaybackFilterChainGroup(FilterChainGroup):
         
         # get filterchain init parameters that are compatible with RTSPCameraDevice input parameters
         if filterchain.context_type == ContextType.live:
-            pars = filterchain.getParDic(RTSPCameraDevice.parameter_defs)
-            device = RTSPCameraDevice(**pars)    
+
+            if "rtsp://" in filterchain.get_address(): # automatically generated getter for the address member (see multifork.py)
+                pars = filterchain.getParDic(RTSPCameraDevice.parameter_defs) # filter out relevant parameters for the device class
+                device = RTSPCameraDevice(**pars)
+            else:
+                pars = filterchain.getParDic(SDPFileDevice.parameter_defs)
+                device = SDPFileDevice(**pars)
+
         elif filterchain.context_type == ContextType.usb:
             pars = filterchain.getParDic(USBCameraDevice.parameter_defs)
             device = USBCameraDevice(**pars)
+
         else:
             device = None
 
         print(self.pre, "getDevice :", pars, device)
         return device
-
-
-
-
-
-
 
 
 def test1():

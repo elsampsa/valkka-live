@@ -23,8 +23,14 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 import cute_mongo_forms
-from valkka.live.datamodel import DataModel
-from valkka.live import tools, singleton
+
+from valkka.live.local import ValkkaLocalDir
+from valkka.live import singleton
+
+singleton.config_dir = ValkkaLocalDir("live")
+singleton.valkkafs_dir = ValkkaLocalDir("live","fs")
+
+from valkka.live.datamodel.base import DataModel
 
 
 class MyGui(QtWidgets.QMainWindow):
@@ -37,8 +43,7 @@ class MyGui(QtWidgets.QMainWindow):
     
 
   def initVars(self):
-    # self.dm = DataModel()
-    self.dm = DataModel(directory = singleton.config_dir)
+    self.dm = DataModel(directory = singleton.config_dir.get())
     # self.dm.clearAll()
     print(cute_mongo_forms.__file__)
 
@@ -61,10 +66,10 @@ class MyGui(QtWidgets.QMainWindow):
 
 
 def main():
-  app=QtWidgets.QApplication(["test_app"])
-  mg=MyGui()
-  mg.show()
-  app.exec_()
+    app=QtWidgets.QApplication(["test_app"])
+    mg=MyGui()
+    mg.show()
+    app.exec_()
 
 
 

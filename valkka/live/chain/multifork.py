@@ -350,9 +350,9 @@ class MultiForkFilterchain(BaseFilterchain):
         self.ctx.slot = self.slot
 
         if (self.address.find("rtsp://") == 0):
-            self.ctx.connection_type = core.LiveConnectionType_rtsp
+            self.ctx.connection_type = core.LiveConnectionType_rtsp # rtsp connection
         else:
-            self.ctx.connection_type = core.LiveConnectionType_sdp  # this is an rtsp connection
+            self.ctx.connection_type = core.LiveConnectionType_sdp  # an sdp file
 
         self.ctx.address = self.address
         # stream address, i.e. "rtsp://.."
@@ -408,6 +408,7 @@ class MultiForkFilterchain(BaseFilterchain):
         self.ctx.framefilter = self.fork_filter_main
 
         # start playing
+        print("createUSBContext: play")
         self.usbdevicethread.playStream(self.ctx)
     
     

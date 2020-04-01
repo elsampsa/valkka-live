@@ -22,7 +22,8 @@ You should have received a copy of the GNU Affero General Public License along w
 
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
-from cute_mongo_forms.column import LineEditColumn, IntegerColumn, SpinBoxIntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn, ConstantComboBoxColumn, ConstantRadioButtonColumn
+from cute_mongo_forms.column import LineEditColumn, IntegerColumn, SpinBoxIntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, \
+    CheckBoxColumn, ConstantComboBoxColumn, ConstantRadioButtonColumn, FileDialogColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from valkka.live import default, tools, style
 from valkka.live.datamodel.column import USBCameraColumn
@@ -58,6 +59,17 @@ class USBCameraRow(Row):
         return len(tools.getH264V4l2())>0
     
       
+class SDPFileRow(Row):
+    name = "SDP File"
+    columns = [
+        ColumnSpec(ConstantIntegerColumn, key_name="slot", label_name="Slot"),
+        ColumnSpec(FileDialogColumn, key_name="address", label_name="SDP File", filter="*.sdp")
+    ]
+
+    def isActive(self):
+        return True
+
+
 class RTSPCameraRow(Row):
     name = "RTSP Camera"
     columns = [

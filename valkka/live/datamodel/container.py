@@ -84,6 +84,9 @@ class DeviceList(List):
             st += " RTSP ("+entry["address"]+")"
         elif (entry["classname"] == "USBCameraRow"):
             st += " USB ("+str(entry["address"])+")" # could be NoneType
+        elif (entry["classname"] == "SDPFileRow"):
+            fname = str(entry["address"]).split("/")[-1]
+            st += " FILE ("+fname+")"
         return st
 
 # *** A stand-alone form for MemoryConfigRow ***

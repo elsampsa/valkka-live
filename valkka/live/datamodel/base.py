@@ -31,13 +31,13 @@ from valkka.live import default
 from valkka.live.form import SlotFormSet
 from valkka.live import constant, tools, singleton
 
-from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
+from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, SDPFileRow, MemoryConfigRow, ValkkaFSConfigRow
 # from valkka.live.datamodel.layout_row import VideoContainerNxMRow, PlayVideoContainerNxMRow, CameraListWindowRow, MainWindowRow
 from valkka.live.datamodel.layout_row import LayoutContainerRow
 from valkka.live.datamodel.column import USBCameraColumn
 from valkka.live.datamodel.container import DeviceList, MemoryConfigForm, ValkkaFSForm, ListAndForm
 
-from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice, SDPFileDevice
 
         
 class DataModel:
@@ -144,7 +144,8 @@ class DataModel:
                              row_classes=[
                     EmptyRow,
                     RTSPCameraRow,
-                    USBCameraRow
+                    USBCameraRow,
+                    SDPFileRow
                 ]
             )
         self.collections.append(self.camera_collection)
@@ -232,6 +233,8 @@ class DataModel:
                 device = RTSPCameraDevice(**row)
             elif (classname == "USBCameraRow"):
                 device = USBCameraDevice(**row)
+            elif (classname == "SDPFileRow"):
+                device = SDPFileDevice(**row)
             else:
                 device = None
             if (device):

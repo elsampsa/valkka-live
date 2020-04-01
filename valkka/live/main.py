@@ -47,15 +47,6 @@ class MyGui(get_valkka_live_universe("xxx")):
         super().__init__(parent)
 """
 
-from valkka.live.gui import MyGui as MyGuiBase
-
-class MyGui(MyGuiBase):
-    
-    def __init__(self, parent = None):
-        print("\n*** Welcome to Valkka Live ***\n")
-        super().__init__(parent)
-
-
     
 def process_cl_args():
 
@@ -68,11 +59,14 @@ def process_cl_args():
     parser.add_argument("command", action="store", type=str,                 
         help="mandatory command)")
     """
-    parser.add_argument("--quiet", action="store", type=bool, default=False, 
+    parser.add_argument("--quiet", action="store", type="bool", default=False, 
         help="less verbosity")
 
-    parser.add_argument("--reset", action="store", type=bool, default=False, 
-        help="less verbosity")
+    parser.add_argument("--reset", action="store", type="bool", default=False, 
+        help="reset views, cameras lists etc.")
+
+    parser.add_argument("--playback", action="store", type="bool", default=True, 
+        help="enable / disable experimental playback")
 
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args
@@ -97,6 +91,22 @@ def main():
 
     if parsed_args.reset:
         singleton.config_dir.reMake()
+
+    if parsed_args.playback:
+        singleton.use_playback = True
+    else:
+        singleton.use_playback = False
+
+    #print(singleton.use_playback)
+    #return
+
+    from valkka.live.gui import MyGui as MyGuiBase
+
+    class MyGui(MyGuiBase):
+    
+        def __init__(self, parent = None):
+            print("\n*** Welcome to Valkka Live ***\n")
+            super().__init__(parent)
 
     app = QtWidgets.QApplication(["Valkka Live"])
     mg = MyGui()

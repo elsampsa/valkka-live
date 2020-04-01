@@ -70,17 +70,16 @@ from valkka.live.qt.tools import QCapsulate, QTabCapsulate, getCorrectedGeom
 from valkka.live.tools import nameToClass, classToName
 
 from valkka.live.datamodel.base import DataModel
-from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, MemoryConfigRow, ValkkaFSConfigRow
+from valkka.live.datamodel.row import RTSPCameraRow, EmptyRow, USBCameraRow, SDPFileRow, MemoryConfigRow, ValkkaFSConfigRow
 # from valkka.live.datamodel.layout_row import VideoContainerNxMRow, PlayVideoContainerNxMRow, CameraListWindowRow, MainWindowRow
 from valkka.live.datamodel.layout_row import LayoutContainerRow
-from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice, SDPFileDevice
 
-from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
+from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem, SDPCameraListItem
 from valkka.live.cameralist import BasicView
 
 from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
 from valkka.live.chain.multifork import RecordType
-
 
 pre = "valkka.live :"
 
@@ -249,7 +248,8 @@ class MyGui(QtWidgets.QMainWindow):
         for i in range(1, 5):
             # adds member function grid_ixi_slot(self)
             self.makeGridSlot(i, i)
-            self.makePlaybackGridSlot(i, i)
+            if singleton.use_playback:
+                self.makePlaybackGridSlot(i, i)
 
         for cl in self.mvision_classes:
             self.makeMvisionSlot(cl)
@@ -294,19 +294,26 @@ class MyGui(QtWidgets.QMainWindow):
         # create container and their windows
         self.manage_cameras_container = singleton.data_model.getDeviceListAndForm(None)
         self.manage_memory_container = singleton.data_model.getConfigForm()
-        self.manage_valkkafs_container = singleton.data_model.getValkkaFSForm()
 
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
         self.manage_cameras_container.getForm().signals.save_record.connect(self.config_modified_slot)
-        self.manage_valkkafs_container.signals.save.connect(self.valkkafs_modified_slot)
+
+        tabs = [ 
+                    (self.manage_cameras_container. widget, "Camera Configuration"),
+                    (self.manage_memory_container.  widget, "Memory Configuration"),
+                ]
+
+        if singleton.use_playback:
+            self.manage_valkkafs_container = singleton.data_model.getValkkaFSForm()
+            self.manage_valkkafs_container.signals.save.connect(self.valkkafs_modified_slot)
+            tabs.append(
+                (self.manage_valkkafs_container.widget, "Recording Configuration")
+            )
+
 
         self.config_win = QTabCapsulate(
                 "Configuration",
-                [ 
-                    (self.manage_cameras_container. widget, "Camera Configuration"),
-                    (self.manage_memory_container.  widget, "Memory Configuration"),
-                    (self.manage_valkkafs_container.widget, "Recording Configuration")
-                ]
+                tabs
             )
 
         self.config_win.signals.close.connect(self.config_dialog_close_slot)
@@ -362,6 +369,17 @@ class MyGui(QtWidgets.QMainWindow):
                         parent = self.server
                     )
                 )
+            elif (row["classname"] == SDPFileRow.__name__):
+                row.pop("classname")
+                devices.append(
+                    SDPCameraListItem(
+                        sdpfile = SDPFileDevice(**row),
+                        parent = self.server
+                    )
+                )
+
+
+
                 
         self.treelist.update()
         self.treelist.expandAll()
@@ -405,14 +423,15 @@ class MyGui(QtWidgets.QMainWindow):
             menu_func.triggered.connect(slot_func)
             # i.e., like this : self.viewmenu.video_grid.grid_1x1.triggered.connect(slot_func)
 
-        for i in range(1, 5):
-            # gets member function grid_ixi_slot
-            slot_func = getattr(self, "playback_grid_%ix%i_slot" % (i, i))
-            # gets member function grid_ixi from self.viewmenu.video_grid
-            menu_func = getattr(self.viewmenu.playback_video_grid,
-                                "grid_%ix%i" % (i, i))
-            menu_func.triggered.connect(slot_func)
-            # i.e., like this : self.viewmenu.video_grid.grid_1x1.triggered.connect(slot_func)
+        if singleton.use_playback:
+            for i in range(1, 5):
+                # gets member function grid_ixi_slot
+                slot_func = getattr(self, "playback_grid_%ix%i_slot" % (i, i))
+                # gets member function grid_ixi from self.viewmenu.video_grid
+                menu_func = getattr(self.viewmenu.playback_video_grid,
+                                    "grid_%ix%i" % (i, i))
+                menu_func.triggered.connect(slot_func)
+                # i.e., like this : self.viewmenu.video_grid.grid_1x1.triggered.connect(slot_func)
 
 
         # *** autogenerated machine vision menu and slots ***
@@ -581,7 +600,7 @@ class MyGui(QtWidgets.QMainWindow):
                 cont.signals.closing.connect(self.rem_grid_container_slot)
                 self.containers_grid.append(cont)
             
-            if t == "PlayVideoContainerNxM":
+            if t == "PlayVideoContainerNxM" and singleton.use_playback:
                 container_dic["child_class"] = nameToClass(container_dic.pop("child_class")) # swap from class name to class instance
                 container_dic["geom"] = tuple(container_dic["geom"])  # woops.. tuple does not json-serialize, but is changed to list .. so change it back to tuplee
                 # non-serializable parameters:
@@ -812,14 +831,14 @@ class MyGui(QtWidgets.QMainWindow):
             self.valkkafs = None
         """
 
-        # if no recording selected, set self.valkkafsmanager = None
-        self.valkkafsmanager = ValkkaFSManager(
-            self.valkkafs,
-            write = record, # True or False
-            read = record,
-            cache = record
-            )
-        self.playback_controller = PlaybackController(valkkafs_manager = self.valkkafsmanager)
+        if singleton.use_playback:
+            self.valkkafsmanager = ValkkaFSManager(
+                self.valkkafs,
+                write = record, # True or False
+                read = record,
+                cache = record
+                )
+            self.playback_controller = PlaybackController(valkkafs_manager = self.valkkafsmanager)
 
         self.filterchain_group = LiveFilterChainGroup(
             datamodel     = singleton.data_model, 
@@ -829,30 +848,21 @@ class MyGui(QtWidgets.QMainWindow):
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
 
-        if record:
-            print("openValkka: ValkkaFS **RECORDING ACTIVATED**")
+        if singleton.use_playback:
+            print("openValkka: ValkkaFS **PLAYBACK & RECORDING ACTIVATED**")
             self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)
         
         # self.filterchain_group.update() # TODO: use this once fixed
         
-        self.filterchain_group_play = PlaybackFilterChainGroup(
-            datamodel     = singleton.data_model,
-            valkkafsmanager
-                        = self.valkkafsmanager,
-            gpu_handler   = self.gpu_handler, 
-            cpu_scheme    = self.cpu_scheme)
-        self.filterchain_group_play.read()
+        if singleton.use_playback:
+            self.filterchain_group_play = PlaybackFilterChainGroup(
+                datamodel     = singleton.data_model,
+                valkkafsmanager
+                            = self.valkkafsmanager,
+                gpu_handler   = self.gpu_handler, 
+                cpu_scheme    = self.cpu_scheme)
+            self.filterchain_group_play.read()
 
-        try:
-            from valkka.mvision import multiprocess
-        except ImportError:
-            pass
-        """
-        else:
-            if self.mvision:
-                singleton.thread = multiprocess.QValkkaThread()
-                singleton.thread.start()
-        """
 
                 
     def closeValkka(self):
@@ -869,15 +879,16 @@ class MyGui(QtWidgets.QMainWindow):
         
         print("Closing filterchains")
         self.filterchain_group.close()
-        self.filterchain_group_play.close()
+        if singleton.use_playback:
+            self.filterchain_group_play.close()
 
         print("Closing OpenGLThreads")
         self.gpu_handler.close()
 
-        self.playback_controller.close()
-        
         print("Closing ValkkaFS threads")
-        self.valkkafsmanager.close()
+        if singleton.use_playback:
+            self.playback_controller.close()
+            self.valkkafsmanager.close()
         
         # print("Closing multiprocessing frontend")
         """

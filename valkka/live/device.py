@@ -135,6 +135,49 @@ class USBCameraDevice:
 
 
 
+class SDPFileDevice:
+    """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
+    """
+
+    parameter_defs = {
+        "_id"       : int,
+        "slot"      : int,
+        "address"   : str
+    }
+
+    def __init__(self, **kwargs):
+        # auxiliary string for debugging output
+        self.pre = self.__class__.__name__ + " : "
+        # check for input parameters, attach them to this instance as
+        # attributes
+        parameterInitCheck(SDPFileDevice.parameter_defs, kwargs, self)
+
+    def __eq__(self, other):
+        return self._id == other._id
+                    
+    def getMainAddress(self):
+        return self.address
+
+    def getSubAddress(self):
+        return self.address
+    
+    def getLabel(self):
+        return "file:"+self.address
+        
+    # the following methods give the true slot numbers used by Valkka
+    # one slot for main, sub and recorded stream per camera
+    # 1..3, 4..6, 7..9, etc.
+    def getLiveMainSlot(self):
+        return (self.slot-1)*3+1
+    
+    def getLiveSubSlot(self):
+        return (self.slot-1)*3+2
+    
+    def getRecSlot(self):
+        return (self.slot-1)*3+3
+
+
+
 
 class MyGui(QtWidgets.QMainWindow):
 

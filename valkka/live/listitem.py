@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
-from valkka.live.device import RTSPCameraDevice, USBCameraDevice
+from valkka.live.device import RTSPCameraDevice, USBCameraDevice, SDPFileDevice
 
 
 """
@@ -212,6 +212,29 @@ class USBCameraListItem(ListItem):
     def getMimeData(self):
         return self.camera
     
-    
+
+class SDPCameraListItem(ListItem):
+    """An example camera class for the tree list
+    """
+
+    parameter_defs = {
+        "parent": None,
+        "sdpfile": SDPFileDevice
+    }
+
+    def __init__(self, **kwargs):
+        # auxiliary string for debugging output
+        self.pre = self.__class__.__name__ + " : "
+        # check for input parameters, attach them to this instance as
+        # attributes
+        parameterInitCheck(SDPCameraListItem.parameter_defs, kwargs, self)
+        self.init()
+
+    def makeItemData(self):
+        self.itemData = [self.sdpfile.getLabel()]
+
+    def getMimeData(self):
+        return self.sdpfile
+
 
     

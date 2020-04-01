@@ -26,6 +26,8 @@ You should have received a copy of the GNU Affero General Public License along w
 
 program_name = "Valkka Live"
 
+use_playback = True
+
 # local dirs
 config_dir = None
 valkkafs_dir = None
