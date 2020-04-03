@@ -947,6 +947,7 @@ class MyGui(QtWidgets.QMainWindow):
         if hasattr(cl, "auto_connect") and cl.auto_connect == False:
             return
         def slot_func():
+            # print(">process_map", singleton.process_map)
             if ( (cl.tag in singleton.process_map) and (len(singleton.process_map[cl.tag])>0) ):
                 cont = container.VideoContainerNxM(
                     parent            = None,
@@ -971,6 +972,7 @@ class MyGui(QtWidgets.QMainWindow):
         if hasattr(cl, "auto_connect") and cl.auto_connect == False:
             return
         def slot_func():
+            # print(">process_map", singleton.process_map)
             if ( (cl.tag in singleton.client_process_map) and len(singleton.client_process_map[cl.tag]) > 0 ):
                 master_tag = cl.master
                 if singleton.get_avail_master_process(master_tag) is not None:
