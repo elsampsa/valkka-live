@@ -97,6 +97,11 @@ class RTSPCameraRow(Row):
             LineEditColumn, 
             key_name="tail", 
             label_name="Tail"),
+        ColumnSpec(
+            CheckBoxColumn,
+            key_name="force_tcp",
+            label_name="Force TCP",
+            def_value=False),
         
         ColumnSpec(
             LineEditColumn, 
@@ -176,6 +181,7 @@ class RTSPCameraRow(Row):
         self.placeWidget(cc, "password"); cc+=1
         self.placeWidget(cc, "port"); cc+=1
         self.placeWidget(cc, "tail"); cc+=1
+        self.placeWidget(cc, "force_tcp"); cc+=1
         # self.setVisible("tail", False) # test
         
         # Mainstream

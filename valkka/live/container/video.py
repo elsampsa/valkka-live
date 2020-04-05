@@ -31,6 +31,7 @@ from valkka.live import style
 from valkka.live.quickmenu import QuickMenu, QuickMenuElement, QuickMenuSection
 from valkka.live.filterchain import FilterChainGroup
 from valkka.live.mouse import MouseClickContext
+from valkka.onvif import OnVif, PTZ, DeviceManagement, Media
 
 
 class VideoContainer:
@@ -109,12 +110,26 @@ class VideoContainer:
 
         def __init__(self, parent=None, mouse_gesture_handler=lambda e: None):
             super().__init__(parent)
+            # qtwidget must have focus to receive keyboard events
+            # however, i don't see code in the other widgets that set focus... why is it needed here?
+            self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
             # self.setStyleSheet("background-color: dark-blue")
             # self.setStyleSheet("background-color: rgba(0,0,0,0)");
             # self.setStyleSheet("border: 1px solid gray; border-radius: 10px; margin: 0px; padding: 0px; background: white;")
             self.setStyleSheet(style.video_widget)
             self.setAutoFillBackground(True)
             self.setAcceptDrops(True)
+
+            # these values will be replaced by retrieving corresponding values from the active camera
+            # for now, they are just hacked in place to get things working
+            ip = "#removed"
+            port = 80
+            user = "#removed"
+            password = "#removed"
+
+            self.ptz_service = PTZ(ip, port, user, password, False, None)
+            self.device_service = DeviceManagement(ip, port, user, password, False, None)
+            self.media_service = Media(ip, port, user, password, False, None)
             
             self.signals = VideoContainer.Signals()
             
@@ -153,6 +168,57 @@ class VideoContainer:
                 e.accept()
             else:
                 e.ignore()
+
+        # if ptz is enabled, this will stop ptz movement
+        def keyReleaseEvent(self, e):
+            # this is gross, but hacked in here to get things working
+            # would like to factor this better later
+            referenceTokenFactory = self.ptz_service.factory.ReferenceToken
+            vector2DFactory = self.ptz_service.factory.Vector2D
+            ptzSpeedFactory = self.ptz_service.factory.PTZSpeed
+            token = referenceTokenFactory(value='ptz0')
+            if (e.key() == QtCore.Qt.Key_Left):
+                # print("VideoWidget: left arrow released")
+                self.ptz_service.ws_client.Stop(ProfileToken=token)
+            if (e.key() == QtCore.Qt.Key_Right):
+                # print("VideoWidget: right arrow released")
+                self.ptz_service.ws_client.Stop(ProfileToken=token)
+            if (e.key() == QtCore.Qt.Key_Down):
+                # print("VideoWidget: down arrow released")
+                self.ptz_service.ws_client.Stop(ProfileToken=token)
+            if (e.key() == QtCore.Qt.Key_Up):
+                # print("VideoWidget: up arrow released")
+                self.ptz_service.ws_client.Stop(ProfileToken=token)
+        
+        # if ptz is enabled, this will start ptz movement
+        def keyPressEvent(self, e):
+            # this is gross, but hacked in here to get things working
+            # would like to factor this better later
+            referenceTokenFactory = self.ptz_service.factory.ReferenceToken
+            vector2DFactory = self.ptz_service.factory.Vector2D
+            ptzSpeedFactory = self.ptz_service.factory.PTZSpeed
+            token = referenceTokenFactory(value='ptz0')
+            
+            if (e.key() == QtCore.Qt.Key_Left):
+                #print("VideoWidget: left arrow pressed")
+                panTilt = vector2DFactory(x=-1.0, y=0.0)
+                ptzSpeed = ptzSpeedFactory(PanTilt=panTilt)
+                self.ptz_service.ws_client.ContinuousMove(ProfileToken=token, Velocity=ptzSpeed)
+            if (e.key() == QtCore.Qt.Key_Right):
+                # print("VideoWidget: right arrow pressed")
+                panTilt = vector2DFactory(x=1.0, y=0.0)
+                ptzSpeed = ptzSpeedFactory(PanTilt=panTilt)
+                self.ptz_service.ws_client.ContinuousMove(ProfileToken=token, Velocity=ptzSpeed)
+            if (e.key() == QtCore.Qt.Key_Down):
+                #print("VideoWidget: down arrow pressed")
+                panTilt = vector2DFactory(x=10.0, y=-1.0)
+                ptzSpeed = ptzSpeedFactory(PanTilt=panTilt)
+                self.ptz_service.ws_client.ContinuousMove(ProfileToken=token, Velocity=ptzSpeed)
+            if (e.key() == QtCore.Qt.Key_Up):
+                print("VideoWidget: up arrow pressed")
+                panTilt = vector2DFactory(x=0.0, y=1.0)
+                ptzSpeed = ptzSpeedFactory(PanTilt=panTilt)
+                self.ptz_service.ws_client.ContinuousMove(ProfileToken=token, Velocity=ptzSpeed)
 
         def mousePressEvent(self, e):
             print("VideoWidget: mousePress")

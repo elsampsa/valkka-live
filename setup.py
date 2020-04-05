@@ -18,7 +18,9 @@ setup(
         'PySide2 == 5.13.2', # 5.13.2+ is again OK
         'cute_mongo_forms >= 0.6.0',
         'imutils >= 0.4.6',
-        'pypng >= 0.0.18'
+        'pypng >= 0.0.18',
+        'zeep >= 3.4.0',
+        'lxml >= 4.5.0'
         # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment
     ],
     

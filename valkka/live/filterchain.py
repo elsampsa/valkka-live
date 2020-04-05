@@ -174,6 +174,7 @@ class LiveFilterChainGroup(FilterChainGroup):
                             = self.gpu_handler.openglthreads,
                 address     = device.getMainAddress(),
                 slot        = device.getLiveMainSlot(),
+                request_tcp = device.getForceTCP(),
                 _id         = device._id,
                 affinity    = affinity,
                 msreconnect = 10000,
