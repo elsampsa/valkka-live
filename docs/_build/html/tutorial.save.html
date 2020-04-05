@@ -7,11 +7,11 @@
     <title>Tutorial - start here &#8212; valkka_live  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -348,11 +348,11 @@ ln -s $PWD/valkka_live $HOME/python3
 </dd>
 </dl>
 <p>The idea is that “base.py” has some base class definitions that are used bu “fancy.py” to create derived classes.  __init__.py has been tweaked so that user can import with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.greeters</span> <span class="k">import</span> <span class="n">UberFancyHelloWorld</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.greeters</span> <span class="kn">import</span> <span class="n">UberFancyHelloWorld</span>
 </pre></div>
 </div>
 <p>instead of the cumbersome</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.fancy.greeters</span> <span class="k">import</span> <span class="n">UberFancyHelloWorld</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.fancy.greeters</span> <span class="kn">import</span> <span class="n">UberFancyHelloWorld</span>
 </pre></div>
 </div>
 <p>(also, the api user should not be bothered with the internal inheritance, etc.)</p>
@@ -453,7 +453,7 @@ ln -s $PWD/valkka_live $HOME/python3
 <div class="section" id="example-snippets">
 <h2>Example snippets<a class="headerlink" href="#example-snippets" title="Permalink to this headline">¶</a></h2>
 <p>The following python code can be downloaded from <a class="reference download internal" download="" href="_downloads/86df3b757703bdb72f25c7a8471a46ba/example1.py"><code class="xref download docutils literal notranslate"><span class="pre">[here]</span></code></a></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.greeters</span> <span class="k">import</span> <span class="n">FancyHelloWorld</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">valkka_live.greeters</span> <span class="kn">import</span> <span class="n">FancyHelloWorld</span>
 <span class="c1"># let&#39;s create an instance</span>
 <span class="n">gr</span><span class="o">=</span><span class="n">FancyHelloWorld</span><span class="p">(</span><span class="n">person</span><span class="o">=</span><span class="s2">&quot;Sampsa&quot;</span><span class="p">)</span>
 <span class="c1"># print the result</span>
@@ -538,7 +538,7 @@ ln -s $PWD/valkka_live $HOME/python3
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -547,7 +547,7 @@ ln -s $PWD/valkka_live $HOME/python3
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

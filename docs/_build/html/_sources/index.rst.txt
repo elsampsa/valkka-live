@@ -95,6 +95,12 @@ Finally, run with
 
     valkka-live
 
+To run with the experimental (and non-stable) playback & recording features, run with:
+
+::
+
+    valkka-live --playback=true 
+
 
 Contents:
 

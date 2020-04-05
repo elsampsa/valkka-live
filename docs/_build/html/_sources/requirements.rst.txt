@@ -62,13 +62,27 @@ If and when the program crashes (with "dangling" machine vision python multiproc
 ::
 
     valkka-kill
-    
+
+
 .. For Ubuntu 18 (bionic), all dependencies of the machine vision example modules can be installed with the following short-cut command:
 ..
 .. ::
 ..
 ..    valkka-bionic-install
     
+
+Command-line options
+--------------------
+
+You can see a list of them with:
+
+::
+
+    valkka-live -h
+
+
+In particular, ``--playback=true`` will enable the experimental playback & recording features (warning: there might be crashes & freezes) 
+
 
 Hacky mode
 ----------

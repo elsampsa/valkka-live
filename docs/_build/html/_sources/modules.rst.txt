@@ -88,9 +88,9 @@ Once you have installed and tested `our Darknet python bindings <https://github.
 
 Several Yolo versions are provided:
 
-- Yolo v3 is the best, but a bit heavy, so it won't work on a "commodity" laptop.  You need a hefty GPU with 2.5+ GB memory.
+- Yolo v3 is the best, but a bit heavy.  You'll need a hefty GPU with 2.4 GB of GPU memory
 - Yolo v2 is almost as good as Yolo v3, but needs less memory on the GPU
-- Yolo v3 Tiny works on the CPU as well and on a regular i7 laptop
+- Yolo v3 Tiny works on the CPU as well and on a regular i7 laptop (if you don't abuse the framerate)
 
 You also have the option to use a single yolo instance (neural net) for several machine vision clients:
 
