@@ -1,9 +1,9 @@
 """
-NAME.py :
+group.py : A class that handles QOnvifThreads (see thread.py in this directory)
 
-Copyright 2018 Sampsa Riikonen
+Copyright 2020 Sampsa Riikonen
 
-Authors: Sampsa Riikonen
+Authors: Sampsa Riikonen, ???
 
 This file is part of the Valkka Live video surveillance program
 
@@ -13,13 +13,20 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/> 
 
-@file    NAME.py
+@file    group.py
 @author  Sampsa Riikonen
-@date    2018
+@date    2020
 @version 0.12.2 
 @brief   
 """
 
 import sys
 
+
+class OnvifGroup:
+    """TODO
+    """
+
+    def __init__(self):
+        pass
 

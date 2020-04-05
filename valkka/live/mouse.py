@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    mouse.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.1 
+@version 0.12.2 
 @brief   a class for separating and handling mouse events (click, double-click, etc.)
 """
 

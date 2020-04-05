@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    root.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.1 
+@version 0.12.2 
 @brief   A root level container class.  VideoContainer (see video.py) can be placed in a grid into the root level container.
 """
 

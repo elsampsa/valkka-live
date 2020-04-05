@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    filterchain.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.1 
+@version 0.12.2 
 @brief   Manage and group Valkka filterchains
 """
 
@@ -174,7 +174,12 @@ class LiveFilterChainGroup(FilterChainGroup):
                             = self.gpu_handler.openglthreads,
                 address     = device.getMainAddress(),
                 slot        = device.getLiveMainSlot(),
-                request_tcp = device.getForceTCP(),
+                # request_tcp = device.getForceTCP(),
+                ## ..that one not here
+                ## MultiForkFilterChain is "universal" for all types
+                ## of inputs (rtsp, usb & sdp files)
+                ## however, requesting tcp streaming instead of udp
+                ## is just for RTSP cameras
                 _id         = device._id,
                 affinity    = affinity,
                 msreconnect = 10000,
@@ -187,6 +192,13 @@ class LiveFilterChainGroup(FilterChainGroup):
                 shmem_n_buffer = constant.shmem_n_buffer,
                 shmem_image_interval = constant.shmem_image_interval
             )
+
+            if classname == RTSPCameraRow.__name__:
+                """RTSP cameras specific configurations here
+                """
+                if (device.getForceTCP()):
+                    chain.setTCPStreaming(True)
+
             self.chains.append(chain) # important .. otherwise chain will go out of context and get garbage collected
     
 

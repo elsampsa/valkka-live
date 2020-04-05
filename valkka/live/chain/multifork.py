@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    multifork.py
 @author  Sampsa Riikonen
 @date    2019
-@version 0.12.1 
+@version 0.12.2 
 @brief   
 """
 
@@ -134,9 +134,10 @@ class MultiForkFilterchain(BaseFilterchain):
         "_id"          : int,
         
         # LiveThread specific
-        "recv_buffer_size"  : (int, 0),     # Operating system socket ringbuffer size in bytes # 0 means default
-        "reordering_mstime" : (int, 0),     # Reordering buffer time for Live555 packets in MILLIseconds # 0 means default
-        "request_tcp" : (bool, False),
+        "recv_buffer_size"  : (int, 0),       # Operating system socket ringbuffer size in bytes # 0 means default
+        "reordering_mstime" : (int, 0),       # Reordering buffer time for Live555 packets in MILLIseconds # 0 means default
+        # "request_tcp"       : (bool, False),  # Request video over tcp (instead of udp)
+        ## that's RTSP specific, so let's set it elsewhere
 
         # these are for the AVThread instance:
         "n_basic"      : (int, 20),  # number of payload frames in the stack
@@ -190,6 +191,10 @@ class MultiForkFilterchain(BaseFilterchain):
         self.start() # starts threads corresponding to this filterchain
     
     
+    def setTCPStreaming(self, val):
+        self.request_tcp = val
+
+
     def __del__(self):
         self.requestClose()
         
@@ -224,7 +229,10 @@ class MultiForkFilterchain(BaseFilterchain):
         self.valkkafsmanager = None
         
         self.closed = False
-        
+
+        # RTPS related
+        self.request_tcp = False
+
     
     def start(self):
         """Starts threads required by the filter chain
