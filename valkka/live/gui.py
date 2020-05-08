@@ -130,7 +130,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.camera_list_win.unSetPropagate()
         self.camera_list_win.close()
         
-        self.config_win.unSetPropagate()
+        # self.config_win.unSetPropagate()
         self.config_win.close()
 
         self.closeProcesses() # closes shmem clients
@@ -292,7 +292,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.aboutmenu = AboutMenu(parent=self)
 
         # create container and their windows
-        self.manage_cameras_container = singleton.data_model.getDeviceListAndForm(None)
+        self.manage_cameras_container = singleton.data_model.getDeviceListAndForm(None) 
         self.manage_memory_container = singleton.data_model.getConfigForm()
 
         self.manage_memory_container.signals.save.connect(self.config_modified_slot)
@@ -317,6 +317,8 @@ class MyGui(QtWidgets.QMainWindow):
             )
 
         self.config_win.signals.close.connect(self.config_dialog_close_slot)
+        self.config_win.signals.close.connect(self.manage_cameras_container.close_slot) 
+        # == inform ListAndForm that it has been closed => it knows to close any extra wins / dialogs present
         # when the configuration dialog is reopened, inform the camera configuration form .. this way it can re-check if usb cams are available
         self.config_win.signals.show.connect(self.manage_cameras_container.getForm().show_slot) 
         self.config_win.signals.show.connect(self.manage_cameras_container.choose_first_slot) # so that we have at least one device chosen

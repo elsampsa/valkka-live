@@ -39,7 +39,7 @@ from valkka.live.listitem import HeaderListItem, ServerListItem,\
     RTSPCameraListItem, USBCameraListItem, ListItem
 from valkka.live.cameralist import TreeModel
 from valkka.live.device import RTSPCameraDevice
-from valkka.live import singleton
+from valkka.live import singleton, constant
 
 
 class DiscoveryHeaderListItem(ListItem):
@@ -65,14 +65,16 @@ class DiscoveryThread(QThread):
 
 
     def run(self):
+        print(">wsdiscovery")
         ips = runWSDiscovery()
+        print(">wsdiscovery done")
         # print(ips)
         ips2 = []
         if self.arp:
             ips2 = runARPScan(exclude_list = ips)
         ips = ips + ips2
         self.signals.ip_list.emit(ips)
-
+        print(">discovery thread bye")
 
 
 class DiscoveryTree(QTreeView):
@@ -113,11 +115,13 @@ class ImportDialog(QDialog):
 
         self.start_slot_label = QLabel("Start slot", self.form)
         self.start_slot = QSpinBox(self.form)
+        self.start_slot.setRange(1, constant.max_devices)
         self.formlay.addWidget(self.start_slot_label, 0, 0)
         self.formlay.addWidget(self.start_slot, 0, 1)
         
         self.end_slot_label = QLabel("End slot", self.form)
         self.end_slot = QSpinBox(self.form)
+        self.end_slot.setRange(1, constant.max_devices)
         self.formlay.addWidget(self.end_slot_label, 1, 0)
         self.formlay.addWidget(self.end_slot, 1, 1)
         
@@ -194,20 +198,23 @@ class DiscoveryWidget(QWidget):
 
 
     def scan_slot(self):
+        print(">scan")
         self.scan_button.setEnabled(False)
         self.import_button.setEnabled(False)
         self.thread = DiscoveryThread(arp = False)
         self.thread.signals.ip_list.connect(self.ip_list_slot)
-        # self.thread.start()
-        #"""# DEBUG
+        self.thread.start()
+        print(">thread started")
+        """# DEBUG
         self.ip_list_slot([
             "192.168.1.24",
             "192.168.1.32"
         ])
-        #"""
+        """
 
     def import_slot(self):
         verbose = False
+        # verbose = True
         if self.import_dialog.exec() == self.import_dialog.Accepted:
             # print("dialog result", res == self.import_dialog.Accepted)
             start_slot, end_slot, overwrite, new, user, password = self.import_dialog.getState()
@@ -235,7 +242,8 @@ class DiscoveryWidget(QWidget):
 
             count = 0            
             for cc, dic in enumerate(dics): # iterate over existing dics
-                if verbose: print("old", dic["classname"], "at slot", cc)
+                n_slot = cc +1
+                if verbose: print("old", dic["classname"], "at slot", n_slot)
                 written = False
                 """
                 try:
@@ -244,23 +252,23 @@ class DiscoveryWidget(QWidget):
                     pass
                 else:
                 """
-                if cc >= start_slot:
-                    if cc <= end_slot:
+                if n_slot >= start_slot:
+                    if n_slot <= end_slot:
                         if dic["classname"] == "EmptyRow" or overwrite:
-                            # delete old entry
-                            if verbose: print("deleting", dic["classname"], "at slot", cc)
-                            singleton.data_model.camera_collection.delete(dic["_id"])
-                            # write new entry
                             try:
                                 device = device_list[count]
                             except IndexError:
                                 if verbose: print("no more new devices")
                             else:
-                                if verbose: print("writing new", device, "at slot", cc)
+                                # delete old entry
+                                if verbose: print("deleting", dic["classname"], "at slot", n_slot)
+                                singleton.data_model.camera_collection.delete(dic["_id"])
+                                # write new entry
+                                if verbose: print("writing new", device, "at slot", n_slot)
                                 # print(">", RTSPCameraRow.getDefaults())
                                 singleton.data_model.camera_collection.new(
                                     RTSPCameraRow, {
-                                        "slot"    : cc,
+                                        "slot"    : n_slot,
                                         "address" : device.address,
                                         "username": device.username,
                                         "password": device.password,
@@ -282,7 +290,7 @@ class DiscoveryWidget(QWidget):
                                 written = True
                                 count += 1
                 if not written:
-                    if verbose: print("retaining old", dic["classname"], "at slot", cc)
+                    if verbose: print("retaining old", dic["classname"], "at slot", n_slot)
                     pass
 
             if count > 0:

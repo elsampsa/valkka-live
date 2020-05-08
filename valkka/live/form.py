@@ -222,7 +222,6 @@ class SlotFormSet(EditFormSet2):
         self.update_dropdown_list_slot()
             
     
-    def closeEvent(self, e):
+    def close(self):
+        # the parent ListAndForm has been closed
         self.discovery_win.close()
-        super().closeEvent(e)
-            

@@ -89,6 +89,9 @@ class DeviceList(List):
             st += " FILE ("+fname+")"
         return st
 
+    def close(self):
+        pass # the ListAndForm has been closed
+
 # *** A stand-alone form for MemoryConfigRow ***
 
 class MemoryConfigForm(SimpleForm):
@@ -265,6 +268,11 @@ class ListAndForm:
     def choose_first_slot(self):
         self.lis.widget.setCurrentItem(self.lis.widget.item(0))
         
+    def close_slot(self):
+        """Inform list and form that they have been closed
+        """
+        self.lis.close()
+        self.form.close()
 
 
 
