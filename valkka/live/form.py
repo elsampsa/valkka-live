@@ -27,6 +27,8 @@ from cute_mongo_forms.container import EditFormSet2
 from valkka.live.tools import getH264V4l2
 from valkka.api2.tools import parameterInitCheck
 from valkka.live import dialog, constant
+from valkka.live.discovery.widget import DiscoveryWidget
+from valkka.live.qt.tools import QCapsulate
 
 pre = "valkka.live.form : "
 verbose = True
@@ -61,8 +63,15 @@ class SlotFormSet(EditFormSet2):
         i = self.lay.count()
         self.info_label = QtWidgets.QLabel("Cameralists and services are reinitiated\n once you close this window", self.widget)
         self.lay.insertWidget(i,self.info_label)
-    
-    
+        
+        # give a signal thats emitted once discovery has modified the camera list
+        self.discovery_win = QCapsulate(DiscoveryWidget(sig = self.signals.modified), "Camera Discovery")
+        self.discovery_win.hide()
+        self.discovery_button = QtWidgets.QPushButton("Camera Search", self.widget)
+        self.discovery_button.clicked.connect(self.discovery_slot)
+        self.lay.insertWidget(i+1,self.discovery_button)
+
+
     def makeButtons(self):
         super().makeButtons()
         self.copyto_button =QtWidgets.QPushButton("COPY", self.buttons)
@@ -71,6 +80,11 @@ class SlotFormSet(EditFormSet2):
         self.copyto_button.clicked.connect(self.copy_slot)
         
         
+    def discovery_slot(self):
+        print("discovery_slot")
+        self.discovery_win.show()
+
+
     def chooseForm_slot(self, element, element_old):
         """Calling this slot chooses the form to be shown
 
@@ -207,5 +221,8 @@ class SlotFormSet(EditFormSet2):
         print(self.pre, "show_slot")
         self.update_dropdown_list_slot()
             
-            
+    
+    def closeEvent(self, e):
+        self.discovery_win.close()
+        super().closeEvent(e)
             

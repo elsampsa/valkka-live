@@ -97,7 +97,7 @@ class RTSPCameraDevice:
         
 
 class USBCameraDevice:
-    """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
+    """Device class used in drag'n'drop.  Copies the members of USBCameraRow
     """
 
     parameter_defs = {
@@ -141,7 +141,7 @@ class USBCameraDevice:
 
 
 class SDPFileDevice:
-    """Device class used in drag'n'drop.  Copies the members of RTSPCameraRow
+    """Device class used in drag'n'drop.  Copies the members of SDPFileRow
     """
 
     parameter_defs = {

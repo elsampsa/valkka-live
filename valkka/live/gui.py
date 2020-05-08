@@ -379,8 +379,6 @@ class MyGui(QtWidgets.QMainWindow):
                 )
 
 
-
-                
         self.treelist.update()
         self.treelist.expandAll()
 
