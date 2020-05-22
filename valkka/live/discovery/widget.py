@@ -31,7 +31,7 @@ from valkka.live.local import ValkkaLocalDir
 from valkka.live import singleton
 singleton.config_dir = ValkkaLocalDir("live")
 singleton.valkkafs_dir = ValkkaLocalDir("live","fs")
-from valkka.live.datamodel.base import DataModel
+# from valkka.live.datamodel.base import DataModel
 """
 from valkka.live.datamodel.row import RTSPCameraRow
 
@@ -183,6 +183,9 @@ class DiscoveryWidget(QWidget):
         self.tree = DiscoveryTree(self, root = self.root)
         self.lay.addWidget(self.tree)
 
+        self.use_arp = QCheckBox("Use arp scan", self)
+        self.lay.addWidget(self.use_arp)
+
         self.buttons = QWidget(self)
         self.button_lay = QHBoxLayout(self.buttons)
         self.lay.addWidget(self.buttons)
@@ -201,7 +204,7 @@ class DiscoveryWidget(QWidget):
         print(">scan")
         self.scan_button.setEnabled(False)
         self.import_button.setEnabled(False)
-        self.thread = DiscoveryThread(arp = False)
+        self.thread = DiscoveryThread(arp = self.use_arp.isChecked())
         self.thread.signals.ip_list.connect(self.ip_list_slot)
         self.thread.start()
         print(">thread started")
@@ -355,6 +358,7 @@ class MyGui(QMainWindow):
     
 
   def initVars(self):
+    from valkka.live.datamodel.base import DataModel
     singleton.data_model = DataModel(directory = singleton.config_dir.get())
 
 

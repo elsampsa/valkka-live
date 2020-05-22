@@ -68,8 +68,9 @@ Valkka uses the following OpenSource software:
 
 FFMpeg libraries (Lesser General Public License)
 Live555 library  (Lesser General Public License)
+WSDiscovery      (Lesser General Public License)
 
-Valkka Live, Copyright Sampsa Riikonen 2018
+Valkka Live, Copyright Sampsa Riikonen 2018-2020
 """
 
 max_devices = 32

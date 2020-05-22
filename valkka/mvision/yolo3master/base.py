@@ -242,8 +242,18 @@ def test3():
 
     
 def test4():
-    # test_with_file(MVisionProcess)
-    pass
+
+    if (len(sys.argv) > 2):
+        init_filename = sys.argv[2]
+    else:
+        init_filename = None
+
+    test_with_file(
+        MVisionClientProcess, 
+        ["valkka.mvision"],
+        shmem_image_interval = 10,
+        init_filename = init_filename)
+
 
 
 def main():

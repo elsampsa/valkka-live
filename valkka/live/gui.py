@@ -140,6 +140,15 @@ class MyGui(QtWidgets.QMainWindow):
         
         e.accept()
     
+    def showEvent(self, e):
+        if self.first_show:
+            self.first_show = False
+            print("singleton.load_layout", singleton.load_layout)
+            # pre-loading stuff
+            if singleton.load_layout:
+                print("load layout")
+                self.load_window_layout_slot()
+
 
     def initDirs(self):
         self.config_dir = singleton.config_dir
@@ -149,6 +158,8 @@ class MyGui(QtWidgets.QMainWindow):
     def initVars(self):
         """Define files & variables
         """
+        self.first_show = True # main window visualized for the first time?
+
         self.version_file = self.config_dir.getFile("version")
         self.layout_file = self.config_dir.getFile("layout")
         
@@ -445,7 +456,6 @@ class MyGui(QtWidgets.QMainWindow):
     def post(self):
         pass
 
-
     # *** Container handling ***
 
     def serializeContainers(self):
@@ -567,7 +577,7 @@ class MyGui(QtWidgets.QMainWindow):
         
         This is the inverse of self.serializeContainers
         
-        Containers must be closed & self.contiainers etc. list must be cleared before calling this
+        Containers must be closed & self.containers etc. list must be cleared before calling this
         """
         # glo = globals()
         # print("glo>",glo)
@@ -900,7 +910,7 @@ class MyGui(QtWidgets.QMainWindow):
     def reOpenValkka(self):
         print("gui: valkka reinit")
         self.wait_window.show()
-        self.saveWindowLayout()
+        self.saveWindowLayout() # overwrites the layout
         self.closeContainers()
         self.closeValkka()
         self.openValkka()
@@ -1059,9 +1069,7 @@ class MyGui(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.about(self, "About", constant.program_info % (version.get(), version.getValkka()))
 
 
-
-
-
+"""
 def process_cl_args():
 
     def str2bool(v):
@@ -1069,30 +1077,32 @@ def process_cl_args():
 
     parser = argparse.ArgumentParser("valkka-live")
     parser.register('type','bool',str2bool)    
-    """
-    parser.add_argument("command", action="store", type=str,                 
-        help="mandatory command)")
-    """
+    # parser.add_argument("command", action="store", type=str,                 
+    #    help="mandatory command)")
     parser.add_argument("--quiet", action="store", type=bool, default=False, 
         help="less verbosity")
 
     parser.add_argument("--reset", action="store", type=bool, default=False, 
         help="less verbosity")
 
+    parser.add_argument("--load", action="store", type=bool, default=False, 
+        help="load the saved layout")
+
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args
 
+
 def main():
+    raise(BaseException("use main.py instead"))
+
     parsed_args, unparsed_args = process_cl_args()
     
     #print(parsed_args, unparsed_args)
     #return
 
-    #"""
     if len(unparsed_args) > 0:
         print("Unknown command-line argument", unparsed_args[0])
         return
-    #"""
 
     if parsed_args.quiet:
         # core.setLogLevel_valkkafslogger(loglevel_debug)
@@ -1112,3 +1122,4 @@ def main():
 
 if (__name__ == "__main__"):
     main()
+"""

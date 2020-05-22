@@ -68,6 +68,9 @@ def process_cl_args():
     parser.add_argument("--playback", action="store", type="bool", default=False, 
         help="enable / disable experimental playback")
 
+    parser.add_argument("--load", action="store", type=bool, default=False, 
+        help="load layout saved previously")
+
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args
 
@@ -96,6 +99,12 @@ def main():
         singleton.use_playback = True
     else:
         singleton.use_playback = False
+
+
+    if parsed_args.load:
+        singleton.load_layout = True
+    else:
+        singleton.load_layout = False
 
     #print(singleton.use_playback)
     #return

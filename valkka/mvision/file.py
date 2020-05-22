@@ -29,7 +29,7 @@ from valkka.api2 import ShmemFilterchain1
 from valkka.api2 import parameterInitCheck
 from valkka.mvision.multiprocess import QShmemProcess
 from valkka.live.qt.widget import AnalyzerWidget
-from valkka.live import tools
+from valkka.live import tools, singleton
 
 pre = "mvision.file : "
 
@@ -42,27 +42,20 @@ class FileGUI(QtWidgets.QMainWindow):
     """
 
     def __init__(self, 
-                 mvision_process, 
-                 # mvision_class, # TODO: use the mvision container infra..?
+                 mvision_process,
+                 mvision_master_process,
                  shmem_image_interval = 1000, 
                  shmem_ringbuffer_size = 10, 
                  shmem_image_dimensions = (1920 // 2, 1080 // 2),
-                 shmem_name="test"):
+                 shmem_name="test",
+                 init_filename = None
+                 ):
         
         super().__init__()
         assert(issubclass(mvision_process.__class__, QShmemProcess))
         
         self.mvision_process        = mvision_process
-        self.mvision_master_process = None
-
-        if hasattr(self.mvision_process,"master"):
-            # find master process if required .. a bit cumbersome..
-            mvision_classes, mvision_client_classes, mvision_master_classes =\
-                tools.scanMVisionClasses() # scans for submodules in namespace valkka.mvision.*
-            master_classes_by_tag = {}
-            for cl in mvision_master_classes:
-                master_classes_by_tag[cl.tag] = cl
-            self.mvision_master_process = master_classes_by_tag[self.mvision_process.master]()
+        self.mvision_master_process = mvision_master_process
 
         # self.mvision_class          = mvision_class,
         self.shmem_image_interval   = shmem_image_interval
@@ -70,6 +63,8 @@ class FileGUI(QtWidgets.QMainWindow):
         self.shmem_image_dimensions = shmem_image_dimensions
         self.shmem_name             = shmem_name
         
+        self.init_filename = init_filename
+
         self.initVars()
         self.setupUi()
         
@@ -77,6 +72,10 @@ class FileGUI(QtWidgets.QMainWindow):
         # self.mvision_widget = QtWidgets.QWidget()
         self.mvision_widget.setParent(self.widget)
         self.widget_lay.addWidget(self.mvision_widget)
+
+        self.mvision_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum,
+            QtWidgets.QSizePolicy.Minimum)
         
         self.openValkka()
 
@@ -89,7 +88,12 @@ class FileGUI(QtWidgets.QMainWindow):
         self.slot_reserved = False
 
     def setupUi(self):
-        self.setGeometry(QtCore.QRect(100, 100, 800, 800))
+
+        rec = QtWidgets.QApplication.desktop().screenGeometry()
+        height = rec.height()
+        width = rec.width()
+
+        self.setGeometry(QtCore.QRect(0, 0, width, height//2))
         self.w = QtWidgets.QWidget(self)
         self.setCentralWidget(self.w)
         self.lay = QtWidgets.QVBoxLayout(self.w)
@@ -157,7 +161,8 @@ class FileGUI(QtWidgets.QMainWindow):
     def openValkka(self):        
         self.mvision_process.go()
 
-        if self.mvision_master_process:
+        if self.mvision_master_process is not None:
+            assert(issubclass(self.mvision_master_process.__class__, QShmemProcess))
             self.mvision_master_process.go()
 
         self.livethread = LiveThread(         # starts live stream services (using live555)
@@ -243,6 +248,11 @@ class FileGUI(QtWidgets.QMainWindow):
             self.mvision_master_process.waitStop()
         
 
+
+    def showEvent(self, e):
+        if self.init_filename is not None:
+            self.open_file_button_slot(self, fname_ = self.init_filename)
+        e.accept()
 
     def closeEvent(self, e):
         print(pre, "closeEvent!")

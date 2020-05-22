@@ -805,10 +805,18 @@ def test_process(mvision_process_class):
     p.stop()
     
 
-def test_with_file(mvision_process_class):
+def test_with_file(
+        mvision_process_class,
+        mvision_class_names = ["valkka.mvision"],
+        shmem_image_interval = 1000,
+        init_filename = None
+        ):
     """Test the analyzer process with files
-    
-    They must be encoded and muxed correctly, i.e., with:
+
+    :param mvision_process_class: Which class to test
+    :param mvision_class_names: Namespaces to search for required master process classes
+
+    Files must be encoded and muxed correctly, i.e., with:
     
     ::
     
@@ -817,16 +825,33 @@ def test_with_file(mvision_process_class):
     """
     import time
     from valkka.mvision.file import FileGUI
+    from valkka.live import tools
+
 
     ps = mvision_process_class()
-    
+    mp = None
+
+    if hasattr(ps,"master"):
+        # find master process if required .. a bit cumbersome..
+        mvision_classes, mvision_client_classes, mvision_master_classes =\
+            tools.scanMVisionClasses(
+                mvision_class_names
+            ) # scans for submodules in namespace valkka.mvision.*
+        master_classes_by_tag = {}
+        for cl in mvision_master_classes:
+            master_classes_by_tag[cl.tag] = cl
+        mp = master_classes_by_tag[ps.master]()
+
+
     app = QtWidgets.QApplication(["mvision test"])
     fg = FileGUI(
-        mvision_process         = ps, 
+        mvision_process         = ps,
+        mvision_master_process  = mp,
         shmem_name              = "test_studio_file",
         shmem_image_dimensions  =(1920 // 2, 1080 // 2),
-        shmem_image_interval    = 1000,
-        shmem_ringbuffer_size   = 5
+        shmem_image_interval    = shmem_image_interval,
+        shmem_ringbuffer_size   = 5,
+        init_filename           = init_filename
         )
     fg.show()
     app.exec_()
