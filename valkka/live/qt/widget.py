@@ -334,6 +334,8 @@ class LineCrossingVideoWidget(SimpleVideoWidget):
         """Draw lines on top of the bitmal
         """
         qp.setPen(QtGui.QPen(QtCore.Qt.cyan, 5))
+        # qp.setPen(QtGui.QPen(QtCore.Qt.cyan, 1))
+
 
         if self.pixmap is not None:
             qp.drawPixmap(0, 0, self.width(), self.height(), self.pixmap)

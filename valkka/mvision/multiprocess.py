@@ -38,6 +38,18 @@ logger = getLogger(__name__)
 
     QShmem.setMasterProcess => QShmem.c__setMasterProcess [activates shmem ringbuffer server]
 
+
+::
+
+    QShmemProcess
+        QShmemMasterProcess
+        QShmemClientProcess
+            MVisionClientBaseProcess
+        MVisionBaseProcess
+
+
+
+
 """
 
 class QShmemProcess(QMultiProcess):
@@ -125,7 +137,11 @@ class QShmemProcess(QMultiProcess):
         """Clear shmem variables
         """
         self.c__deactivate()
+
         
+    def resetState_(self):
+        pass
+
 
     def run(self):
         self.preRun_()
@@ -545,6 +561,8 @@ class QShmemClientProcess(QShmemProcess):
 
 
 class MVisionBaseProcess(QShmemProcess):
+    """Mvision process without a common master process
+    """
 
     class Signals(QtCore.QObject):
         pong = QtCore.Signal(object) # demo outgoing signal
@@ -560,9 +578,12 @@ class MVisionBaseProcess(QShmemProcess):
     # *** common back-end methods for machine vision processes ***
 
     def c__updateAnalyzerParameters(self, **kwargs):
-        self.logger.debug("got analyzer parameters %s", kwargs)
+        self.logger.debug("backend: got analyzer parameters %s", kwargs)
         self.parameters = kwargs # update parameters at the backend
 
+    def c__resetAnalyzerState(self, **kwargs):
+        self.logger.info("backend: reset analyzer state")
+        self.resetState_()
 
     def c__requestQtShmemServer(self, **kwargs):
         self.logger.debug("shmem server requested")
@@ -603,7 +624,7 @@ class MVisionBaseProcess(QShmemProcess):
         self.qt_server = None
         pass
 
-
+    
     # *** common frontend methods for machine vision processes ***
 
     def connectAnalyzerWidget(self, analyzer_widget):
@@ -620,6 +641,11 @@ class MVisionBaseProcess(QShmemProcess):
             self.releaseQtShmemServer
         )
         
+    def resetAnalyzerState(self):
+        print(">resetAnalyzerState")
+        self.sendMessageToBack(MessageObject(
+            "resetAnalyzerState", **{}))
+
     def disconnectAnalyzerWidget(self, analyzer_widget):
         analyzer_widget.video.signals.update_analyzer_parameters.disconnect(
             self.updateAnalyzerParameters)
@@ -673,6 +699,8 @@ class MVisionBaseProcess(QShmemProcess):
 
 
 class MVisionClientBaseProcess(QShmemClientProcess):
+    """Client Analyzer processes that use a common master processs
+    """
 
     class Signals(QtCore.QObject):
         pong = QtCore.Signal(object) # demo outgoing signal
@@ -688,6 +716,11 @@ class MVisionClientBaseProcess(QShmemClientProcess):
     def c__updateAnalyzerParameters(self, **kwargs):
         self.logger.debug("Movement mvision: got analyzer parameters %s", kwargs)
         self.parameters = kwargs # update parameters at the backend
+
+
+    def c__resetAnalyzerState(self, **kwargs):
+        self.logger.info("backend: reset analyzer state")
+        self.resetState_()
 
 
     def c__requestQtShmemServer(self, **kwargs):
@@ -743,6 +776,11 @@ class MVisionClientBaseProcess(QShmemClientProcess):
         analyzer_widget.signals.close.connect(
             self.releaseQtShmemServer
         )
+
+    def resetAnalyzerState(self):
+        print(">resetAnalyzerState")
+        self.sendMessageToBack(MessageObject(
+            "resetAnalyzerState", **{}))
         
     def disconnectAnalyzerWidget(self, analyzer_widget):
         analyzer_widget.video.signals.update_analyzer_parameters.disconnect(

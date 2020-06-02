@@ -201,6 +201,7 @@ class MVisionContainer(VideoContainer):
 
 
     def connectSignals(self):
+        # print("\nSAAAAATANA",self.__class__,"\n")
         # is there a signal giving the bounding boxes..?  let's connect it
         if hasattr(self.mvision_process.signals,"bboxes"):
             print(self.pre, "connecting bboxes signal")

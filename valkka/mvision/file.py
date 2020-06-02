@@ -102,9 +102,11 @@ class FileGUI(QtWidgets.QMainWindow):
 
         # divide window into three parts
         self.upper = QtWidgets.QWidget(self.w)
+        self.middle = QtWidgets.QWidget(self.w)
         self.lower = QtWidgets.QWidget(self.w)
         self.lowest = QtWidgets.QWidget(self.w)
         self.lay.addWidget(self.upper)
+        self.lay.addWidget(self.middle)
         self.lay.addWidget(self.lower)
         self.lay.addWidget(self.lowest)
 
@@ -130,7 +132,16 @@ class FileGUI(QtWidgets.QMainWindow):
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Expanding)
 
-        # lower part: [Open File] [Close Live] [Play] [Stop] [Rewind]
+        """
+        [------|--------------------------------------]
+        [Open File] [Close Live] [Play] [Stop] [Rewind]
+        """
+
+        self.middlelay = QtWidgets.QHBoxLayout(self.middle)
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.middle)
+        self.middlelay.addWidget(self.slider)
+        self.slider.setTracking(False)
+
         self.lowerlay = QtWidgets.QHBoxLayout(self.lower)
         self.open_file_button = QtWidgets.QPushButton("Open File", self.lower)
         self.close_file_button = QtWidgets.QPushButton(
@@ -138,18 +149,21 @@ class FileGUI(QtWidgets.QMainWindow):
         self.play_button = QtWidgets.QPushButton("Play", self.lower)
         self.stop_button = QtWidgets.QPushButton("Stop", self.lower)
         self.rewind_button = QtWidgets.QPushButton("<<", self.lower)
+        self.seek_label = QtWidgets.QLabel("<<", self.lower)
 
         self.lowerlay.addWidget(self.open_file_button)
         self.lowerlay.addWidget(self.close_file_button)
         self.lowerlay.addWidget(self.play_button)
         self.lowerlay.addWidget(self.stop_button)
         self.lowerlay.addWidget(self.rewind_button)
+        self.lowerlay.addWidget(self.seek_label)
 
         self.open_file_button.clicked. connect(self.open_file_button_slot)
         self.close_file_button.clicked.connect(self.close_file_button_slot)
         self.play_button.clicked.      connect(self.play_button_slot)
         self.stop_button.clicked.      connect(self.stop_button_slot)
         self.rewind_button.clicked.    connect(self.rewind_button_slot)
+        self.slider.valueChanged.      connect(self.slider_slot)
 
         # lowest part: some text
         self.lowestlay = QtWidgets.QVBoxLayout(self.lowest)
@@ -251,7 +265,7 @@ class FileGUI(QtWidgets.QMainWindow):
 
     def showEvent(self, e):
         if self.init_filename is not None:
-            self.open_file_button_slot(self, fname_ = self.init_filename)
+            self.open_file_button_slot(fname_ = self.init_filename)
         e.accept()
 
     def closeEvent(self, e):
@@ -278,6 +292,9 @@ class FileGUI(QtWidgets.QMainWindow):
             self.slot_reserved = True
             if (self.chain.fileStatusOk()):
                 self.infotext.setText("Opened file " + fname)
+                print("Duration:", self.chain.file_ctx.duration)
+                self.slider.setMinimum(0)
+                self.slider.setMaximum(self.chain.file_ctx.duration)
             else:
                 self.infotext.setText("Can't play file " + fname)
         else:
@@ -321,6 +338,14 @@ class FileGUI(QtWidgets.QMainWindow):
             self.filethread.stopStream(self.chain.file_ctx)
         else:
             pass
+
+    def slider_slot(self, v):
+        print(">", v)
+        self.chain.file_ctx.seektime_ = v
+        # TODO: reset analyzer state
+        self.seek_label.setText(str(v))
+        self.mvision_process.resetAnalyzerState()
+        self.filethread.seekStream(self.chain.file_ctx)
 
     def set_bounding_boxes_slot(self, bbox_list):
         self.openglthread.core.clearObjectsCall(self.token)
