@@ -571,6 +571,7 @@ class MVisionBaseProcess(QShmemProcess):
 
     def __init__(self, **kwargs):
         self.parameters = None
+        self.parameters_changed = False
         self.qt_server = None
         super().__init__(**kwargs)
 
@@ -580,10 +581,12 @@ class MVisionBaseProcess(QShmemProcess):
     def c__updateAnalyzerParameters(self, **kwargs):
         self.logger.debug("backend: got analyzer parameters %s", kwargs)
         self.parameters = kwargs # update parameters at the backend
+        self.parameters_changed = True
 
     def c__resetAnalyzerState(self, **kwargs):
         self.logger.info("backend: reset analyzer state")
         self.resetState_()
+        self.parameters_changed = True
 
     def c__requestQtShmemServer(self, **kwargs):
         self.logger.debug("shmem server requested")
@@ -847,6 +850,7 @@ def test_with_file(
         mvision_process_class,
         mvision_class_names = ["valkka.mvision"],
         shmem_image_interval = 1000,
+        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
         init_filename = None
         ):
     """Test the analyzer process with files
@@ -886,7 +890,7 @@ def test_with_file(
         mvision_process         = ps,
         mvision_master_process  = mp,
         shmem_name              = "test_studio_file",
-        shmem_image_dimensions  =(1920 // 2, 1080 // 2),
+        shmem_image_dimensions  = shmem_image_dimensions,
         shmem_image_interval    = shmem_image_interval,
         shmem_ringbuffer_size   = 5,
         init_filename           = init_filename
