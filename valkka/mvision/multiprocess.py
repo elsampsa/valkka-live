@@ -102,10 +102,11 @@ class QShmemProcess(QMultiProcess):
         """Init shmem variables to None
         """
         self.logger.debug("c__deactivate")
+        # print("c__deactivate")
         self.preDeactivate_()
         self.listening = False
         # self.image_dimensions = None
-        self.client = None # shared memory client created when activate is called
+        self.client = None # shared memory client was created when activate was called
     # ****
 
     parameter_defs = {
@@ -545,6 +546,12 @@ class QShmemClientProcess(QShmemProcess):
         super().requestStop()
     
 
+    def deactivate(self):
+        self.unsetMasterProcess()
+        super().deactivate()
+
+
+
     """
     def activate(self, **kwargs):
         self.sendMessageToBack(MessageObject(
@@ -710,7 +717,8 @@ class MVisionClientBaseProcess(QShmemClientProcess):
         shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
 
     def __init__(self, **kwargs):
-        self.parameters = {}
+        self.parameters = None
+        self.parameters_changed = False
         self.qt_server = None
         super().__init__(**kwargs)
 
@@ -719,6 +727,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
     def c__updateAnalyzerParameters(self, **kwargs):
         self.logger.debug("Movement mvision: got analyzer parameters %s", kwargs)
         self.parameters = kwargs # update parameters at the backend
+        self.parameters_changed = True
 
 
     def c__resetAnalyzerState(self, **kwargs):

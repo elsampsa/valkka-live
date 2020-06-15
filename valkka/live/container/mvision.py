@@ -254,7 +254,7 @@ class MVisionContainer(VideoContainer):
         self.report("clearDevice")
         if not self.device:
             return
-        if (self.mvision_process==None):
+        if self.mvision_process is None:
             return
         
         # if self.analyzer_widget.visible:
