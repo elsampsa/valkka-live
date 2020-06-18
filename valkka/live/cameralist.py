@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    cameralist.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.12.2 
+@version 0.13.0 
 @brief   QTree abstraction for a drag'n'drop camera list
 """
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    group.py
 @author  Sampsa Riikonen
 @date    2020
-@version 0.12.2 
+@version 0.13.0 
 @brief   
 """
 
