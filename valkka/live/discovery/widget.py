@@ -71,6 +71,7 @@ class DiscoveryThread(QThread):
         # print(ips)
         ips2 = []
         if self.arp:
+            print(">arp-scan")
             ips2 = runARPScan(exclude_list = ips)
         ips = ips + ips2
         self.signals.ip_list.emit(ips)
