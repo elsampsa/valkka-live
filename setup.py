@@ -52,8 +52,9 @@ setup(
     packages=[
         'valkka.live',
         'valkka.live.chain',
-        'valkka.live.datamodel',
         'valkka.live.container',
+        'valkka.live.datamodel',
+        'valkka.live.discovery',
         'valkka.live.qt',
         'valkka.mvision',
         'valkka.mvision.movement',
