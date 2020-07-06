@@ -1,0 +1,22 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+    <h1>Sessions</h1>
+    <p>Create data into the cache by pressing the button</p>
+    <p><a class="btn btn-primary btn-lg" href="{{request.route_url('session_push')}}" role="button">Create more useless data &raquo;</a></p>
+    <p><a class="btn btn-primary btn-lg" href="session_clear" role="button">Clear useless data &raquo;</a></p>
+
+    <p> Current Data </p>
+    {% for data in data_list %}
+        <p> {{data}} </p>
+    {% endfor %}
+
+
+{% endblock content %}
+
+
+{% block javascript %}
+<script type="text/javascript">
+</script>
+{% endblock javascript %}
+

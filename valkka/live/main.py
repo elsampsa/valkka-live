@@ -36,6 +36,8 @@ singleton.test = "hello"
 # set variables in the singleton module before loading gui
 singleton.config_dir = ValkkaLocalDir("live")
 singleton.valkkafs_dir = ValkkaLocalDir("live","fs")
+singleton.logs_dir = ValkkaLocalDir("live","logs")
+
 
 """
 from valkka.live.gui import get_valkka_live_universe

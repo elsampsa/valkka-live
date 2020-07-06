@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="{{request.locale_name}}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Pyramid Playground</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{request.static_url('valkka.web:static/bootstrap/dist/css/bootstrap.min.css')}}" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="{{request.static_url('valkka.web:static/bootstrap/assets/css/ie10-viewport-bug-workaround.css')}}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{request.static_url('valkka.web:static/bootstrap/jumbotron.css')}}" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie8-responsive-file-warning.js')}}"></script><![endif]-->
+    <script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie-emulation-modes-warning.js')}}"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="{{request.static_url('valkka.web:static/js/html5shiv.min.js')}}"></script>
+      <script src="{{request.static_url('valkka.web:static/js/respond.min.js')}}"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Pyramid Playground</a>
+        </div>
+        <!--
+        <div id="navbar" class="navbar-collapse collapse">
+          <form class="navbar-form navbar-right">
+            <div class="form-group">
+              <input type="text" placeholder="Email" class="form-control">
+            </div>
+            <div class="form-group">
+              <input type="password" placeholder="Password" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-success">Sign in</button>
+          </form>
+        </div>
+        -->
+      </div>
+    </nav>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        {% block content %}
+        {% endblock content %}
+        <!--
+        <h1>Hello, world!</h1>
+        <p>This is a template for a simple marketing or informational website. It includes a large callout called a jumbotron and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
+        <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more &raquo;</a></p>
+        -->
+        <p id="alert_paragraph"></p> <!-- insert alerts here with javascript -->
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+
+        <div class="col-md-4">
+          <h2>Asynchronous GET demo</h2>
+          <!-- NOTE: use here the route names you have defined in "routes.py" -->
+          <p><a class="btn btn-default" href="{{request.route_url('async_get')}}" role="button">Try Asynchronous GET &raquo;</a></p>
+        </div>
+
+        <div class="col-md-4">
+          <h2>Download demo</h2>
+          <p><a class="btn btn-default" href="{{request.route_url('download')}}" role="button">Try Download &raquo;</a></p>
+       </div>
+
+        <div class="col-md-4">
+          <h2>Session demo</h2>
+          <p><a class="btn btn-default" href="{{request.route_url('session')}}" role="button">Try Session &raquo;</a></p>
+        </div>
+
+        <div class="col-md-4">
+          <h2>Videoplayer demo</h2>
+          <p><a class="btn btn-default" href="{{request.route_url('shaka')}}" role="button">Try Video &raquo;</a></p>
+        </div>
+
+        <div class="col-md-4">
+            <h2>Login demo</h2>
+          <p><a class="btn btn-default" href="{{request.route_url('myauth')}}" role="button">Try Login &raquo;</a></p>
+        </div>
+
+        <div class="col-md-4">
+            <h2>Websocket demo</h2>
+          <p><a class="btn btn-default" href="{{request.route_url('websocket')}}" role="button">Try Login &raquo;</a></p>
+        </div>
+
+
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; 2019 S.R.</p>
+      </footer>
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{request.static_url('valkka.web:static/js/jquery-1.12.4.min.js')}}" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/vendor/jquery.min.js')}}"><\/script>')</script>
+    <script src="{{request.static_url('valkka.web:static/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie10-viewport-bug-workaround.js')}}"></script>
+
+    <!-- Per-template javascript -->
+
+    {% block javascript %}
+    {% endblock javascript %}
+
+    <!-- Custom javascript -->
+
+    <script type="text/javascript">
+      function getAlert(title, text, type) {
+            // creates html that produces bootstrap alert boxes
+            return '<div class="alert '+type+'"\><button type="button" class="close" data-dismiss="alert">&times;</button\><strong>'+title+' </strong>  '+text+'</div>'
+          }
+
+      function insertAlert(title, text, type) {
+          // uses getAlert to produce alert box html & inserts it into alert paragraph
+          document.getElementById("alert_paragraph").innerHTML += getAlert(title, text, type);
+      }
+
+      function clearAlerts() {
+          // clears all html from alert paragraph
+          console.log("clear alerts")
+          document.getElementById("alert_paragraph").innerHTML = "";
+      }
+    </script>
+
+  </body>
+</html>

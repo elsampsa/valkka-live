@@ -1,0 +1,55 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+    <h1>Websockets</h1>
+    <p>Send messages by pressing the button.  Websocket server will reply.</p>
+    
+    <p><a class="btn btn-primary btn-lg" href="#" 
+    onclick="callWS1()"
+    role="button">
+    Send "hello" to websocket 1&raquo;</a></p>
+    
+    <p><a class="btn btn-primary btn-lg" href="#" 
+    onclick="callWS2()"
+    role="button">
+    Send "hello" to websocket 2&raquo;</a></p>
+    
+    <p> Received messages 1</p>
+    <ul id="myList1">
+    </ul>
+
+    <p> Received messages 2</p>
+    <ul id="myList2">
+    </ul>
+
+{% endblock content %}
+
+{% block javascript %}
+<script type="text/javascript">
+
+ws1 = new WebSocket("ws://127.0.0.1:8080/ws/control/1");
+ws2 = new WebSocket("ws://127.0.0.1:8080/ws/control/2");
+
+ws1.onmessage = function (event) {
+    var node = document.createElement("LI");
+    var textnode = document.createTextNode(event.data);
+    node.appendChild(textnode);
+    document.getElementById("myList1").appendChild(node);
+};
+function callWS1() {
+    ws1.send("hello 1"); 
+}
+
+ws2.onmessage = function (event) {
+    var node = document.createElement("LI");
+    var textnode = document.createTextNode(event.data);
+    node.appendChild(textnode);
+    document.getElementById("myList2").appendChild(node);
+};
+function callWS2() {
+    ws2.send("hello 2"); 
+}
+
+
+</script>
+{% endblock javascript %}

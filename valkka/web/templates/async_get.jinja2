@@ -1,0 +1,75 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+    <h1>Asynchronous GET</h1>
+    <p>Press the button.  After that it'll take some time before you get your **it.</p>
+    <input id="first_name" type="text" placeholder="First name" class="navbar-form" onchange="first_name_key_changed()">
+    <input id="last_name" type="text" placeholder="Last name" class="navbar-form" onchange="last_name_key_changed()">
+    <a id="init_button" class="btn btn-success" href="#" role="button" onclick="init_button_clicked()">Get some **it &raquo;</a>
+    </p>
+{% endblock content %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        
+        function last_name_key_changed() {
+            // document.getElementById("demo").innerHTML = "Paragraph changed.";
+            // enable ok button .. 
+        }
+
+        function first_name_key_changed() {
+            // document.getElementById("demo").innerHTML = "Paragraph changed.";
+            // enable ok button .. 
+        }
+
+        async function callGet(addr, pars) {
+            // addr: address for the GET call, pars: parameters to be URL encoded
+            // create URL-encoded parameters like this:
+            pars = jQuery.param(pars);
+            addr = addr + "?" + pars;
+            console.log("callGet", addr);
+
+            // call server with GET
+            const settings = {
+                method: 'GET'
+            };
+            try {
+                const fetchResponse = await fetch(addr, settings);
+                const data = await fetchResponse.json();
+                return data;
+            } catch (e) {
+                return e;
+            }     
+        }
+        async function init_button_clicked() {
+            clearAlerts();
+            // read the token field
+            first_name = document.getElementById("first_name").value;
+            last_name = document.getElementById("last_name").value;
+            
+            document.getElementById("init_button").style.visibility="hidden";
+            insertAlert("Calling GET","Please wait & do not refresh this page","alert-info");
+            
+            data = await callGet("async_get2", { 
+                "first_name" : first_name, 
+                "last_name"  : last_name
+                });
+            
+            document.getElementById("init_button").style.visibility="visible";
+            console.log("callGet returned", data);
+            // expecting keys: "error" : string, "files" : list of strings
+            if (data.error != "") {
+                console.log(`error ${data.error}`);
+                insertAlert("Failed:", data.error,"alert-danger"); // see base.jinja2 for javascript
+            }
+            else {
+                insertAlert("Success!","Get returned something","alert-success"); // see base.jinja2 for javascript
+                for (i in data.files) {
+                    insertAlert("A file", data.files[i], "alert-info");
+                }
+            }
+        }
+
+    </script>
+    
+{% endblock javascript %}

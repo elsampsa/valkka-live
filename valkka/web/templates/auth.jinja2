@@ -1,0 +1,64 @@
+{% extends "base.jinja2" %}
+
+{% block content %}
+    <h1>Authorization</h1>
+    <p><a class="btn btn-primary btn-lg" 
+        href="#" 
+        role="button"
+        onclick="login_clicked()">Login &raquo;</a></p>
+    <p><a class="btn btn-primary btn-lg" 
+        href="#" 
+        role="button"
+        onclick="logout_clicked()">Logout &raquo;</a></p>
+
+    {% if is_auth %}    
+        <h3> You're logged in </h3>
+    {% else %}
+        <h3> You're logged out </h3>
+    {% endif %}
+
+{% endblock content %}
+
+{% block javascript %}
+<script type="text/javascript">
+    async function callGet(addr, pars) {
+        // addr: address for the GET call, pars: parameters to be URL encoded
+        // create URL-encoded parameters like this:
+        pars = jQuery.param(pars);
+        addr = addr + "?" + pars;
+        console.log("callGet", addr);
+
+        // call server with GET
+        const settings = {
+            method: 'GET'
+        };
+        try {
+            const fetchResponse = await fetch(addr, settings);
+            const data = await fetchResponse.json();
+            return data;
+        } catch (e) {
+            return e;
+        }    
+    }
+
+    async function login_clicked() {
+        // return;
+        data = await callGet("login", { 
+            "user" : "kokkelis",
+            "passwd" : "kikkelis"
+            });
+        location.reload(); 
+        // since now link followed through href, must reload here
+        // to refresh the page status
+        }
+        
+
+    async function logout_clicked() {
+        // return;
+        data = await callGet("logout", {});
+        location.reload();
+        }
+
+</script>
+{% endblock javascript %}
+

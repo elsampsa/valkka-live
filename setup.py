@@ -15,7 +15,8 @@ setup(
     install_requires = [
         # 'PySide2 >=5.11.1', # woops.. in 5.12 there has been some API changes
         # 'PySide2 == 5.11.1',
-        'PySide2 == 5.13.2', # 5.13.2+ is again OK
+        # 'PySide2 >= 5.13.2', # 5.13.2+ is again OK
+        'PySide2 == 5.14.2', # keep this in sync with cute_mongo_forms ..
         'cute_mongo_forms >= 0.7.1',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',
@@ -43,7 +44,10 @@ setup(
     entry_points={
         'console_scripts': [
             'run-valkka-live = valkka.live.main:main'
-    ]
+        ],
+        'paste.app_factory': [ # used by pastedeploy => pyramid
+            'main = valkka.web:main'
+        ],
     },
 
     # packages = find_packages(), # # includes python code from every directory that has an "__init__.py" file in it.  If no "__init__.py" is found, the directory is omitted.  Other directories / files to be included, are defined in the MANIFEST.in file
@@ -60,7 +64,8 @@ setup(
         'valkka.mvision.nix',
         'valkka.mvision.yolo3',
         'valkka.mvision.yolo2',
-        'valkka.mvision.yolo3tiny'
+        'valkka.mvision.yolo3tiny',
+        'valkka.web'
         ],
 
     include_package_data=True, # # conclusion: NEVER forget this : files get included but not installed

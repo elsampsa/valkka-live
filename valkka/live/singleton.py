@@ -33,6 +33,8 @@ load_layout = False
 # local dirs
 config_dir = None
 valkkafs_dir = None
+logs_dir = None
+ipc_dir = None
 
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]
