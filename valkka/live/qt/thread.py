@@ -48,6 +48,7 @@ class IPCQThread(QtCore.QThread):
 
     def __init__(self, server_address):
         super().__init__()
+        self.pre = self.__class__.__name__
         self.lock = Lock()
         self.signals = self.Signals()
         self.signals.command.connect(self.handleCommand)
@@ -108,6 +109,10 @@ sock.send(msg)
             {"class" : "valkka_live", "name" : "something", "parameters" : dict}
     
         """
+        if not isinstance(cmd, dict):
+            print("sendMessage__ : bad message", cmd, "must be dict")
+            return
+
         if "class" not in cmd:
             print("sendMessage__ : bad message", cmd)
             return
@@ -121,6 +126,9 @@ sock.send(msg)
         else:
             print("sendMessage__ : no class for signal", cmd)
 
+    def afterSocketCreated__(self):
+        pass
+
 
     def run(self):
         """Everything here happens in the multithread
@@ -132,6 +140,7 @@ sock.send(msg)
         - From active connections
         """
         self.createSocket__()
+        self.afterSocketCreated__()
         ok = True
         active_conns = []
         while ok:
@@ -140,43 +149,49 @@ sock.send(msg)
             r, w, e = safe_select(rlis, [], [], timeout = 1.0)
             
             if len(r) < 1:
-                print("timeout")
+                print(self.pre, ": timeout, ", len(rlis))
 
             if self.pipe_read in r:
                 msg = self.pipe_read.recv()
-                print("got command", msg)
+                print(self.pre, ": got command", msg)
                 if msg is None:
                     break
 
             if self.sock in r:
                 client_socket, address = self.sock.accept()
                 active_conns.append(client_socket)
-                print("connection from", client_socket, address)
+                print(self.pre, ": connection from", client_socket, address)
                 continue # there might be stuff in that socket, so select again
 
             remaining_conns = []
             for conn in active_conns:
+                conn_ok = True
                 if conn in r:
-                    conn_ok = True
+                    #print(self.pre, ": getting some from", r)
                     msg = bytes(0)
                     while True:
+                        #print(self.pre, ": receiving")
                         msg_part = conn.recv(512)
+                        #print(self.pre, ": received", msg_part)
                         if len(msg_part) < 1:
                             conn_ok = False
                         msg += msg_part
                         if len(msg) < 512:
                             break
                     if conn_ok:
-                        print("got external command", pickle.loads(msg))
+                        print(self.pre, ": got external command", pickle.loads(msg))
                         self.sendMessage__(pickle.loads(msg))
-                        remaining_conns.append(conn)
                     else:
-                        print("dropping connection", conn)
+                        print(self.pre, ": dropping connection", conn)
+                        conn.close()
                         self.sendMessage__({
                           "class" : "base",
                           "name"  : "drop",
                           "parameters" : {}  
                         })
+                if conn_ok:
+                    remaining_conns.append(conn)
+                
             active_conns = remaining_conns
 
         for conn in active_conns:

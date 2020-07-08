@@ -37,6 +37,10 @@ class WWWQThread(IPCQThread):
     
     def __init__(self, server_address):
         super().__init__(server_address)
+        self.pre = self.__class__.__name__
+
+
+    def afterSocketCreated__(self):
         self.start_nginx()
         self.start_pyramid()
 
@@ -129,14 +133,21 @@ class WebSocketThread(IPCQThread):
 
     def __init__(self, server_address):
         super().__init__(server_address)
+        self.pre = self.__class__.__name__
+        
+    
+    def afterSocketCreated__(self):
         self.start_ws_server()
 
 
-    def start_ws_server():
+    def start_ws_server(self):
         comm = "%s %s" % (
             self.cli,
             self.server_address
         )
+        #print("WebSocketThread: sleeping")
+        #time.sleep(20)
+        print("WebSocketThread: running", comm)
         self.ws_process = subprocess.Popen(
             # comm, shell = True
             shlex.split(comm)
@@ -146,8 +157,6 @@ class WebSocketThread(IPCQThread):
     def close(self):
         self.ws_process.terminate()
         self.ws_process.wait()
-
-
 
 
 
@@ -171,13 +180,20 @@ class MyGui(QtWidgets.QMainWindow):
         self.thread = WWWQThread(
             singleton.ipc_dir.getFile("pyramid.ipc")
         )
+        self.ws_thread = WebSocketThread(
+            singleton.ipc_dir.getFile("ws.ipc")
+        )
 
         self.b = QtWidgets.QPushButton(self, "Push Me")
         self.b.clicked.connect(self.b_slot)
         self.lay.addWidget(self.b)
 
         self.thread.start()
+        time.sleep(1)
+        self.ws_thread.start()
 
+        # TODO: connect signal from ws_thread to a slot (i.e. message from the websocket)
+        # TODO: implement ingoing messagee slot to IPCQThread => we can send message to the web-page using ws_thread
 
     def b_slot(self):
         pass
@@ -185,6 +201,7 @@ class MyGui(QtWidgets.QMainWindow):
 
     def closeEvent(self, e):
         print("closeEvent!")
+        self.ws_thread.close()
         self.thread.close()
         e.accept()
 

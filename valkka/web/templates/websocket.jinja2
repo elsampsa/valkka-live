@@ -37,8 +37,15 @@ ws1.onmessage = function (event) {
     document.getElementById("myList1").appendChild(node);
 };
 function callWS1() {
-    ws1.send("hello 1"); 
-}
+    // ws1.send("hello 1"); 
+    ws1.send('{"class" : "base", "name"  : "ping"}');
+    ws1.send(JSON.stringify(
+        {
+        "class" : "base", 
+        "name"  : "ping"
+        }
+    ));
+};
 
 ws2.onmessage = function (event) {
     var node = document.createElement("LI");

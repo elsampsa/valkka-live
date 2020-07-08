@@ -43,7 +43,8 @@ setup(
     #
     entry_points={
         'console_scripts': [
-            'run-valkka-live = valkka.live.main:main'
+            'run-valkka-live = valkka.live.main:main',
+            'valkka-live-ws-server = valkka.web.ws_serve:main'
         ],
         'paste.app_factory': [ # used by pastedeploy => pyramid
             'main = valkka.web:main'
