@@ -29,22 +29,44 @@ from PySide2 import QtCore, QtWidgets, QtGui
 
 
 class IPCQThread(QtCore.QThread):
-    """QThread handling onvif commands to rtsp cameras
+    """A thread that interacts with an external web, etc. server and the rest of the Qt system
 
-    Send Qt signals to this thread from the Qt main thread
+    ::
 
-
+        Qt main thread <-- Qt signals --> IPCQThread <-- unix domains socket --> Webserver
+        Qt main thread <-- Qt signals --> IPCQThread <-- unix domains socket --> Websocket server
+    
     TODO: 
     - implement slot for incoming messages
-    - outgoing messages should carry a token that identify the client
+    - outgoing messages should carry a token (lets make it the fid) that identify the client
     - ..which can then be used to send incoming messages to this thread
     - ..and finally to the web request
     """
     class Signals(QtCore.QObject):
-        # incoming signal that carries an object
+        """incoming (==from the rest of the Qt system) signals that carry an object
+
+        - These signals are connectd to IPCQThread.handleCommand
+        - ..which writes into internal pipe at the frontend
+        - ..backend reads the object from the pipe and acts accordingly
+        """
         command = QtCore.Signal(object)
-        # outgoing signal classes
+        
+        """outgoing (== to the rest of the Qt system) signal classes
+
+        - This thread emits these signals
+
+        Messages that come through the unix ipc socket, have structures like this:
+
+        ::
+
+            {"class" : "base", "name" : "close"}
+            {"class" : "valkka_live", "name" : "something", "parameters" : dict}
+
+        When a message comes throught the ipc socket, class looks for correct signal object with the name
+        defined by the key "class":
+        """
         base = QtCore.Signal(object)
+
 
     def __init__(self, server_address):
         super().__init__()
@@ -64,6 +86,14 @@ class IPCQThread(QtCore.QThread):
     # *** frontend ****
 
     def handleCommand(self, com):
+        """Should conform the scheme:
+        {
+            "class" : "base",
+            "name"  : "somename",
+            "id"    : "someid", # and id of the socket connection (there might be several websockets, etc)
+            "parameters : {}
+        }
+        """
         with self.lock:
             self.pipe_write.send(com)
 
@@ -143,6 +173,8 @@ sock.send(msg)
         self.afterSocketCreated__()
         ok = True
         active_conns = []
+        conns_by_id = {}
+        ids_by_conn = {}
         while ok:
             rlis = [self.pipe_read, self.sock]
             rlis += active_conns
@@ -152,19 +184,50 @@ sock.send(msg)
                 print(self.pre, ": timeout, ", len(rlis))
 
             if self.pipe_read in r:
+                """Commands from the frontend (i.e. from the rest of the Qt system)
+                """
                 msg = self.pipe_read.recv()
-                print(self.pre, ": got command", msg)
+                print(self.pre, ": got qt command", msg)
+                print(self.pre, ": conns_by_id:", conns_by_id)
                 if msg is None:
                     break
-
+                try:
+                    key = msg["id"]
+                except KeyError:
+                    # send to all connections
+                    print("sending to all")
+                    for conn in active_conns:
+                        print("sending", conn, msg)
+                        conn.send(pickle.dumps(msg))
+                else:
+                    try:
+                        conn = conns_by_id[key]
+                    except KeyError:
+                        print("no such registered unix ipc connection", key)
+                    else:
+                        print("sending", conn, msg)
+                        msg_ = pickle.dumps(msg)
+                        # print("raw", msg_)
+                        conn.send(msg_)
+                
             if self.sock in r:
+                """New connections from the unix ipc socket
+                """
                 client_socket, address = self.sock.accept()
                 active_conns.append(client_socket)
-                print(self.pre, ": connection from", client_socket, address)
+                key = id(client_socket)
+                conns_by_id[key] = client_socket
+                ids_by_conn[client_socket] = key
+                print(self.pre, ": connection from", client_socket, address, key) 
+                print(self.pre, ": ", conns_by_id, ids_by_conn)
                 continue # there might be stuff in that socket, so select again
 
             remaining_conns = []
             for conn in active_conns:
+                """Messages from the unix ipc socket
+
+                append id & signal to the rest of the Qt system
+                """
                 conn_ok = True
                 if conn in r:
                     #print(self.pre, ": getting some from", r)
@@ -178,17 +241,34 @@ sock.send(msg)
                         msg += msg_part
                         if len(msg) < 512:
                             break
+                    
                     if conn_ok:
-                        print(self.pre, ": got external command", pickle.loads(msg))
-                        self.sendMessage__(pickle.loads(msg))
+                        # add id, so that rest of the system can distinguish this connection
+                        key = ids_by_conn[conn]
+                        try:
+                            msg = pickle.loads(msg)
+                        except Exception as e:
+                            print("could not deserialize message from ipc", e)
+                            continue
+                        if isinstance(msg, dict):
+                            pass
+                        else:
+                            print("ipc message not a dict")
+                            continue
+                        msg["id"] = key
+                        print(self.pre, ": got ipc command", msg, "from", conn)
+                        self.sendMessage__(msg)
                     else:
                         print(self.pre, ": dropping connection", conn)
                         conn.close()
                         self.sendMessage__({
                           "class" : "base",
                           "name"  : "drop",
-                          "parameters" : {}  
+                          "parameters" : {},
+                          "id" : ids_by_conn[conn]  
                         })
+                        key = ids_by_conn.pop(conn)
+                        conns_by_id.pop(key)
                 if conn_ok:
                     remaining_conns.append(conn)
                 

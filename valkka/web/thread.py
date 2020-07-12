@@ -31,6 +31,11 @@ from PySide2 import QtCore, QtWidgets, QtGui
 class WWWQThread(IPCQThread):
     """Starts a pyramid webserver & handles intercom to Qt main thread with it
 
+    ::
+
+        Qt main thread <-- Qt signals --> IPCQThread <-- unix domains socket --> Pyramid webserver
+
+
     TODO: instantiate the client-side unix socket in the http requests
     """
     inifile = "development.ini"
@@ -121,6 +126,12 @@ class WWWQThread(IPCQThread):
 class WebSocketThread(IPCQThread):
     """Starts a websocket daemon that communicates with this QThread using ipc
 
+
+    ::
+
+        Qt main thread <-- Qt signals --> IPCQThread [THIS ONE] <-- unix domains socket --> Websocket server
+
+
     - websocket requested => ws server creates the socket, sends a message to this thread through IPC
     - .. clients should be registered, based on the fd
     - valkka-counter case: increment signals are sent from here .. just connect that signal to rest of the system
@@ -129,7 +140,6 @@ class WebSocketThread(IPCQThread):
     - ..websocket server gets that signal & sends it to client
     """
     cli = "valkka-live-ws-server"
-
 
     def __init__(self, server_address):
         super().__init__(server_address)
@@ -188,6 +198,8 @@ class MyGui(QtWidgets.QMainWindow):
         self.b.clicked.connect(self.b_slot)
         self.lay.addWidget(self.b)
 
+        self.ws_thread.signals.base.connect(self.ws_message)
+
         self.thread.start()
         time.sleep(1)
         self.ws_thread.start()
@@ -197,6 +209,18 @@ class MyGui(QtWidgets.QMainWindow):
 
     def b_slot(self):
         pass
+
+
+    def ws_message(self, obj):
+        print("Main thread got ws message", obj)
+        id_ = obj["id"]
+        # let's do ping-pong game with the web frontend
+        self.ws_thread.command.emit({
+            "id" : id_,
+            "class" : "base",
+            "name"  : "pong",
+            "parameters" : None
+        })
 
 
     def closeEvent(self, e):

@@ -32,29 +32,39 @@ ws2 = new WebSocket("ws://127.0.0.1:8080/ws/control/2");
 
 ws1.onmessage = function (event) {
     var node = document.createElement("LI");
-    var textnode = document.createTextNode(event.data);
-    node.appendChild(textnode);
+    // var textnode = document.createTextNode(event.data);
+    data = JSON.parse(event.data)
+    var textnode = document.createTextNode("class:" + data["class"]);
+    node.appendChild(textnode)
     document.getElementById("myList1").appendChild(node);
 };
 function callWS1() {
     // ws1.send("hello 1"); 
-    ws1.send('{"class" : "base", "name"  : "ping"}');
     ws1.send(JSON.stringify(
         {
         "class" : "base", 
-        "name"  : "ping"
+        "name"  : "click",
+        "parameters" : {"button" : 1}
         }
     ));
 };
 
 ws2.onmessage = function (event) {
     var node = document.createElement("LI");
-    var textnode = document.createTextNode(event.data);
+    // var textnode = document.createTextNode(event.data);
+    data = JSON.parse(event.data)
+    var textnode = document.createTextNode("class:" + data["class"]);
     node.appendChild(textnode);
     document.getElementById("myList2").appendChild(node);
 };
 function callWS2() {
-    ws2.send("hello 2"); 
+    ws2.send(JSON.stringify(
+        {
+        "class" : "base", 
+        "name"  : "click",
+        "parameters" : {"button" : 2}
+        }
+    ));
 }
 
 
