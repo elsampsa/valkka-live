@@ -6,6 +6,11 @@ Now also with Yolo object detection.
 
 For installation instructions, manual, etc. go [here](https://elsampsa.github.io/valkka-live)
 
+
+## Changelog
+
+
+
 ## Authors
 Sampsa Riikonen
 

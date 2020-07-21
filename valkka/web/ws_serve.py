@@ -70,7 +70,10 @@ async def hello(websocket, path):
                 "parameters" : null
             }
             """
-            msg = ws_task.result()
+            try:
+                msg = ws_task.result()
+            except websockets.exceptions.ConnectionClosedOK:
+                break
             #print("ws_serve: sending to ipc", msg)
             msg = json.loads(msg)
             writer.write(pickle.dumps(msg))
@@ -80,7 +83,11 @@ async def hello(websocket, path):
             lis.append(ws_task)
 
         if us_task in done:
-            msg = us_task.result()
+            try:
+                msg = us_task.result()
+            except Exception as e:
+                print("ws_serve: ipc failed with", e)
+                break
             #print("ws_serve: got from ipc raw", msg)
             msg = pickle.loads(msg) # last char is endline
             #print("ws_serve: got from ipc", msg)
@@ -91,10 +98,10 @@ async def hello(websocket, path):
             lis.append(us_task)
 
     print("ws_serve: closing ipc socket")
-    reader.close()
+    # reader.close() # nopes
     writer.close()
-    await reader.wait_closed()
-    await writer.wait_closed()
+    # await reader.wait_closed()
+    # await writer.wait_closed() # nopes (only for __servers__)
     print("ws_serve: closing websocket")
 
     #"""

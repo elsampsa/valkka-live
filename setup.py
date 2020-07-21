@@ -17,7 +17,7 @@ setup(
         # 'PySide2 == 5.11.1',
         # 'PySide2 >= 5.13.2', # 5.13.2+ is again OK
         'PySide2 == 5.14.2', # keep this in sync with cute_mongo_forms ..
-        'cute_mongo_forms >= 0.7.2',
+        # 'cute_mongo_forms >= 0.7.2',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',
         'zeep >= 3.4.0',
@@ -29,6 +29,15 @@ setup(
     #    'git+https://github.com/elsampsa/cute_mongo_forms.git' # (**) works, but is deprecated.  Must use --process-dependency_links with pip3
     #],
     
+    www_requires = [
+        'plaster_pastedeploy',
+        'pyramid',
+        'pyramid_jinja2',
+        'pyramid_debugtoolbar',
+        'waitress'
+        # 'pyramid-redis-sessions'
+    ],
+
     scripts=[
         "bin/valkka-live", # sets env variables, uses run-valkka-live entry point
         "bin/install-valkka-core",

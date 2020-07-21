@@ -25,6 +25,12 @@ You should have received a copy of the GNU Affero General Public License along w
 # test = None
 
 program_name = "Valkka Live"
+sema_uuid = None
+
+# shared memory ring-buffer and image sizes
+shmem_n_buffer = None
+shmem_image_dimensions = None
+shmem_image_interval = None
 
 # cli arguments
 use_playback = True
@@ -35,6 +41,9 @@ config_dir = None
 valkkafs_dir = None
 logs_dir = None
 ipc_dir = None
+
+# start extra servers
+start_www = None
 
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]

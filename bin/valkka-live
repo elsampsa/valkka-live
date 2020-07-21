@@ -1,9 +1,9 @@
 #!/bin/bash
-# # disable vsync for intel:
+## disable vsync for intel:
 export vblank_mode=0
-# # disable vsync for nvidia proprietary drivers:
+## disable vsync for nvidia proprietary drivers:
 export __GL_SYNC_TO_VBLANK=0
-# # turn off compositor # maybe no ..
+## turn off compositor # maybe not ..
 # qdbus org.kde.KWin /Compositor suspend
 
 run-valkka-live "$@"
@@ -12,9 +12,12 @@ if [[ $? -eq 139 ]]; then
     echo "**** Segfault when executing Valkka : are you running on tested hardware and drivers?  See: http://www.valkka.fi   *********"
     echo "**** It could also be about your machine vision plugins                                                            *********"
     echo "****************************************************************************************************************************"
-    # let's kill all hanging processes ..
+    ## let's kill all hanging processes:
     valkka-kill
+    ## remove all hanging semaphores
+    ## TODO: each valkka application should use their own namespace for the semaphores..
+    ## now we might be killing other applications semaphores as well
+    # rm /dev/shm/*valkka*
 fi
-
-# if we would like to resume compositor ..
+## if we would like to resume compositor ..
 # qdbus org.kde.KWin /Compositor resume

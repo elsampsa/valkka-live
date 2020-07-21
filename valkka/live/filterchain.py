@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 import sys
 from valkka.live.gpuhandler import GPUHandler
-from valkka.live import constant
+from valkka.live import constant, singleton
 # from valkka.api2.chains import ManagedFilterchain, LiveManagedFilterchain, USBManagedFilterchain
 from valkka.live.chain.multifork import MultiForkFilterchain, ContextType, RecordType
 from valkka.live.chain.playback import PlaybackFilterchain
@@ -188,9 +188,9 @@ class LiveFilterChainGroup(FilterChainGroup):
                 
                 time_correction = self.time_correction, # overwrite timestamps or not?
 
-                shmem_image_dimensions = constant.shmem_image_dimensions,
-                shmem_n_buffer = constant.shmem_n_buffer,
-                shmem_image_interval = constant.shmem_image_interval
+                shmem_image_dimensions = singleton.shmem_image_dimensions,
+                shmem_n_buffer = singleton.shmem_n_buffer,
+                shmem_image_interval = singleton.shmem_image_interval
             )
 
             if classname == RTSPCameraRow.__name__:

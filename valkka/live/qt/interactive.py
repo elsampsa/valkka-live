@@ -29,7 +29,6 @@ import numpy
 from valkka.live.qt.tools import numpy2QPixmap
 from valkka.live.qt.widget import SimpleVideoWidget, CanvasWidget
 from valkka.live.mouse import MouseClickContext
-from valkka.api2 import ShmemRGBClient
 
 
 def point2vec(point):

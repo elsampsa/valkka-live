@@ -180,15 +180,19 @@ sock.send(msg)
             rlis += active_conns
             r, w, e = safe_select(rlis, [], [], timeout = 1.0)
             
+            """
             if len(r) < 1:
                 print(self.pre, ": timeout, ", len(rlis))
+            """
 
             if self.pipe_read in r:
                 """Commands from the frontend (i.e. from the rest of the Qt system)
                 """
                 msg = self.pipe_read.recv()
+                """
                 print(self.pre, ": got qt command", msg)
                 print(self.pre, ": conns_by_id:", conns_by_id)
+                """
                 if msg is None:
                     break
                 try:
@@ -256,7 +260,7 @@ sock.send(msg)
                             print("ipc message not a dict")
                             continue
                         msg["id"] = key
-                        print(self.pre, ": got ipc command", msg, "from", conn)
+                        # print(self.pre, ": got ipc command", msg, "from", conn)
                         self.sendMessage__(msg)
                     else:
                         print(self.pre, ": dropping connection", conn)

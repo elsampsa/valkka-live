@@ -476,8 +476,10 @@ class VideoShmemThread(QtCore.QThread):
             time.sleep(1)
             """
             # """
+            # print("pullFrameThread>")
             index, meta = self.client.pullFrameThread(
             )  # releases Python GIL while waiting for a frame
+            # print("<pullFrameThread")
             if (index is None):
                 # print(self.pre, "VideoShmemThread: client timed out..")
                 pass
@@ -486,8 +488,10 @@ class VideoShmemThread(QtCore.QThread):
                 data = self.client.shmem_list[index]
                 img = data.reshape(
                     (meta.height, meta.width, 3))
+                #"""
                 pixmap = numpy2QPixmap(img)
                 self.signals.pixmap.emit(pixmap)
+                #"""
             # """
 
         print(self.pre, "exit")
@@ -534,6 +538,7 @@ class AnalyzerWidget(QtWidgets.QWidget):
         self.signals = self.Signals()
         self.lay.addWidget(self.video)
         self.thread_ = None  # woops.. thread seems to be a member of QWidget..!
+        self.first_show_event = True
 
     def parametersToMvision(self) -> dict:
         return self.video.parametersToMvision()
@@ -547,9 +552,14 @@ class AnalyzerWidget(QtWidgets.QWidget):
             self.setGeometry(geom)
 
     def showEvent(self, e):
+        """Called on every time windows is re-shown
+        """
         print("AnalyzerWindow: showEvent")
-        # request shmem server from mvision process
-        self.signals.show.emit()
+        if self.first_show_event:
+            # request shmem server from mvision process
+            # ..but only once!
+            self.signals.show.emit() 
+            self.first_show_event = False
         e.accept()
 
     def closeEvent(self, e):

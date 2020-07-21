@@ -35,6 +35,7 @@ from valkka.api2.tools import parameterInitCheck, typeCheck, generateGetters
 from valkka.api2.chains.port import ViewPort
 
 from valkka.live.chain.base import BaseFilterchain
+from valkka.live import singleton
 
 
 class ContextType(Enum):
@@ -150,9 +151,9 @@ class MultiForkFilterchain(BaseFilterchain):
         "verbose"      : (bool, False),
         "msreconnect"  : (int, 0),
 
-        "shmem_image_dimensions" : (tuple, (1920//4, 1080//4)),
-        "shmem_n_buffer"         : (int, 10),
-        "shmem_image_interval"   : (int, 1000),
+        "shmem_image_dimensions" : None, # (tuple, (1920//4, 1080//4)),
+        "shmem_n_buffer"         : None, # (int, 10),
+        "shmem_image_interval"   : None, # (int, 1000),
         
         # "movement_interval" : (int, 100), # pass frames at 10 fps # USE shmem_image_interval
         # "movement_treshold" : (float, 0.01),
@@ -590,7 +591,8 @@ class MultiForkFilterchain(BaseFilterchain):
     def getShmem(self):
         """Returns the unique name identifying the shared mem and semaphores.  The name can be passed to the machine vision routines.
         """
-        shmem_name = self.idst + "_" + str(len(self.shmem_terminals))
+        shmem_name = singleton.sema_uuid + "_" +\
+            self.idst + "_" + str(len(self.shmem_terminals))
         print("getShmem : reserving", shmem_name)
         shmem_filter = core.RGBShmemFrameFilter(shmem_name, self.shmem_n_buffer, self.width, self.height)
         # shmem_filter = core.BriefInfoFrameFilter(shmem_name) # DEBUG: see if you are actually getting any frames here ..
@@ -622,7 +624,8 @@ class MultiForkFilterchain(BaseFilterchain):
     def getShmemQt(self):
         """For passing bitmaps to the Qt side
         """
-        shmem_name = self.idst + "_qt_" + str(len(self.shmem_terminals_qt))
+        shmem_name = singleton.sema_uuid + "_" +\
+            self.idst + "_qt_" + str(len(self.shmem_terminals_qt))
         print("getShmemQt : reserving", shmem_name)
         shmem_filter = core.RGBShmemFrameFilter(shmem_name, self.shmem_n_buffer, self.width, self.height)
         # shmem_filter = core.BriefInfoFrameFilter(shmem_name) # DEBUG: see if you are actually getting any frames here ..

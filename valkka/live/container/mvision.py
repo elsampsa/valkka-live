@@ -222,8 +222,8 @@ class MVisionContainer(VideoContainer):
 
     def activate(self):
         self.mvision_process.activate(
-                n_buffer         = constant.shmem_n_buffer,
-                image_dimensions = constant.shmem_image_dimensions,
+                n_buffer         = singleton.shmem_n_buffer,
+                image_dimensions = singleton.shmem_image_dimensions,
                 shmem_name       = self.shmem_name
                 )
         # creates the shmem client at the multiprocess
@@ -350,8 +350,8 @@ class MVisionClientContainer(MVisionContainer):
 
     def activate(self):
         self.mvision_process.activate(
-            n_buffer         = constant.shmem_n_buffer,
-            image_dimensions = constant.shmem_image_dimensions,
+            n_buffer         = singleton.shmem_n_buffer,
+            image_dimensions = singleton.shmem_image_dimensions,
             shmem_name       = self.shmem_name
             )
         self.mvision_process.setMasterProcess(self.mvision_master_process)

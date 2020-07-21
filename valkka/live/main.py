@@ -33,10 +33,17 @@ from valkka.live.local import ValkkaLocalDir
 from valkka.live import singleton
 
 singleton.test = "hello"
+singleton.sema_uuid = "valkka-live"
+# shared memory ring-buffer and image sizes
+singleton.shmem_n_buffer = 10
+singleton.shmem_image_dimensions = (1920//4, 1080//4)
+singleton.shmem_image_interval = 100 # 10 fps
+
 # set variables in the singleton module before loading gui
 singleton.config_dir = ValkkaLocalDir("live")
 singleton.valkkafs_dir = ValkkaLocalDir("live","fs")
 singleton.logs_dir = ValkkaLocalDir("live","logs")
+singleton.ipc_dir = ValkkaLocalDir("live","ipc")
 
 
 """
@@ -53,6 +60,7 @@ class MyGui(get_valkka_live_universe("xxx")):
 def process_cl_args():
 
     def str2bool(v):
+        print("vittu")
         return v.lower() in ("yes", "true", "t", "1")
 
     parser = argparse.ArgumentParser("valkka-live")
@@ -61,17 +69,20 @@ def process_cl_args():
     parser.add_argument("command", action="store", type=str,                 
         help="mandatory command)")
     """
-    parser.add_argument("--quiet", action="store", type="bool", default=False, 
+    parser.add_argument("--quiet", action="store", type=str2bool, default=False, 
         help="less verbosity")
 
-    parser.add_argument("--reset", action="store", type="bool", default=False, 
+    parser.add_argument("--reset", action="store", type=str2bool, default=False, 
         help="reset views, cameras lists etc.")
 
-    parser.add_argument("--playback", action="store", type="bool", default=False, 
+    parser.add_argument("--playback", action="store", type=str2bool, default=False, 
         help="enable / disable experimental playback")
 
-    parser.add_argument("--load", action="store", type=bool, default=False, 
+    parser.add_argument("--load", action="store", type=str2bool, default=False, 
         help="load layout saved previously")
+
+    parser.add_argument("--www", action="store", type=str2bool, default=False, 
+        help="start the web- and websocket servers")
 
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args
@@ -108,7 +119,13 @@ def main():
     else:
         singleton.load_layout = False
 
-    #print(singleton.use_playback)
+
+    if parsed_args.www:
+        singleton.start_www = True
+    else:
+        singleton.start_www = False
+        
+    #print(singleton.start_www)
     #return
 
     from valkka.live.gui import MyGui as MyGuiBase

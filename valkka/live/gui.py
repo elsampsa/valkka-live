@@ -99,6 +99,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.generateMethods()
         self.setupUi()
         self.startProcesses()
+        self.startThreads()
         self.openValkka()
         self.makeLogic()
         self.post()
@@ -134,7 +135,7 @@ class MyGui(QtWidgets.QMainWindow):
         self.config_win.close()
 
         self.closeProcesses() # closes shmem clients
-
+        self.closeThreads()
         self.closeValkka() # closes filterchains that have shmem servers
         singleton.data_model.close()
         
@@ -916,6 +917,42 @@ class MyGui(QtWidgets.QMainWindow):
         self.openValkka()
         self.loadWindowLayout()
         self.wait_window.hide()
+
+
+    def startThreads(self):
+        print(">startThreads")
+        if singleton.start_www:
+            from valkka.web.thread import WWWQThread, WebSocketThread
+            self.www_thread = WWWQThread(
+                singleton.ipc_dir.getFile("pyramid.ipc")
+            )
+            self.ws_thread = WebSocketThread(
+                singleton.ipc_dir.getFile("ws.ipc")
+            )
+            self.ws_thread.signals.base.connect(self.ws_message_test_slot)
+
+            print(">startThread: starting")
+            self.www_thread.start()
+            self.ws_thread.start()
+
+
+    def closeThreads(self):
+        if singleton.start_www:
+            self.ws_thread.close()
+            self.www_thread.close()
+
+
+    def ws_message_test_slot(self, obj):
+        print("Main thread got ws message", obj)
+        id_ = obj["id"]
+        # let's do ping-pong game with the web frontend
+        self.ws_thread.command.emit({
+            "id" : id_,
+            "class" : "base",
+            "name"  : "pong",
+            "parameters" : None
+        })
+
 
 
     # *** slot generators ***

@@ -25,7 +25,9 @@ import logging
 from valkka.api2 import ValkkaProcess, Namespace, ShmemRGBClient, ShmemRGBServer
 from valkka.api2.tools import *
 from valkka.live.multiprocess import MessageObject, safe_select, QMultiProcess
-from valkka.mvision import singleton
+from valkka.live import singleton as live_singleton
+from valkka.mvision import singleton as mvision_singleton
+
 
 logger = getLogger(__name__)
 
@@ -46,6 +48,50 @@ logger = getLogger(__name__)
         QShmemClientProcess
             MVisionClientBaseProcess
         MVisionBaseProcess
+
+
+
+
+A signal --> slot walkthrough:
+
+::
+
+    
+    valkka/live/container/video.py:
+
+    VideoContainer
+        
+        - Organizes / encapsulates QWidgets & QSignals
+        - Encapsulates a VideoWidget that handles drag'n'drop
+          and showing of video using X11 window mappings to OpenGL
+         
+    valkka/live/container/mvision.py:
+
+    MVisionClientContainer(VideoContainer)
+
+        Drag'n'dropping video into this container's VideoWidget,
+        launches method setDevice
+        => shmem server at the cpp side, by calling valkka/live/chain/multifork.py: getShmem
+        (which creates the server)
+        => then calls self.activate
+        => calls self.mvision_process.activate, which is a QShmemClientProcess
+        frontend method
+        => calls c__activate in the backend
+        => establishes an shmem client that listens to the shmem channel
+        
+        => calls QShmemClientProcesses' setMasterProcess
+        => goes to backend c__setMasterProcess, which establishes an shmem
+        server at the python side
+
+        Once that is done, call master processes "registerClient" method
+        => master process establishes ShmemRGBClient to listen for client's
+        RGBShmem server
+
+        Other things:
+
+        - Creates a floating AnalyzerWidget that appears only
+        when analyzer is defined
+        - ..when that happens, call self.analyzer_widget.activate
 
 
 
@@ -244,10 +290,10 @@ class QShmemMasterProcess(QShmemProcess):
         """
         self.logger.debug("c__registerClient")
 
-        event_fd, pipe = singleton.ipc.get2(ipc_index)
-        singleton.ipc.wait(ipc_index) # wait till the shmem server has been created
+        event_fd, pipe = mvision_singleton.ipc.get2(ipc_index)
+        mvision_singleton.ipc.wait(ipc_index) # wait till the shmem server has been created
         # this flag is controlled by QShmemClientProcess.c__setMasterProcess
-        singleton.ipc.clear(ipc_index)
+        mvision_singleton.ipc.clear(ipc_index)
         shmem_client = ShmemRGBClient(
                 name            =shmem_name,
                 n_ringbuffer    =n_buffer,   # size of ring buffer
@@ -417,7 +463,7 @@ class QShmemClientProcess(QShmemProcess):
     def c__setMasterProcess(self, ipc_index = None):
         # get shmem parameters from master process frontend
         self.ipc_index = ipc_index
-        self.eventfd, self.master_pipe = singleton.ipc.get1(self.ipc_index)
+        self.eventfd, self.master_pipe = mvision_singleton.ipc.get1(self.ipc_index)
         # self.n_buffer etc. have been set by a call to c__activate
         self.server = ShmemRGBServer(
             name            =self.shmem_name_server,
@@ -427,11 +473,11 @@ class QShmemClientProcess(QShmemProcess):
             verbose         =self.shmem_verbose
             )        
         self.server.useEventFd(self.eventfd) # activate eventfd API
-        singleton.ipc.set(ipc_index)
+        mvision_singleton.ipc.set(ipc_index)
 
 
     def c__unsetMasterProcess(self):
-        # singleton.ipc.release(self.ipc_index) # not here
+        # mvision_singleton.ipc.release(self.ipc_index) # not here
         self.server = None
         self.master_pipe = None
         self.eventfd = None
@@ -440,7 +486,7 @@ class QShmemClientProcess(QShmemProcess):
 
     def __init__(self, name = "QShmemClientProcess", **kwargs):
         super().__init__(name = name, **kwargs)
-        self.shmem_name_server = "valkkashmemserver"+str(id(self))
+        self.shmem_name_server = live_singleton.sema_uuid + "_shmemserver_" + str(id(self))
         # parameterInitCheck(QShmemClientProcess.parameter_defs, kwargs, self)
         self.ipc_index = None # used at the frontend
         self.master_process = None
@@ -509,7 +555,7 @@ class QShmemClientProcess(QShmemProcess):
     def setMasterProcess(self, master_process = None):
         # ipc_index, n_buffer, image_dimensions, shmem_name # TODO
         self.master_process = master_process
-        self.ipc_index = singleton.ipc.reserve()
+        self.ipc_index = mvision_singleton.ipc.reserve()
 
         # first, create the server
         self.sendMessageToBack(MessageObject(
@@ -536,7 +582,7 @@ class QShmemClientProcess(QShmemProcess):
         self.master_process.unregisterClient(
             ipc_index = self.ipc_index
         )
-        singleton.ipc.release(self.ipc_index)
+        mvision_singleton.ipc.release(self.ipc_index)
         self.ipc_index = None
         self.master_process = None
 
@@ -640,7 +686,7 @@ class MVisionBaseProcess(QShmemProcess):
     def connectAnalyzerWidget(self, analyzer_widget):
         analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        # print("connectAnalyzerWidget: signals:", self.signals)
+        print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
             analyzer_widget.setShmem_slot
         )
