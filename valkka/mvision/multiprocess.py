@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    multiprocess.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.13.0 
+@version 0.14.0 
 @brief   multiprocess / Qt intercommunication through pipes and signals
 """
 
