@@ -263,6 +263,7 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         self.N = N
         self.index = -1
         self.lines_normals = self.N * [(None, None)]
+        self.line_widths = self.N * [1]
         # current line & normal under definition:
         self.line = None  # tuple of two 2D numpy vectors # current line being manipulated
         self.unitnormal = None  # a 2D numpy vector # current normal being manipulated
@@ -274,6 +275,17 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         self.lines_normals[n] = (None, None)
         print("index, lines_normals", self.index, self.lines_normals[self.index])
         self.state = 0
+
+    def set_line_width_slot(self, n, width):
+        if n < 0: return
+        self.line_widths[n] = width
+        if self.state == 0: # send new line widths immediately
+            self.signals.update_analyzer_parameters.emit(
+                    self.parametersToMvision()
+                )
+        else:
+            # line definition is going on; when its finished, it'll send the parameters
+            pass
 
     def drawWidget(self, qp):
         super().drawWidget(qp)  # draws the bitmap on the background
@@ -314,7 +326,8 @@ class NLineCrossingCanvasWidget(CanvasWidget):
                 unitnormals.append(normal.tolist())   
         res = {
             "lines"         : lines,
-            "unitnormals"   : unitnormals
+            "unitnormals"   : unitnormals,
+            "linewidths"    : self.line_widths
         }
         # pprint(res)
         return res
@@ -325,12 +338,13 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         for cc, line in enumerate(dic["lines"]):
             if line is None:
                 self.lines_normals[cc] = (None, None)
+                self.line_widths[cc] = 1
             else:
                 unitnormal = dic["unitnormals"][cc]
                 line_ = (numpy.array(line[0]), numpy.array(line[1]))
                 unitnormal_ = numpy.array(unitnormal)
                 self.lines_normals[cc] = (line_, unitnormal_)
-
+                self.line_widths[cc] = dic["linewidths"]
 
     def handle_move(self, info):
         print("handle_move")
@@ -485,9 +499,14 @@ class NLineCrossingVideoWidget(SimpleVideoWidget):
         self.buttons = QtWidgets.QWidget(self)
         self.lay.addWidget(self.buttons)
         self.button1 = QtWidgets.QPushButton("Set Line 1", self.buttons)
+        self.linedef1 = QtWidgets.QSpinBox(self.buttons)
         self.button2 = QtWidgets.QPushButton("Set Line 2", self.buttons)
+        self.linedef2 = QtWidgets.QSpinBox(self.buttons)
 
-        for b in [self.buttons, self.button1, self.button2]:
+        self.linedef1.setRange(4,60)
+        self.linedef2.setRange(4,60)
+
+        for b in [self.buttons, self.button1, self.linedef1, self.button2, self.linedef2]:
             b.setSizePolicy(
                 QtWidgets.QSizePolicy.Maximum,
                 QtWidgets.QSizePolicy.Maximum
@@ -495,10 +514,15 @@ class NLineCrossingVideoWidget(SimpleVideoWidget):
 
         self.button_lay = QtWidgets.QHBoxLayout(self.buttons)
         self.button_lay.addWidget(self.button1)
+        self.button_lay.addWidget(self.linedef1)
         self.button_lay.addWidget(self.button2)
+        self.button_lay.addWidget(self.linedef2)
 
         self.button1.clicked.connect(lambda: self.canvas.define_line_slot(0))
         self.button2.clicked.connect(lambda: self.canvas.define_line_slot(1))
+        self.linedef1.valueChanged.connect(lambda i: self.canvas.set_line_width_slot(0, i))
+        self.linedef2.valueChanged.connect(lambda i: self.canvas.set_line_width_slot(1, i))
+
 
 
 class MyGui(QtWidgets.QMainWindow):
