@@ -27,8 +27,15 @@
 {% block javascript %}
 <script type="text/javascript">
 
-ws1 = new WebSocket("ws://127.0.0.1:8080/ws/control/1");
-ws2 = new WebSocket("ws://127.0.0.1:8080/ws/control/2");
+function createWebSocket(path) {
+    var protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+    return new WebSocket(protocolPrefix + '//' + location.host + path);
+}
+
+//ws1 = new WebSocket("ws://127.0.0.1:8080/ws/control/1");
+//ws2 = new WebSocket("ws://127.0.0.1:8080/ws/control/2");
+var ws1 = createWebSocket('/ws/control/1');
+var ws2 = createWebSocket('/ws/control/2');
 
 ws1.onmessage = function (event) {
     var node = document.createElement("LI");

@@ -31,6 +31,7 @@ import argparse
 from valkka.live.tools import getLogger
 from valkka.live.local import ValkkaLocalDir
 from valkka.live import singleton
+from valkka import web
 
 singleton.test = "hello"
 singleton.sema_uuid = "valkka-live"
@@ -122,6 +123,7 @@ def main():
 
     if parsed_args.www:
         singleton.start_www = True
+        singleton.www_module = web
     else:
         singleton.start_www = False
         

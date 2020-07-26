@@ -38,10 +38,14 @@ class WWWQThread(IPCQThread):
 
     TODO: instantiate the client-side unix socket in the http requests
     """
-    inifile = "development.ini"
+    inifile = "valkka.ini"
     
-    def __init__(self, server_address):
+    def __init__(self, server_address, web_module_name):
         super().__init__(server_address)
+        self.web_module_name = web_module_name
+        # this module's directory structure is inspected for
+        # config/nginx.conf
+        # config/valkka.ini
         self.pre = self.__class__.__name__
 
 
@@ -52,7 +56,8 @@ class WWWQThread(IPCQThread):
 
     def start_nginx(self):
         self.inipath = os.path.join(
-            "/".join(inspect.getabsfile(inspect.currentframe()).split("/")[0:-1]),
+            # "/".join(inspect.getabsfile(inspect.currentframe()).split("/")[0:-1]),
+            "/".join(inspect.getabsfile(self.web_module_name).split("/")[0:-1]),
             "config",
             "nginx.conf"
         )
@@ -77,7 +82,8 @@ class WWWQThread(IPCQThread):
 
     def start_pyramid(self):
         self.inipath = os.path.join(
-            "/".join(inspect.getabsfile(inspect.currentframe()).split("/")[0:-1]),
+            # "/".join(inspect.getabsfile(inspect.currentframe()).split("/")[0:-1]),
+            "/".join(inspect.getabsfile(self.web_module_name).split("/")[0:-1]),
             "config",
             self.inifile
         )
@@ -167,6 +173,7 @@ class WebSocketThread(IPCQThread):
     def close(self):
         self.ws_process.terminate()
         self.ws_process.wait()
+        super().close()
 
 
 
@@ -188,7 +195,8 @@ class MyGui(QtWidgets.QMainWindow):
         self.lay = QtWidgets.QVBoxLayout(self.w)
 
         self.thread = WWWQThread(
-            singleton.ipc_dir.getFile("pyramid.ipc")
+            singleton.ipc_dir.getFile("pyramid.ipc"),
+            inspect.currentframe()
         )
         self.ws_thread = WebSocketThread(
             singleton.ipc_dir.getFile("ws.ipc")

@@ -12,22 +12,22 @@
     <title>Pyramid Playground</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{{request.static_url('valkka.web:static/bootstrap/dist/css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{request.static_path('valkka.web:static/bootstrap/dist/css/bootstrap.min.css')}}" rel="stylesheet">
 
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="{{request.static_url('valkka.web:static/bootstrap/assets/css/ie10-viewport-bug-workaround.css')}}" rel="stylesheet">
+    <link href="{{request.static_path('valkka.web:static/bootstrap/assets/css/ie10-viewport-bug-workaround.css')}}" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="{{request.static_url('valkka.web:static/bootstrap/jumbotron.css')}}" rel="stylesheet">
+    <link href="{{request.static_path('valkka.web:static/bootstrap/jumbotron.css')}}" rel="stylesheet">
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie8-responsive-file-warning.js')}}"></script><![endif]-->
-    <script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie-emulation-modes-warning.js')}}"></script>
+    <!--[if lt IE 9]><script src="{{request.static_path('valkka.web:static/bootstrap/assets/js/ie8-responsive-file-warning.js')}}"></script><![endif]-->
+    <script src="{{request.static_path('valkka.web:static/bootstrap/assets/js/ie-emulation-modes-warning.js')}}"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="{{request.static_url('valkka.web:static/js/html5shiv.min.js')}}"></script>
-      <script src="{{request.static_url('valkka.web:static/js/respond.min.js')}}"></script>
+      <script src="{{request.static_path('valkka.web:static/js/html5shiv.min.js')}}"></script>
+      <script src="{{request.static_path('valkka.web:static/js/respond.min.js')}}"></script>
     <![endif]-->
   </head>
 
@@ -81,32 +81,32 @@
         <div class="col-md-4">
           <h2>Asynchronous GET demo</h2>
           <!-- NOTE: use here the route names you have defined in "routes.py" -->
-          <p><a class="btn btn-default" href="{{request.route_url('async_get')}}" role="button">Try Asynchronous GET &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('async_get')}}" role="button">Try Asynchronous GET &raquo;</a></p>
         </div>
 
         <div class="col-md-4">
           <h2>Download demo</h2>
-          <p><a class="btn btn-default" href="{{request.route_url('download')}}" role="button">Try Download &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('download')}}" role="button">Try Download &raquo;</a></p>
        </div>
 
         <div class="col-md-4">
           <h2>Session demo</h2>
-          <p><a class="btn btn-default" href="{{request.route_url('session')}}" role="button">Try Session &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('session')}}" role="button">Try Session &raquo;</a></p>
         </div>
 
         <div class="col-md-4">
           <h2>Videoplayer demo</h2>
-          <p><a class="btn btn-default" href="{{request.route_url('shaka')}}" role="button">Try Video &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('shaka')}}" role="button">Try Video &raquo;</a></p>
         </div>
 
         <div class="col-md-4">
             <h2>Login demo</h2>
-          <p><a class="btn btn-default" href="{{request.route_url('myauth')}}" role="button">Try Login &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('myauth')}}" role="button">Try Login &raquo;</a></p>
         </div>
 
         <div class="col-md-4">
             <h2>Websocket demo</h2>
-          <p><a class="btn btn-default" href="{{request.route_url('websocket')}}" role="button">Try Login &raquo;</a></p>
+          <p><a class="btn btn-default" href="{{request.route_path('websocket')}}" role="button">Try Login &raquo;</a></p>
         </div>
 
 
@@ -123,11 +123,11 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{{request.static_url('valkka.web:static/js/jquery-1.12.4.min.js')}}" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/vendor/jquery.min.js')}}"><\/script>')</script>
-    <script src="{{request.static_url('valkka.web:static/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+    <script src="{{request.static_path('valkka.web:static/js/jquery-1.12.4.min.js')}}" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="{{request.static_path('valkka.web:static/bootstrap/assets/js/vendor/jquery.min.js')}}"><\/script>')</script>
+    <script src="{{request.static_path('valkka.web:static/bootstrap/dist/js/bootstrap.min.js')}}"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="{{request.static_url('valkka.web:static/bootstrap/assets/js/ie10-viewport-bug-workaround.js')}}"></script>
+    <script src="{{request.static_path('valkka.web:static/bootstrap/assets/js/ie10-viewport-bug-workaround.js')}}"></script>
 
     <!-- Per-template javascript -->
 

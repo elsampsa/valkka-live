@@ -94,7 +94,7 @@ async def hello(websocket, path):
             print("ws_serve: sending to ws", msg)
             await websocket.send(json.dumps(msg))
             # re-schedule
-            us_task = loop.create_task(reader.read()) # unix socket
+            us_task = loop.create_task(reader.read(1024)) # unix socket
             lis.append(us_task)
 
     print("ws_serve: closing ipc socket")

@@ -224,6 +224,12 @@ sock.send(msg)
                 ids_by_conn[client_socket] = key
                 print(self.pre, ": connection from", client_socket, address, key) 
                 print(self.pre, ": ", conns_by_id, ids_by_conn)
+                self.sendMessage__({
+                    "class" : "base",
+                    "name"  : "open",
+                    "parameters" : {},
+                    "id" : key  
+                })
                 continue # there might be stuff in that socket, so select again
 
             remaining_conns = []

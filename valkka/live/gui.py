@@ -924,13 +924,13 @@ class MyGui(QtWidgets.QMainWindow):
         if singleton.start_www:
             from valkka.web.thread import WWWQThread, WebSocketThread
             self.www_thread = WWWQThread(
-                singleton.ipc_dir.getFile("pyramid.ipc")
+                singleton.ipc_dir.getFile("pyramid.ipc"),
+                singleton.www_module
             )
             self.ws_thread = WebSocketThread(
                 singleton.ipc_dir.getFile("ws.ipc")
             )
-            self.ws_thread.signals.base.connect(self.ws_message_test_slot)
-
+            self.ws_thread.signals.base.connect(self.ws_message_slot)
             print(">startThread: starting")
             self.www_thread.start()
             self.ws_thread.start()
@@ -942,7 +942,7 @@ class MyGui(QtWidgets.QMainWindow):
             self.www_thread.close()
 
 
-    def ws_message_test_slot(self, obj):
+    def ws_message_slot(self, obj):
         print("Main thread got ws message", obj)
         id_ = obj["id"]
         # let's do ping-pong game with the web frontend

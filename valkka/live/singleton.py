@@ -44,6 +44,7 @@ ipc_dir = None
 
 # start extra servers
 start_www = None
+www_module = None
 
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]
