@@ -29,14 +29,16 @@ setup(
     #    'git+https://github.com/elsampsa/cute_mongo_forms.git' # (**) works, but is deprecated.  Must use --process-dependency_links with pip3
     #],
     
-    www_requires = [
-        'plaster_pastedeploy',
-        'pyramid',
-        'pyramid_jinja2',
-        'pyramid_debugtoolbar',
-        'waitress'
-        # 'pyramid-redis-sessions'
-    ],
+    extras_require={
+        'www': [
+            'plaster_pastedeploy',
+            'pyramid',
+            'pyramid_jinja2',
+            'pyramid_debugtoolbar',
+            'waitress'
+            # 'pyramid-redis-sessions'
+        ] 
+    },
 
     scripts=[
         "bin/valkka-live", # sets env variables, uses run-valkka-live entry point
