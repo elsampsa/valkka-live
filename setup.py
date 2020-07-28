@@ -35,8 +35,8 @@ setup(
             'pyramid',
             'pyramid_jinja2',
             'pyramid_debugtoolbar',
-            'waitress'
-            # 'pyramid-redis-sessions'
+            'waitress',
+            'pyramid-redis-sessions'
         ] 
     },
 
