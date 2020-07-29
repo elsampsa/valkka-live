@@ -329,7 +329,8 @@ class NLineCrossingCanvasWidget(CanvasWidget):
             "unitnormals"   : unitnormals,
             "linewidths"    : self.line_widths
         }
-        # pprint(res)
+        #print("parametersToMvision")
+        #pprint(res)
         return res
 
     def mvisionToParameters(self, dic: dict):
@@ -344,7 +345,7 @@ class NLineCrossingCanvasWidget(CanvasWidget):
                 line_ = (numpy.array(line[0]), numpy.array(line[1]))
                 unitnormal_ = numpy.array(unitnormal)
                 self.lines_normals[cc] = (line_, unitnormal_)
-                self.line_widths[cc] = dic["linewidths"]
+                self.line_widths[cc] = dic["linewidths"][cc]
 
     def handle_move(self, info):
         print("handle_move")

@@ -36,7 +36,8 @@ setup(
             'pyramid_jinja2',
             'pyramid_debugtoolbar',
             'waitress',
-            'pyramid-redis-sessions'
+            'pyramid-redis-sessions',
+            'websockets'
         ] 
     },
 
