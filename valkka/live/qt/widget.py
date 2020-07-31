@@ -558,7 +558,20 @@ class AnalyzerWidget(QtWidgets.QWidget):
         if self.first_show_event:
             # request shmem server from mvision process
             # ..but only once!
-            self.signals.show.emit() 
+            self.signals.show.emit()
+            # this signal is connected by calling
+            #
+            # valkka.live.container.MVisionContainer.init
+            #
+            # to the correct processes
+            # 
+            # valkka.live.multiprocess.MVisionBaseProcess.
+            # .connectAnalyzerWidget
+            #
+            # so that it requests an shmem server
+            # it also connects self.signal.close to 
+            # .disconnectAnalyzerWidget
+            # 
             self.first_show_event = False
         e.accept()
 
@@ -571,6 +584,8 @@ class AnalyzerWidget(QtWidgets.QWidget):
             self.thread_ = None
         # release shmem server from mvision
         self.signals.close.emit()
+        # diconnects the shmem server
+        self.first_show_event = True
         e.accept()
 
     # def setShmem_slot(self, shmem_name, shmem_n_buffer, width, height):
