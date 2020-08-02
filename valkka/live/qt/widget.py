@@ -531,10 +531,7 @@ class AnalyzerWidget(QtWidgets.QWidget):
         # self.setCentralWidget(self.w)
 
         self.lay = QtWidgets.QVBoxLayout(self.w)
-        # self.video = SimpleVideoWidget(parent = self.w)
-        # self.video = LineCrossingVideoWidget(parent = self.w)
         self.video = analyzer_video_widget_class(parent=self.w)
-        # self.signals = self.video.signals # alias
         self.signals = self.Signals()
         self.lay.addWidget(self.video)
         self.thread_ = None  # woops.. thread seems to be a member of QWidget..!
@@ -588,7 +585,6 @@ class AnalyzerWidget(QtWidgets.QWidget):
         self.first_show_event = True
         e.accept()
 
-    # def setShmem_slot(self, shmem_name, shmem_n_buffer, width, height):
 
     def setShmem_slot(self, kwargs):
         """ Called after the mvision process has established a shmem server
@@ -607,7 +603,7 @@ class AnalyzerWidget(QtWidgets.QWidget):
         )
         self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
         self.thread_.start()
-        print("AnalyzerWindow: setShmem_slot: thread_", self.thread_)
+        print("AnalyzerWindow: setShmem_slot: thread_", id(self), self.thread_)
 
 
 class MyGui(QtWidgets.QMainWindow):

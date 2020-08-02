@@ -34,6 +34,42 @@ from valkka.mvision import multiprocess
 # from valkka.live.qt.widget import SimpleVideoWidget, LineCrossingVideoWidget, VideoShmemThread
 from valkka.live.qt.widget import AnalyzerWidget
 
+"""walk-through
+
+valkka.live.container.mvision.MVisionContainer
+    - encloses widgets
+    - encloses a machine vision multiprocess
+        --> self.mvision_process
+    - encloses self.analyzer_widget{valkka.live.qt.widget.AnalyzerWidget}
+        - AnalyzerWidget encloses self.video{valkka.live.qt.widget.SimpleVideoWidget}
+    - encloses self.video_widget{self.VideoWidget}
+        --> emits signal upon drag'n'drop
+    - setDevice is called when drag'n'drop occurs
+
+    in self.init():
+
+    self.mvision_process.connectAnalyzerWidget(
+        self.analyzer_widget
+    )
+
+    connects:
+
+    - MVisionProcess.signals.shmem_server
+      ==> self.analyzer_widget.setShmem_slot
+      (signals that shmem server is ready)
+
+    - self.analyzer_widget.signals.show
+      ==> MVisionProcess.requestQtShmemServer
+      (requests shmem server from MVisionProcess)
+
+    - self.analyzer_widget.signals.close
+      ==> MVisionProcess.releaseQtShmemServer
+      (tells MVisionProcess that shmem server can be released)
+
+"""
+
+
+
 
 class MVisionContainer(VideoContainer):
     """This class starts an analyzer process and passes it the correct shmem identifier
@@ -83,6 +119,8 @@ class MVisionContainer(VideoContainer):
             self.analyzer_widget = AnalyzerWidget(
                 analyzer_video_widget_class = self.mvision_process.analyzer_video_widget_class
                 )
+
+            print("MVisionContainer created AnalyzerWidget", id(self.analyzer_widget))
             # if hasattr(self.mvision_process, "connectAnalyzerWidget"):
             # self.mvision_process.connectAnalyzerWidget(self.analyzer_widget)
             # self.analyzer_widget_connected = True
@@ -250,8 +288,8 @@ class MVisionContainer(VideoContainer):
     def clearDevice(self):
         """Remove the current stream
         """
-        #print(self.pre, "clearDevice: ")
-        self.report("clearDevice")
+        print(self.pre, "clearDevice: ")
+        # self.report("clearDevice")
         if not self.device:
             return
         if self.mvision_process is None:
@@ -276,6 +314,7 @@ class MVisionContainer(VideoContainer):
         
         
     def clearProcess(self):
+        print("MVisionContainer: clearProcess")
         if self.mvision_process is None:
             return
         tag = self.mvision_class.tag
@@ -327,6 +366,7 @@ class MVisionClientContainer(MVisionContainer):
 
 
     def clearProcess(self):
+        print("MVisionClientContainer: clearProcess")
         if self.mvision_process is None:
             return
         self.mvision_process.unsetMasterProcess()        
@@ -334,6 +374,8 @@ class MVisionClientContainer(MVisionContainer):
         # print(self.pre, "clearProcess: client_process_map0=", singleton.client_process_map)
         singleton.client_process_map[tag].append(self.mvision_process) # .. and recycle it
         # print(self.pre, "clearProcess: client_process_map=", singleton.client_process_map)
+        if self.analyzer_widget_connected:
+            self.mvision_process.disconnectAnalyzerWidget(self.analyzer_widget)
         self.mvision_process = None
 
     

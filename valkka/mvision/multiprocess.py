@@ -684,9 +684,9 @@ class MVisionBaseProcess(QShmemProcess):
     # *** common frontend methods for machine vision processes ***
 
     def connectAnalyzerWidget(self, analyzer_widget):
+        print("connectAnalyzerWidget: signals:", self.signals)
         analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
             analyzer_widget.setShmem_slot
         )
@@ -703,6 +703,7 @@ class MVisionBaseProcess(QShmemProcess):
             "resetAnalyzerState", **{}))
 
     def disconnectAnalyzerWidget(self, analyzer_widget):
+        print("disconnectAnalyzerWidget: signals:", self.signals)
         analyzer_widget.video.signals.update_analyzer_parameters.disconnect(
             self.updateAnalyzerParameters)
         self.signals.shmem_server.disconnect(
@@ -822,9 +823,9 @@ class MVisionClientBaseProcess(QShmemClientProcess):
 
     
     def connectAnalyzerWidget(self, analyzer_widget):
+        print("MVisionClientBase: connectAnalyzerWidget: signals:", self.signals)
         analyzer_widget.video.signals.update_analyzer_parameters.connect(
             self.updateAnalyzerParameters)
-        # print("connectAnalyzerWidget: signals:", self.signals)
         self.signals.shmem_server.connect(
             analyzer_widget.setShmem_slot
         )
@@ -841,6 +842,7 @@ class MVisionClientBaseProcess(QShmemClientProcess):
             "resetAnalyzerState", **{}))
         
     def disconnectAnalyzerWidget(self, analyzer_widget):
+        print("MVisionClientBase: disconnectAnalyzerWidget: signals:", self.signals)
         analyzer_widget.video.signals.update_analyzer_parameters.disconnect(
             self.updateAnalyzerParameters)
         self.signals.shmem_server.disconnect(
