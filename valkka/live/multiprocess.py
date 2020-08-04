@@ -94,7 +94,29 @@ class QFrontThread(QtCore.QThread):
         self.logger.debug("QFrontThread: bye!")
 
     def readPipes__(self, timeout):
-        obj = self.pipe.recv()
+        """URGENT
+
+        ::
+
+            OpenGLThread: handleFifo: DISCARDING late frame  -11 <1596451483966> 
+            Traceback (most recent call last):
+            File "/home/sampsa/python3_packages/valkka_live/valkka/live/multiprocess.py", line 93, in run
+                self.readPipes__(timeout = None)
+            File "/home/sampsa/python3_packages/valkka_live/valkka/live/multiprocess.py", line 97, in readPipes__
+                obj = self.pipe.recv()
+            File "/usr/lib/python3.6/multiprocessing/connection.py", line 251, in recv
+                return _ForkingPickler.loads(buf.getbuffer())
+            AttributeError: Recursively add dependencies of package to depends_set.
+            [Thread 0x7fffa1527700 (LWP 27397) exited]
+            AnalyzerWindow: showEvent
+
+        """
+        try:
+            obj = self.pipe.recv()
+        except Exception as e:
+            self.logger.critical("QFrontThread: reading from multiprocess failed with %s", e)
+            return
+
         if obj is None:
             self.loop = False
             return
