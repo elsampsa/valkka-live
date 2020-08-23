@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    NAME.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.14.0 
+@version 0.14.1 
 @brief   
 """
 
@@ -219,7 +219,7 @@ class DiscoveryWidget(QWidget):
     def import_slot(self):
         verbose = False
         # verbose = True
-        if self.import_dialog.exec() == self.import_dialog.Accepted:
+        if self.import_dialog.exec_() == self.import_dialog.Accepted:
             # print("dialog result", res == self.import_dialog.Accepted)
             start_slot, end_slot, overwrite, new, user, password = self.import_dialog.getState()
             if verbose: print("dialog:", start_slot, end_slot, overwrite, new, user, password)

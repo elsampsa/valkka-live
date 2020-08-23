@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    widget.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.14.0 
+@version 0.14.1 
 @brief   Custom Qt Widgets
 """
 
@@ -468,6 +468,7 @@ class VideoShmemThread(QtCore.QThread):
             height=self.height,
             # client timeouts if nothing has been received in 1000 milliseconds
             mstimeout=1000,
+            # mstimeout=100,
             verbose=False
         )
         while self.loop:
@@ -478,6 +479,7 @@ class VideoShmemThread(QtCore.QThread):
             # """
             # print("pullFrameThread>")
             index, meta = self.client.pullFrameThread(
+            # index, meta = self.client.pullFrame(
             )  # releases Python GIL while waiting for a frame
             # print("<pullFrameThread")
             if (index is None):
@@ -486,8 +488,17 @@ class VideoShmemThread(QtCore.QThread):
             else:
                 # print(self.pre, "VideoShmemThread: client index, w, h =", index, meta.width, meta.height)
                 data = self.client.shmem_list[index]
-                img = data.reshape(
+                # print(data[0:10])
+                img = data.copy().reshape(
                     (meta.height, meta.width, 3))
+                # print(img[0:10])
+                """WARNING
+                - reshape does not necessarily create a copy of the data, but uses memview instead
+                - imagine that a memview is passed donwstreams, where it eventually goes to another python thread
+                - ..but in that pullFrameThread call above, we have released the GIL, so it migh happen
+                that the cpp code is modifying the data while the downstream python thread is accessing it simultaneously and
+                - ..crassssh
+                """
                 #"""
                 pixmap = numpy2QPixmap(img)
                 self.signals.pixmap.emit(pixmap)

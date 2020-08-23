@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    tools.py
 @author  Sampsa Riikonen
 @date    2018
-@version 0.14.0 
+@version 0.14.1 
 @brief   
 """
 
@@ -160,7 +160,7 @@ def QTabCapsulate(name, widget_list, blocking = False):
 
  
 def numpy2QPixmap(img):
-    """Stupid, time-leaking conversion from numpy array => QImage => QPixmap
+    """Stupid, time-consuming conversion from numpy array => QImage => QPixmap
     
     .. but there seems to be no other way
     
