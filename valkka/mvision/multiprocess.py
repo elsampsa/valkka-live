@@ -21,6 +21,7 @@ from PySide2 import QtWidgets, QtCore, QtGui
 import sys
 import time
 import logging
+from setproctitle import setproctitle
 
 from valkka.api2 import ValkkaProcess, Namespace, ShmemRGBClient, ShmemRGBServer
 from valkka.api2.tools import *
@@ -177,6 +178,8 @@ class QShmemProcess(QMultiProcess):
 
     def preRun_(self):
         self.logger.debug("preRun_")
+        if hasattr(self, "tag"):
+            setproctitle("valkka-"+self.tag)
         self.c__deactivate() # init variables
         
 
@@ -347,6 +350,8 @@ class QShmemMasterProcess(QShmemProcess):
 
     def preRun_(self):
         self.logger.debug("preRun_")
+        if hasattr(self, "tag"):
+            setproctitle("valkka-"+self.tag)
         self.clients = {}
         self.clients_by_fd = {}
         self.rlis = [self.back_pipe]
@@ -494,6 +499,8 @@ class QShmemClientProcess(QShmemProcess):
         
     def preRun_(self):
         self.logger.debug("preRun_")
+        if hasattr(self, "tag"):
+            setproctitle("valkka-"+self.tag)
         self.c__deactivate() # init variables
         self.c__unsetMasterProcess()
 

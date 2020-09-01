@@ -21,7 +21,8 @@ setup(
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',
         'zeep >= 3.4.0',
-        'lxml >= 4.5.0'
+        'lxml >= 4.5.0',
+        'setproctitle'
         # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment
     ],
     

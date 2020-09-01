@@ -21,12 +21,10 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import sys
-
-
-import sys
 from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
 import logging
 import argparse
+from setproctitle import setproctitle
 
 from valkka.live.tools import getLogger
 from valkka.live.local import ValkkaLocalDir
@@ -138,6 +136,7 @@ def main():
             print("\n*** Welcome to Valkka Live ***\n")
             super().__init__(parent)
 
+    setproctitle("valkka-live")
     app = QtWidgets.QApplication(["Valkka Live"])
     mg = MyGui()
     mg.show()
