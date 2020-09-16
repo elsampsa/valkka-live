@@ -1,7 +1,7 @@
 import asyncio
 import time, sys, os, socket, pickle, json
 import websockets
-
+from setproctitle import setproctitle
 
 """
 ::
@@ -114,5 +114,6 @@ def main():
 
 
 if __name__ == "__main__":
+    setproctitle("valkka-websocket")
     main()
 

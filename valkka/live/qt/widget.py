@@ -238,10 +238,23 @@ class SimpleVideoWidget(QtWidgets.QWidget):
         self.canvas.set_pixmap_slot(pixmap)
 
     def parametersToMvision(self) -> dict:
+        """internal parameters of this analyzer widget to a dictionary that
+        the associated machine vision process understands
+
+        everything in the dict must be json-seriazable, since this is used
+        to save the analyzer widget state to disk
+
+        requested from the canvas widget where most of the action takes place
+        """
         return self.canvas.parametersToMvision()
 
     def mvisionToParameters(self, dic: dict):
-        return self.canvas.mvisionToParameters(dic)
+        """used to deserialize the analyzer widget state from disk
+        into the widget
+
+        forwarded to the canvas widget
+        """
+        self.canvas.mvisionToParameters(dic)
 
 
 

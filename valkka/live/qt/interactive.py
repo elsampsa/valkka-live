@@ -81,10 +81,11 @@ class LineCrossingCanvasWidget(CanvasWidget):
         self.unSetTracking()
 
     def parametersToMvision(self) -> dict:
-        """Internal parameters of this analyzer widget to something that\
-        is understood by the associated machine vision process
+        """internal parameters of this analyzer widget to a dictionary that
+        the associated machine vision process understands
 
-        Must use json-seriazable objects
+        everything in the dict must be json-seriazable, since this is used
+        to save the analyzer widget state to disk
         """
         return {
             # "line"         : [invertY(self.line[0], shift = 1).tolist(), invertY(self.line[1], shift = 1).tolist()],
@@ -96,7 +97,8 @@ class LineCrossingCanvasWidget(CanvasWidget):
         }
 
     def mvisionToParameters(self, dic: dict):
-        """Inverse of parametersToMVision
+        """used to deserialize the analyzer widget state from disk
+        into the widget
         """
         self.line = (numpy.array(dic["line"][0]),
                         numpy.array(dic["line"][1]))
@@ -264,6 +266,7 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         self.index = -1
         self.lines_normals = self.N * [(None, None)]
         self.line_widths = self.N * [1]
+        self.object_size = 50*100
         # current line & normal under definition:
         self.line = None  # tuple of two 2D numpy vectors # current line being manipulated
         self.unitnormal = None  # a 2D numpy vector # current normal being manipulated
@@ -286,6 +289,22 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         else:
             # line definition is going on; when its finished, it'll send the parameters
             pass
+
+    def clear_line_slot(self, n = -1):
+        if n < 0: return
+        self.initVars()
+        self.lines_normals[n] = (None, None)
+        self.line_widths[n] = 1
+        self.signals.update_analyzer_parameters.emit(
+            self.parametersToMvision()
+            )
+        self.update()
+
+    def set_object_size_slot(self, val):
+        self.object_size = val
+        self.signals.update_analyzer_parameters.emit(
+            self.parametersToMvision()
+            )
 
     def drawWidget(self, qp):
         super().drawWidget(qp)  # draws the bitmap on the background
@@ -327,7 +346,8 @@ class NLineCrossingCanvasWidget(CanvasWidget):
         res = {
             "lines"         : lines,
             "unitnormals"   : unitnormals,
-            "linewidths"    : self.line_widths
+            "linewidths"    : self.line_widths,
+            "object_size"   : self.object_size
         }
         #print("parametersToMvision")
         #pprint(res)
@@ -346,6 +366,8 @@ class NLineCrossingCanvasWidget(CanvasWidget):
                 unitnormal_ = numpy.array(unitnormal)
                 self.lines_normals[cc] = (line_, unitnormal_)
                 self.line_widths[cc] = dic["linewidths"][cc]
+        self.object_size = dic["object_size"]
+
 
     def handle_move(self, info):
         print("handle_move")
@@ -499,13 +521,23 @@ class NLineCrossingVideoWidget(SimpleVideoWidget):
             )
         self.buttons = QtWidgets.QWidget(self)
         self.lay.addWidget(self.buttons)
-        self.button1 = QtWidgets.QPushButton("Set Line 1", self.buttons)
+        
+        self.button1 = QtWidgets.QPushButton("Set 1", self.buttons)
         self.linedef1 = QtWidgets.QSpinBox(self.buttons)
-        self.button2 = QtWidgets.QPushButton("Set Line 2", self.buttons)
+        self.cbutton1 = QtWidgets.QPushButton("Clear 1", self.buttons)
+
+        self.button2 = QtWidgets.QPushButton("Set 2", self.buttons)
         self.linedef2 = QtWidgets.QSpinBox(self.buttons)
+        self.cbutton2 = QtWidgets.QPushButton("Clear 2", self.buttons)
+       
+        self.label1 = QtWidgets.QLabel("Min object size:")
+        self.sizedef = QtWidgets.QSpinBox(self.buttons)
 
         self.linedef1.setRange(4,60)
         self.linedef2.setRange(4,60)
+        self.sizedef.setRange(0, 200*200)
+        self.sizedef.setValue(50*100) # a nice predefined value
+        self.sizedef.setSingleStep(500)
 
         for b in [self.buttons, self.button1, self.linedef1, self.button2, self.linedef2]:
             b.setSizePolicy(
@@ -515,15 +547,34 @@ class NLineCrossingVideoWidget(SimpleVideoWidget):
 
         self.button_lay = QtWidgets.QHBoxLayout(self.buttons)
         self.button_lay.addWidget(self.button1)
+        self.button_lay.addWidget(self.cbutton1)
         self.button_lay.addWidget(self.linedef1)
         self.button_lay.addWidget(self.button2)
+        self.button_lay.addWidget(self.cbutton2)
         self.button_lay.addWidget(self.linedef2)
+        self.button_lay.addWidget(self.label1)
+        self.button_lay.addWidget(self.sizedef)
 
         self.button1.clicked.connect(lambda: self.canvas.define_line_slot(0))
         self.button2.clicked.connect(lambda: self.canvas.define_line_slot(1))
+        
+        self.cbutton1.clicked.connect(lambda: self.canvas.clear_line_slot(0))
+        self.cbutton2.clicked.connect(lambda: self.canvas.clear_line_slot(1))
+        
         self.linedef1.valueChanged.connect(lambda i: self.canvas.set_line_width_slot(0, i))
         self.linedef2.valueChanged.connect(lambda i: self.canvas.set_line_width_slot(1, i))
+        self.sizedef.valueChanged.connect(self.canvas.set_object_size_slot)
 
+
+    def mvisionToParameters(self, dic: dict):
+        super().mvisionToParameters(dic)
+        # update the spinboxes
+        w0 = dic["linewidths"][0]
+        w1 = dic["linewidths"][1]
+        object_size = dic["object_size"]
+        self.linedef1.setValue(w0)
+        self.linedef2.setValue(w1)
+        self.sizedef.setValue(object_size)
 
 
 class MyGui(QtWidgets.QMainWindow):
