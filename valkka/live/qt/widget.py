@@ -126,7 +126,8 @@ class CanvasWidget(QtWidgets.QWidget):
     def mousePressEvent(self, e):
         # print("VideoWidget: mousePress")
         self.mouse_click_ctx.atPressEvent(e)
-        super().mousePressEvent(e)
+        # super().mousePressEvent(e) # why this?
+        e.accept()
 
     def mouseMoveEvent(self, e):
         self.handle_move(e)
@@ -155,7 +156,8 @@ class CanvasWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, e):
         self.mouse_click_ctx.atReleaseEvent(e)
-        super().mouseReleaseEvent(e)
+        # super().mouseReleaseEvent(e)
+        e.accept()
 
     def mouseGestureHandler(self, info):
         """This is the callback for MouseClickContext.  Passed to VideoWidget as a parameter
