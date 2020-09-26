@@ -86,7 +86,8 @@ class CanvasWidget(QtWidgets.QWidget):
         self.signals = signals
         self.pre = "CanvasWidget : "
         self.painter = QtGui.QPainter()
-        self.pixmap = def_pixmap
+        self.def_pixmap = def_pixmap
+        self.pixmap = self.def_pixmap
         self.mouse_click_ctx = MouseClickContext(
             self.mouseGestureHandler,
             t_double_click=0
@@ -111,11 +112,16 @@ class CanvasWidget(QtWidgets.QWidget):
         """
         pass
 
+    def closeEvent(self, e):
+        self.pixmap = self.def_pixmap
+        e.accept()
+
     def paintEvent(self, e):
         # http://zetcode.com/gui/pyqt5/painting/
         self.painter.begin(self)
         self.drawWidget(self.painter)
         self.painter.end()
+        e.accept()
 
     def drawWidget(self, qp):
         if self.pixmap is None:
@@ -602,7 +608,8 @@ class AnalyzerWidget(QtWidgets.QWidget):
         # TODO: why this is not fired?
         print("AnalyzerWindow: closeEvent: thread_", self.thread_)
         if self.thread_ is not None:
-            self.thread_.stop()
+            print("AnalyzerWindow: closeEvent: requesting thread stop")
+            self.thread_.stop() # waits for the thread to stop
             self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
             self.thread_ = None
         # release shmem server from mvision

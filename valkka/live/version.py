@@ -44,10 +44,9 @@ MIN_DARKNET_VERSION_MINOR = 2
 MIN_DARKNET_VERSION_PATCH = 0
 
 def check():
-    # check that the imported valkka is fresh enough
-    if ( (MIN_VALKKA_VERSION_MAJOR > VALKKA_VERSION_MAJOR) 
-        or (MIN_VALKKA_VERSION_MINOR > VALKKA_VERSION_MINOR) 
-        or (MIN_VALKKA_VERSION_PATCH > VALKKA_VERSION_PATCH) ):
+    version_min = int("%4.4i%4.4i%4.4i" % (MIN_VALKKA_VERSION_MAJOR, MIN_VALKKA_VERSION_MINOR, MIN_VALKKA_VERSION_PATCH))
+    version = int("%4.4i%4.4i%4.4i" % (VALKKA_VERSION_MAJOR, VALKKA_VERSION_MINOR, VALKKA_VERSION_PATCH))
+    if version < version_min:
             print(constant.valkka_core_old % (MIN_VALKKA_VERSION_MAJOR, 
                                               MIN_VALKKA_VERSION_MINOR, 
                                               MIN_VALKKA_VERSION_PATCH,

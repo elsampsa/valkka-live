@@ -24,7 +24,7 @@ from PySide2 import QtWidgets, QtCore, QtGui # Qt5
 from valkka.live import style, constant, singleton
 import sys
 import ctypes
-
+from PIL import Image
 
 def getCorrectedGeom(window):
     """Returns x, y, width, height that can be used with setGeometry (that uses coordinates without frames)
@@ -166,12 +166,19 @@ def numpy2QPixmap(img):
     
     A memleak & a fix: https://bugreports.qt.io/browse/PYSIDE-140?focusedCommentId=403528&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-403528
     """
-    # """
+    """
     ch = ctypes.c_char.from_buffer(img, 0)
     rcount = ctypes.c_long.from_address(id(ch)).value
     qimage = QtGui.QImage(ch, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
     ctypes.c_long.from_address(id(ch)).value = rcount
-    # """
+    """
+    #qimage = QtGui.QImage(im, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+    
+    #qimage = QtGui.QImage.fromData(QtCore.QByteArray(img.tobytes()), QtGui.QImage.Format_RGB888) ## nopes
+    
     # qimage = QtGui.QImage(img.tobytes(), img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
     #
-    return QtGui.QPixmap.fromImage(qimage)
+    im = Image.fromarray(img)
+    # qimage = im.toqpixmap 
+    # return QtGui.QPixmap.fromImage(qimage)
+    return im.toqpixmap()
