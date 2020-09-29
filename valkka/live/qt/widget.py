@@ -113,8 +113,13 @@ class CanvasWidget(QtWidgets.QWidget):
         pass
 
     def closeEvent(self, e):
+        print("CanvasWidget: close event")
         self.pixmap = self.def_pixmap
         e.accept()
+        print("CanvasWidget: close event exit")
+        # pixmap that was sent here through the signal/slot system
+        # gets garbage-collected
+        
 
     def paintEvent(self, e):
         # http://zetcode.com/gui/pyqt5/painting/
@@ -226,6 +231,9 @@ class CanvasWidget(QtWidgets.QWidget):
         self.pixmap = pixmap
         self.repaint()
 
+    def set_image_slot(self, img):
+        self.pixmap = numpy2QPixmap(img)
+        self.repaint()
 
 
 class SimpleVideoWidget(QtWidgets.QWidget):
@@ -244,6 +252,9 @@ class SimpleVideoWidget(QtWidgets.QWidget):
 
     def set_pixmap_slot(self, pixmap):
         self.canvas.set_pixmap_slot(pixmap)
+
+    def set_image_slot(self, img):
+        self.canvas.set_image_slot(img)
 
     def parametersToMvision(self) -> dict:
         """internal parameters of this analyzer widget to a dictionary that
@@ -466,6 +477,7 @@ class VideoShmemThread(QtCore.QThread):
     """
     class Signals(QtCore.QObject):
         pixmap = QtCore.Signal(object)
+        image = QtCore.Signal(object)
         exit = QtCore.Signal()
 
     def __init__(self, shmem_name: str, shmem_n_buffer: int, width: int, height: int, verbose=False):
@@ -510,7 +522,7 @@ class VideoShmemThread(QtCore.QThread):
                 # print(self.pre, "VideoShmemThread: client index, w, h =", index, meta.width, meta.height)
                 data = self.client.shmem_list[index]
                 # print(data[0:10])
-                img = data.copy().reshape(
+                self.img = data.copy().reshape(
                     (meta.height, meta.width, 3))
                 # print(img[0:10])
                 """WARNING
@@ -520,10 +532,26 @@ class VideoShmemThread(QtCore.QThread):
                 that the cpp code is modifying the data while the downstream python thread is accessing it simultaneously and
                 - ..crassssh
                 """
-                #"""
+                """DEBUG: test without actually sending the object into Qt infrastructure
+                # which one of these two lines is the problem?
                 pixmap = numpy2QPixmap(img)
                 self.signals.pixmap.emit(pixmap)
+                """
+                # send numpy array into the signal/slot system
+                # instead of QPixmap..?
                 #"""
+                self.signals.image.emit(self.img)
+                #"""
+                # could also just send the
+                # index of the shmem array
+                # & do everything at the canvas widget
+                #
+                # 1) 12h test without pixmap or signal
+                # 1b) use here self.pixmap instead of pixmap, in order to keep the reference
+                # https://wiki.python.org/moin/PyQt/Threading%2C_Signals_and_Slots
+                # 2) 12h test sending the img
+                # 3) 12h test sending the index only
+                # 
             # """
 
         print(self.pre, "exit")
@@ -610,7 +638,8 @@ class AnalyzerWidget(QtWidgets.QWidget):
         if self.thread_ is not None:
             print("AnalyzerWindow: closeEvent: requesting thread stop")
             self.thread_.stop() # waits for the thread to stop
-            self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
+            # self.thread_.signals.pixmap.disconnect(self.video.set_pixmap_slot)
+            self.thread_.signals.image.disconnect(self.video.set_image_slot)
             self.thread_ = None
         # release shmem server from mvision
         self.signals.close.emit()
@@ -634,7 +663,8 @@ class AnalyzerWidget(QtWidgets.QWidget):
             width,
             height
         )
-        self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
+        # self.thread_.signals.pixmap.connect(self.video.set_pixmap_slot)
+        self.thread_.signals.image.connect(self.video.set_image_slot)
         self.thread_.start()
         print("AnalyzerWindow: setShmem_slot: thread_", id(self), self.thread_)
 
@@ -682,3 +712,16 @@ def main():
 
 if (__name__ == "__main__"):
     main()
+
+
+"""
+AnalyzerWindow: showEvent
+AnalyzerWindow: closeEvent: thread_ <valkka.live.qt.widget.VideoShmemThread(0x207b1e0) at 0x7fff280f2b88>
+AnalyzerWindow: closeEvent: requesting thread stop
+VideoShmemThread:  exit
+[Thread 0x7ffee7fff700 (LWP 10179) exited]
+
+
+
+
+"""
