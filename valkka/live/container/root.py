@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   A root level container class.  VideoContainer (see video.py) can be placed in a grid into the root level container.
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
 import sys
 from valkka.api2.tools import parameterInitCheck
 from valkka.live import style, constant
@@ -78,8 +78,8 @@ class RootVideoContainer:
     """
 
     class Signals(QtCore.QObject):
-        close = QtCore.Signal()
-        closing = QtCore.Signal(object) # carries itself in the signal .. used to inform the main program that this instance can be removed from a list
+        close = Signal()
+        closing = Signal(object) # carries itself in the signal .. used to inform the main program that this instance can be removed from a list
 
     class ContainerWindow(QtWidgets.QMainWindow):
         # TODO: connect close signal

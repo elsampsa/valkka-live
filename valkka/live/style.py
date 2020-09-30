@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Qt stylesheets for Valkka Live
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
 
 # http://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qmenu
 

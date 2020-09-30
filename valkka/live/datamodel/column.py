@@ -21,7 +21,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import sys
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 from cute_mongo_forms.column import Column
 from valkka.live.tools import getH264V4l2
 from valkka.api2.tools import parameterInitCheck

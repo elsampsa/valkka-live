@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   QTree abstraction for a drag'n'drop camera list
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 import sys
 import pickle
 from valkka.live.listitem import HeaderListItem, ServerListItem, RTSPCameraListItem, USBCameraListItem
@@ -71,11 +71,11 @@ class TreeModel(QtCore.QAbstractItemModel):
             return self.createIndex(row, column, childItem)
             """
             # .. that one does not work for PySide 5.12+
-            TypeError: 'PySide2.QtCore.QAbstractItemModel.createIndex' called with wrong argument types:
-            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, ServerListItem)
+            TypeError: 'PyQt5.QtCore.QAbstractItemModel.createIndex' called with wrong argument types:
+            PyQt5.QtCore.QAbstractItemModel.createIndex(int, int, ServerListItem)
             Supported signatures:
-            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, quintptr = 0)
-            PySide2.QtCore.QAbstractItemModel.createIndex(int, int, void = nullptr)
+            PyQt5.QtCore.QAbstractItemModel.createIndex(int, int, quintptr = 0)
+            PyQt5.QtCore.QAbstractItemModel.createIndex(int, int, void = nullptr)
             """
         else:
             return QtCore.QModelIndex()

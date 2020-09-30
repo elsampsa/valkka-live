@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Custom Qt Widgets
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 import sys
 import time
 # import math
@@ -67,7 +67,7 @@ class FormWidget(QtWidgets.QWidget):
     """
 
     class Signals(QtCore.QObject):
-        show = QtCore.Signal()
+        show = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -232,7 +232,8 @@ class CanvasWidget(QtWidgets.QWidget):
         self.repaint()
 
     def set_image_slot(self, img):
-        self.pixmap = numpy2QPixmap(img)
+        self.pixmap = numpy2QPixmap(img) # THIS WILL CREATE A REFLEAK IN PYSIDE2
+        # self.pixmap = None
         self.repaint()
 
 
@@ -240,7 +241,7 @@ class SimpleVideoWidget(QtWidgets.QWidget):
     """Receives QPixMaps to a slot & draws them
     """
     class Signals(QtCore.QObject):
-        update_analyzer_parameters = QtCore.Signal(object)
+        update_analyzer_parameters = Signal(object)
 
     def __init__(self, def_pixmap=None, parent=None):
         super().__init__(parent)
@@ -476,9 +477,9 @@ class VideoShmemThread(QtCore.QThread):
     Connect VideoShmemThread to SimpleVideoWidget.set_pixmap_slot
     """
     class Signals(QtCore.QObject):
-        pixmap = QtCore.Signal(object)
-        image = QtCore.Signal(object)
-        exit = QtCore.Signal()
+        pixmap = Signal(object)
+        image = Signal(object)
+        exit = Signal()
 
     def __init__(self, shmem_name: str, shmem_n_buffer: int, width: int, height: int, verbose=False):
         super().__init__()
@@ -579,8 +580,8 @@ class AnalyzerWidget(QtWidgets.QWidget):
     """
 
     class Signals(QtCore.QObject):
-        show = QtCore.Signal()
-        close = QtCore.Signal()
+        show = Signal()
+        close = Signal()
 
     def __init__(self, parent=None, analyzer_video_widget_class=SimpleVideoWidget):
         super().__init__(parent)

@@ -25,7 +25,7 @@ import time
 from multiprocessing import Pipe, Lock
 from valkka.live.multiprocess import safe_select
 import socket, pickle, os
-from PySide2 import QtCore, QtWidgets, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 
 
 class IPCQThread(QtCore.QThread):
@@ -49,7 +49,7 @@ class IPCQThread(QtCore.QThread):
         - ..which writes into internal pipe at the frontend
         - ..backend reads the object from the pipe and acts accordingly
         """
-        command = QtCore.Signal(object)
+        command = Signal(object)
         
         """outgoing (== to the rest of the Qt system) signal classes
 
@@ -65,7 +65,7 @@ class IPCQThread(QtCore.QThread):
         When a message comes throught the ipc socket, class looks for correct signal object with the name
         defined by the key "class":
         """
-        base = QtCore.Signal(object)
+        base = Signal(object)
 
 
     def __init__(self, server_address):

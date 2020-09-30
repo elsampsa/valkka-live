@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   a container that manages widgets for video
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
 import sys
 import pickle
 from valkka.api2.tools import parameterInitCheck
@@ -74,10 +74,10 @@ class VideoContainer:
     """
 
     class Signals(QtCore.QObject):
-        close = QtCore.Signal(object)
-        drop  = QtCore.Signal(object)
-        left_double_click  = QtCore.Signal()
-        right_double_click = QtCore.Signal()
+        close = Signal(object)
+        drop  = Signal(object)
+        left_double_click  = Signal()
+        right_double_click = Signal()
         
     # Right-click pop-up menu
     # Adding installed cameras here could be done as follows: create this

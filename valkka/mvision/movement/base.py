@@ -16,8 +16,8 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   A movement analyzer and the associated multiprocess
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-from PySide2 import QtWidgets, QtCore, QtGui
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import sys
 import time
 import os
@@ -211,10 +211,10 @@ class MVisionProcess(MVisionBaseProcess):
     # signals.
     #"""
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object)
-        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
-        start_move = QtCore.Signal()
-        stop_move = QtCore.Signal()
+        pong = Signal(object)
+        shmem_server = Signal(object) # launched when the mvision process has established a shared mem server
+        start_move = Signal()
+        stop_move = Signal()
     #"""
 
     # backend method

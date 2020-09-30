@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Datatypes that can be saved and visualized using cute_mongo_forms
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 import sys
 import os
 # from valkka.core import *

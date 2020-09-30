@@ -23,7 +23,7 @@ You should have received a copy of the GNU Affero General Public License along w
 import sys
 import time
 from threading import Lock, Event
-from PySide2 import QtCore, QtWidgets, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 
 from valkka.onvif import OnVif, PTZ, DeviceManagement, Media
 
@@ -31,7 +31,7 @@ from valkka.onvif import OnVif, PTZ, DeviceManagement, Media
 class OnvifCommand:
 
     class Signals(QtCore.QObject):
-        reply = QtCore.Signal(object)
+        reply = Signal(object)
 
     def __init__(self,
                  service_name=None,
@@ -69,7 +69,7 @@ class QOnvifThread(QtCore.QThread):
     """
     class Signals(QtCore.QObject):
         # incoming signal that carries and object (++)
-        command = QtCore.Signal(object)
+        command = Signal(object)
 
     def __init__(self, ip = None, port = 80, user = "admin", password = "12345"):
         super().__init__()

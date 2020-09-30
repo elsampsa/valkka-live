@@ -19,9 +19,9 @@ You should have received a copy of the GNU Affero General Public License along w
 @version 0.14.1 
 @brief   
 """
-
 import sys
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+# import PyQt5 # this would trigger PyQt5 instead of PySide2
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import logging
 import argparse
 from setproctitle import setproctitle

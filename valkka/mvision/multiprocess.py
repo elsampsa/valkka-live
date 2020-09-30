@@ -16,8 +16,8 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   multiprocess / Qt intercommunication through pipes and signals
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-from PySide2 import QtWidgets, QtCore, QtGui
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import sys
 import time
 import logging
@@ -105,7 +105,7 @@ class QShmemProcess(QMultiProcess):
     timeout = 1.0
 
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object) # demo outgoing signal
+        pong = Signal(object) # demo outgoing signal
 
     # **** define here backend methods that correspond to incoming slots
     # **** 
@@ -625,8 +625,8 @@ class MVisionBaseProcess(QShmemProcess):
     """
 
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object) # demo outgoing signal
-        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
+        pong = Signal(object) # demo outgoing signal
+        shmem_server = Signal(object) # launched when the mvision process has established a shared mem server
 
 
     def __init__(self, **kwargs):
@@ -767,8 +767,8 @@ class MVisionClientBaseProcess(QShmemClientProcess):
     """
 
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object) # demo outgoing signal
-        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
+        pong = Signal(object) # demo outgoing signal
+        shmem_server = Signal(object) # launched when the mvision process has established a shared mem server
 
     def __init__(self, **kwargs):
         self.parameters = None

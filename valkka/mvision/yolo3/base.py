@@ -16,8 +16,8 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   Yolo v3 object detector for Valkka Live
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-from PySide2 import QtWidgets, QtCore, QtGui
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import sys
 import time
 import os
@@ -114,10 +114,10 @@ class MVisionProcess(MVisionBaseProcess):
     # frontend Qt thread will read processes communication pipe and emit these
     # signals.
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object)
-        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
-        objects = QtCore.Signal(object)
-        bboxes  = QtCore.Signal(object)
+        pong = Signal(object)
+        shmem_server = Signal(object) # launched when the mvision process has established a shared mem server
+        objects = Signal(object)
+        bboxes  = Signal(object)
 
     parameter_defs = {
         "verbose": (bool, False)

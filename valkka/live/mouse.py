@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   a class for separating and handling mouse events (click, double-click, etc.)
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 import sys
 import time
 from valkka.api2.tools import parameterInitCheck
@@ -82,7 +82,7 @@ class MouseClickContext:
         # print("MouseClickContext:",e.button())
         self.info.button = e.button()
         # self.info.events.append(e)
-        self.info.event = e  # save the event.. # but this get deleted when used with PySide2 ..?
+        self.info.event = e  # save the event.. # but this get deleted when used with PyQt5 ..?
         self.info.globalPos = e.globalPos()
         self.info.pos = e.pos()
         

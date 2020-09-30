@@ -20,9 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   
 """
 
-from PySide2.QtWidgets import *
-from PySide2.QtCore import *
-from PySide2.QtGui import *
+from valkka.live.qimport2 import *
 import sys
 from valkka.discovery import runWSDiscovery, runARPScan
 

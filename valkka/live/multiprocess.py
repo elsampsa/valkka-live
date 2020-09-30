@@ -27,7 +27,7 @@ import time
 import sys
 import logging
 
-from PySide2 import QtCore, QtWidgets
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 from valkka.live.tools import getLogger, setLogger
 
 logger = getLogger(__name__)
@@ -159,7 +159,7 @@ class QMultiProcess(Process):
     timeout = 1.0
 
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object) # demo outgoing signal
+        pong = Signal(object) # demo outgoing signal
 
 
     # **** define here backend methods that correspond to incoming slots

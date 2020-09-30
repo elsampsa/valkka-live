@@ -16,9 +16,9 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   A GUI for testing your machine vision with plain video files
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # If you use PyQt5, be aware
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # If you use PyQt5, be aware
 # of the licensing consequences
-from PySide2 import QtWidgets, QtCore, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import cv2
 import sys
 import json

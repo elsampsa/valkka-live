@@ -27,7 +27,7 @@ import time
 from valkka.api2 import  ValkkaFS, ValkkaFSManager, formatMstimestamp
 
 # Qt
-from PySide2 import QtCore, QtWidgets, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 
 # valkka live
 from valkka.live.qt.playwidget import TimeLineWidget, CalendarWidget
@@ -83,10 +83,10 @@ class PlaybackController:
     
     
     class Signals(QtCore.QObject):
-        set_time = QtCore.Signal(object)                # current time
-        set_fs_time_limits = QtCore.Signal(object)      # filesystem time limits.   Carries a tuple
-        set_block_time_limits = QtCore.Signal(object)   # loaded frames time limits.  Carries a tuple
-        new_block = QtCore.Signal()                     # a new block has been created
+        set_time = Signal(object)                # current time
+        set_fs_time_limits = Signal(object)      # filesystem time limits.   Carries a tuple
+        set_block_time_limits = Signal(object)   # loaded frames time limits.  Carries a tuple
+        new_block = Signal()                     # a new block has been created
         
     
     def __init__(self, **kwargs):

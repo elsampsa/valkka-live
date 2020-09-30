@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Manage and group Valkka filterchains
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
 import sys
 from valkka.live.gpuhandler import GPUHandler
 from valkka.live import constant, singleton

@@ -16,8 +16,8 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   Yolo v3 object detector for Valkka Live
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-from PySide2 import QtWidgets, QtCore, QtGui
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import sys
 import time
 import os

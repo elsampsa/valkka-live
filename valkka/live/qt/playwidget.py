@@ -22,7 +22,7 @@ import numpy
 import time, datetime
 import logging
 from valkka.live.tools import getLogger
-from PySide2 import QtWidgets, QtCore, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 
 
 def formatMstimestamp(mstime):
@@ -134,7 +134,7 @@ class TimeDiff:
 class CalendarWidget(QtWidgets.QCalendarWidget):
   
     class Signals(QtCore.QObject):
-        set_day_click  = QtCore.Signal(object)
+        set_day_click  = Signal(object)
 
     #stylesheet="""
     #QTableView{
@@ -277,7 +277,7 @@ class TimeLineWidget(QtWidgets.QWidget):
     """
 
     class Signals(QtCore.QObject):
-        seek_click = QtCore.Signal(object)
+        seek_click = Signal(object)
 
 
     # widget minimum dimensions

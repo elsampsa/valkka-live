@@ -21,7 +21,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import sys
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn
 from cute_mongo_forms.row import ColumnSpec, Row, RowWatcher
 from cute_mongo_forms.container import List, SimpleForm

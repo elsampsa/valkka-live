@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
 from valkka.live import style, constant, singleton
 import sys
 import ctypes
@@ -65,8 +65,8 @@ def QCapsulate(widget, name, blocking = False, nude = False):
     class QuickWindow(QtWidgets.QMainWindow):
 
         class Signals(QtCore.QObject):
-            close = QtCore.Signal()
-            show  = QtCore.Signal()
+            close = Signal()
+            show  = Signal()
 
         def __init__(self, blocking = False, parent = None, nude = False):
             super().__init__(parent)
@@ -120,8 +120,8 @@ def QTabCapsulate(name, widget_list, blocking = False):
     class QuickWindow(QtWidgets.QMainWindow):
 
         class Signals(QtCore.QObject):
-            close = QtCore.Signal()
-            show  = QtCore.Signal()
+            close = Signal()
+            show  = Signal()
 
         def __init__(self, blocking = False, parent = None):
             super().__init__(parent)

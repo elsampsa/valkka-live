@@ -25,7 +25,7 @@ import time
 import os, pickle, inspect, subprocess, shlex
 from valkka.live.qt.thread import IPCQThread
 from valkka.live import singleton
-from PySide2 import QtCore, QtWidgets, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 
 
 class WWWQThread(IPCQThread):

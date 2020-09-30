@@ -20,7 +20,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @brief   Custom cute_mongo_forms
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 import sys
 from cute_mongo_forms.row import Row, Column
 from cute_mongo_forms.container import EditFormSet2
@@ -48,9 +48,9 @@ class SlotFormSet(EditFormSet2):
         - new_record(object) : emitted when a new record has been added.  Carries the record _id.
         - save_record(object): emitted when a record has been saved.  Carries the record _id.
         """
-        save_record  =QtCore.Signal(object) # emitted when a record has been saved
-        modified     =QtCore.Signal(object) # emitted when one of the above has been triggered
-        copy_request =QtCore.Signal(object) # emitted when user wants to copy a certain entry to other slots
+        save_record  =Signal(object) # emitted when a record has been saved
+        modified     =Signal(object) # emitted when one of the above has been triggered
+        copy_request =Signal(object) # emitted when user wants to copy a certain entry to other slots
     
 
     def initVars(self):

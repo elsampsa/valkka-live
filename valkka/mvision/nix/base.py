@@ -16,9 +16,9 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @brief   Communicate with your machine vision analyzer through stdout, stdin and the filesystem
 """
 
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-# from PyQt5 import QtWidgets, QtCore, QtGui # Qt5
-from PySide2 import QtWidgets, QtCore, QtGui
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+# from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
 import sys
 import time
 import os
@@ -166,9 +166,9 @@ class MVisionProcess(MVisionBaseProcess):
     # signals.
     #"""
     class Signals(QtCore.QObject):
-        pong = QtCore.Signal(object)
-        shmem_server = QtCore.Signal(object) # launched when the mvision process has established a shared mem server
-        text = QtCore.Signal(object)
+        pong = Signal(object)
+        shmem_server = Signal(object) # launched when the mvision process has established a shared mem server
+        text = Signal(object)
     #"""
 
     parameter_defs = {

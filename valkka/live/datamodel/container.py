@@ -21,7 +21,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 import sys
-from PySide2 import QtWidgets, QtCore, QtGui  # Qt5
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 #from cute_mongo_forms.column import LineEditColumn, IntegerColumn, ConstantIntegerColumn, IPv4AddressColumn, LabelColumn, CheckBoxColumn
 from cute_mongo_forms.row import RowWatcher
 from cute_mongo_forms.container import List, SimpleForm
@@ -97,7 +97,7 @@ class DeviceList(List):
 class MemoryConfigForm(SimpleForm):
 
     class Signals(QtCore.QObject):
-        save = QtCore.Signal()
+        save = Signal()
 
     parameter_defs = {
         "row_class": RowWatcher,
@@ -157,7 +157,7 @@ class MemoryConfigForm(SimpleForm):
 class ValkkaFSForm(SimpleForm):
 
     class Signals(QtCore.QObject):
-        save = QtCore.Signal()
+        save = Signal()
 
     parameter_defs = {
         "row_class": RowWatcher,
