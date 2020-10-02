@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '0.14.1'
+version = '1.0.0'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -17,7 +17,8 @@ setup(
         # 'PySide2 == 5.11.1',
         # 'PySide2 >= 5.13.2', # 5.13.2+ is again OK
         'PySide2 == 5.14.2', # keep this in sync with cute_mongo_forms ..
-        # 'cute_mongo_forms >= 0.7.2',
+        'PyQt5',
+        'cute_mongo_forms >= 0.7.3',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',
         'zeep >= 3.4.0',
