@@ -150,8 +150,9 @@ class WebSocketThread(IPCQThread):
     def __init__(self, server_address):
         super().__init__(server_address)
         self.pre = self.__class__.__name__
-        
+        self.ws_process = None    
     
+
     def afterSocketCreated__(self):
         self.start_ws_server()
 
@@ -171,8 +172,9 @@ class WebSocketThread(IPCQThread):
 
 
     def close(self):
-        self.ws_process.terminate()
-        self.ws_process.wait()
+        if self.ws_process is not None:
+            self.ws_process.terminate()
+            self.ws_process.wait()
         super().close()
 
 

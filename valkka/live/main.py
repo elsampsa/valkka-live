@@ -29,7 +29,10 @@ from setproctitle import setproctitle
 from valkka.live.tools import getLogger
 from valkka.live.local import ValkkaLocalDir
 from valkka.live import singleton
-from valkka import web
+try:
+    from valkka import web
+except Exception as e:
+    print("WARNING: web backend not loaded")
 
 singleton.test = "hello"
 singleton.sema_uuid = "valkka-live"
@@ -81,7 +84,7 @@ def process_cl_args():
         help="load layout saved previously")
 
     parser.add_argument("--www", action="store", type=str2bool, default=False, 
-        help="start the web- and websocket servers")
+        help="start the web- and websocket servers.  you need to install the extras with pip3 using '[www]'")
 
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args

@@ -35,11 +35,11 @@ setup(
     extras_require={
         'www': [
             'plaster_pastedeploy',
-            'pyramid',
-            'pyramid_jinja2',
-            'pyramid_debugtoolbar',
-            'waitress',
-            'pyramid-redis-sessions',
+            'pyramid==1.10.5',
+            'pyramid_jinja2==2.8',
+            'pyramid_debugtoolbar==4.9',
+            'waitress==1.4.4',
+            'pyramid-redis-sessions==1.0.1',
             'websockets'
         ] 
     },
