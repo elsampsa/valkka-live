@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    main.py
 @author  Sampsa Riikonen
 @date    2020
-@version 1.0.0 
+@version 1.0.1 
 @brief   
 """
 import sys
@@ -84,7 +84,7 @@ def process_cl_args():
         help="load layout saved previously")
 
     parser.add_argument("--www", action="store", type=str2bool, default=False, 
-        help="start the web- and websocket servers.  you need to install the extras with pip3 using '[www]'")
+        help="starts the web- and websocket servers.  Before this, you need to install the www extras with 'pip3 install --user -e .[www]'")
 
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args

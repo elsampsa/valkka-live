@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    multiprocess.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.0 
+@version 1.0.1 
 @brief   multiprocess / Qt intercommunication through pipes and signals
 """
 
@@ -23,7 +23,9 @@ import time
 import logging
 from setproctitle import setproctitle
 
-from valkka.api2 import ValkkaProcess, Namespace, ShmemRGBClient, ShmemRGBServer
+# from valkka.api2 import ValkkaProcess, Namespace, ShmemRGBClient, ShmemRGBServer
+from valkka.api2 import ShmemRGBClient, ShmemRGBServer
+# from valkka.multiprocess import ValkkaProcess, Namespace
 from valkka.api2.tools import *
 from valkka.live.multiprocess import MessageObject, safe_select, QMultiProcess
 from valkka.live import singleton as live_singleton
