@@ -17,7 +17,7 @@ setup(
         # 'PySide2 == 5.11.1',
         # 'PySide2 >= 5.13.2', # 5.13.2+ is again OK
         'PySide2 == 5.14.2', # keep this in sync with cute_mongo_forms ..
-        'PyQt5',
+        'PyQt5', # installation of this seems to be buggy nowadays..?
         'cute_mongo_forms >= 0.7.3',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',

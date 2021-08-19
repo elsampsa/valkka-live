@@ -71,7 +71,7 @@ We'll be installing directly from github, so git is required:
 
 ::
 
-    sudo apt-get install git python3-pip
+    sudo apt-get install git python3-pip python3-opencv v4l-utils
 
 After that, install (and in the future, update) with:
 
