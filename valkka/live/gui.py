@@ -36,7 +36,9 @@ except importerror:
     raise SystemExit()
 
 from valkka.api2.logging import *
-from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError
+# from valkka.api2 import LiveThread, USBDeviceThread, ValkkaFS, ValkkaFSManager, ValkkaFSLoadError # old
+from valkka.api2 import LiveThread, USBDeviceThread
+from valkka.fs import ValkkaSingleFS, ValkkaFSManager, ValkkaFSLoadError
 from valkka.api2.tools import parameterInitCheck
 from valkka import core # for logging
 """
@@ -80,6 +82,8 @@ from valkka.live.cameralist import BasicView
 
 from valkka.live.filterchain import LiveFilterChainGroup, PlaybackFilterChainGroup
 from valkka.live.chain.multifork import RecordType
+
+from valkka.live.fs import ValkkaSingleFSHandler
 
 pre = "valkka.live :"
 
@@ -179,7 +183,7 @@ class MyGui(QtWidgets.QMainWindow):
         else:
             self.mvision = False
 
-        self.valkkafs = None
+        self.valkkafs = None # NEW: list of valkkafs'
 
         self.config_modified = False
         self.valkkafs_modified = False
@@ -269,7 +273,6 @@ class MyGui(QtWidgets.QMainWindow):
         for cl in self.mvision_client_classes:
             self.makeMvisionClientSlot(cl)
     
-
 
     def setupUi(self):
         self.setStyleSheet(style.main_gui)
@@ -391,7 +394,6 @@ class MyGui(QtWidgets.QMainWindow):
                         parent = self.server
                     )
                 )
-
 
         self.treelist.update()
         self.treelist.expandAll()
@@ -785,72 +787,7 @@ class MyGui(QtWidgets.QMainWindow):
         n_blocks  = valkkafs_config["n_blocks"]
         fs_flavor = valkkafs_config["fs_flavor"] 
         record    = valkkafs_config["record"]
-
-        # TODO: activate this if ValkkaFS changed in config!
-        if fs_flavor == "file":
-            partition_uuid = None
-        else:
-            partition_uuid = valkkafs_config["partition_uuid"]
-            
-        create_new_fs = False
-
-        if self.valkkafs is None: # first time
-            create_new_fs = False # try to load initially from disk
-        else:
-            print("openValkka: checking ValkkaFS")
-            create_new_fs = not self.valkkafs.is_same( # has changed, so must recreate
-                partition_uuid = partition_uuid, # None or a string
-                blocksize = blocksize * 1024*1024,
-                n_blocks = n_blocks
-            )
-            if create_new_fs: print("openValkka: ValkkaFS changed!")
-        
-        if not create_new_fs: # let's try to load it
-            print("openValkka: trying to load ValkkaFS")
-            try:
-                self.valkkafs = ValkkaFS.loadFromDirectory(
-                    dirname = singleton.valkkafs_dir.get()
-                )
-            except ValkkaFSLoadError as e:
-                print("openValkka: loading ValkkaFS failed with", e)
-                create_new_fs = True # no luck, must recreate
-
-        if create_new_fs:
-            print("openValkka: (re)create ValkkaFS")
-            self.valkkafs = ValkkaFS.newFromDirectory(
-                dirname = singleton.valkkafs_dir.get(),
-                blocksize = valkkafs_config["blocksize"] * 1024*1024, # MB
-                n_blocks = valkkafs_config["n_blocks"],
-                partition_uuid = partition_uuid,
-                verbose = True
-            )
-            # to keep things consistent..
-            singleton.data_model.valkkafs_collection.new(
-                ValkkaFSConfigRow,
-                {
-                    # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
-                    "n_blocks"       : default.get_valkkafs_config()["n_blocks"],
-                    "blocksize"      : valkkafs_config["blocksize"],
-                    "fs_flavor"      : valkkafs_config["fs_flavor"],
-                    "record"         : record,
-                    "partition_uuid" : partition_uuid
-                })
-
-
-        """
-        else:
-            self.valkkafs = None
-        """
-
-        if singleton.use_playback:
-            self.valkkafsmanager = ValkkaFSManager(
-                self.valkkafs,
-                write = record, # True or False
-                read = record,
-                cache = record
-                )
-            self.playback_controller = PlaybackController(valkkafs_manager = self.valkkafsmanager)
-
+    
         self.filterchain_group = LiveFilterChainGroup(
             datamodel     = singleton.data_model, 
             livethread    = self.livethread, 
@@ -859,21 +796,83 @@ class MyGui(QtWidgets.QMainWindow):
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
 
+        # NEW
+        # TODO: set default values to 100 blocks x 10 MB ~ 1 GB
+        # TODO: RecordType..?
         if singleton.use_playback:
             print("openValkka: ValkkaFS **PLAYBACK & RECORDING ACTIVATED**")
-            self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)
-        
-        # self.filterchain_group.update() # TODO: use this once fixed
-        
-        if singleton.use_playback:
+            # directory handling and valkkafs <-> stream id association
+            self.valkka_fs_handler = ValkkaSingleFSHandler(
+                basedir = singleton.valkkafs_dir.get(),
+                blocksize = valkkafs_config["blocksize"] * 1024*1024, # MB
+                n_blocks = valkkafs_config["n_blocks"]
+            )
+            for row in singleton.data_model.camera_collection.get():
+                _id=row["_id"] # get stream id
+                slot=row["slot"]
+                classname=row["classname"]
+                if classname!="EmptyRow":
+                    print(">", row)
+                    self.valkka_fs_handler.load(_id)
+                    # creates new valkka if doesn't exist
+            self.valkkafsmanager = ValkkaFSManager(
+                self.valkka_fs_handler.tolist()
+                )
+            #self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)# OLD
+            # self.filterchain_group: source for live stream
+            # self.filterchain_group_play: sink where the playback/saved stream should
+            # be sent
             self.filterchain_group_play = PlaybackFilterChainGroup(
                 datamodel     = singleton.data_model,
-                valkkafsmanager
-                            = self.valkkafsmanager,
                 gpu_handler   = self.gpu_handler, 
                 cpu_scheme    = self.cpu_scheme)
             self.filterchain_group_play.read()
 
+            print("self.filterchain_group_play: len=", len(self.filterchain_group_play))
+
+            # connect live & playback filterchains with the manager
+            for valkkafs, inputfilter in self.valkkafsmanager.iterateFsInput():
+                _id = self.valkka_fs_handler.getId(valkkafs)
+                if _id is None:
+                    print("WARNING: main: could not get id for", valkkafs)
+                    continue
+                playback_fc=self.filterchain_group_play.get(_id=_id)
+                if playback_fc is None:
+                    print("WARNING: main: could not find _id", _id,\
+                        "in playback filterchain group")
+                    """
+                    for chain in self.filterchain_group_play.chains:
+                        print(">>", chain)
+                        for key, getter in chain.iterateGetters():
+                            print(">", key, getter())
+                    """
+                    continue
+                live_fc=self.filterchain_group.get(_id=_id)
+                if live_fc is None:
+                    print("WARNING: main: could not find _id", _id,\
+                        "in live filterchain group")
+                    continue
+                self.valkkafsmanager.map_(
+                    valkkafs=valkkafs,
+                    # read & cached stream is sent/output'd here:
+                    framefilter=playback_fc.getInputFilter(),
+                    write_slot=live_fc.slot,
+                    read_slot=playback_fc.slot,
+                    _id=_id
+                )
+                # frames coming from the live stream are sent to
+                # valkkafsmanager's correct inputfilter
+                # (there is one corresponding to each valkkafs)
+                live_fc.connectRecTo(
+                    inputfilter,
+                    RecordType.always
+                    )
+                # TODO: disconnect at exit..?
+
+            # self.filterchain_group.update() # TODO: use this once fixed
+            self.playback_controller = PlaybackController(
+                valkkafs_manager = self.valkkafsmanager
+            )
 
                 
     def closeValkka(self):
@@ -906,7 +905,6 @@ class MyGui(QtWidgets.QMainWindow):
         if singleton.thread:
             singleton.thread.stop()
         """
-        
 
     def reOpenValkka(self):
         print("gui: valkka reinit")

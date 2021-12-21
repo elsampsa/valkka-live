@@ -13,7 +13,7 @@ Valkka Python3 examples library is free software: you can redistribute it and/or
 @author  Petri Eränkö
 @author  Sampsa Riikonen
 @date    2017
-@version 1.0.1 
+@version 1.2.2 
 @brief
 """
 
@@ -21,9 +21,9 @@ import sys
 import numpy
 import time, datetime
 import logging
-from valkka.live.tools import getLogger
-from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot
-
+from valkka.api2.tools import getLogger
+# from PySide2 import QtWidgets, QtCore, QtGui
+from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
 
 def formatMstimestamp(mstime):
     t = datetime.datetime.fromtimestamp(mstime/1000)
@@ -134,7 +134,7 @@ class TimeDiff:
 class CalendarWidget(QtWidgets.QCalendarWidget):
   
     class Signals(QtCore.QObject):
-        set_day_click  = Signal(object)
+        set_day_click  = QtCore.Signal(object)
 
     #stylesheet="""
     #QTableView{
@@ -240,7 +240,7 @@ class CalendarWidget(QtWidgets.QCalendarWidget):
         """
         self.day_min = datetime.date.fromtimestamp(limits[0]/1000)
         self.day_max = datetime.date.fromtimestamp(limits[1]/1000)
-        print("CalendarWidget: set_fs_time_limits_slot %s -> %s" %(str(self.day_min), str(self.day_max)))
+        # print("CalendarWidget: set_fs_time_limits_slot %s -> %s" %(str(self.day_min), str(self.day_max))) # TODO: proper logging
         
         self.setDateRange(
             QtCore.QDate(self.day_min.year, self.day_min.month, self.day_min.day),
@@ -277,7 +277,7 @@ class TimeLineWidget(QtWidgets.QWidget):
     """
 
     class Signals(QtCore.QObject):
-        seek_click = Signal(object)
+        seek_click = QtCore.Signal(object)
 
 
     # widget minimum dimensions
@@ -307,7 +307,6 @@ class TimeLineWidget(QtWidgets.QWidget):
         super().__init__(parent)
         self.signals = TimeLineWidget.Signals()
         self.logger = getLogger(__name__ + "." + self.__class__.__name__)
-        self.logger.setLevel(logging.DEBUG)
         self.logger.propagate = False
 
         self.setFSTimeLimits(None)
@@ -339,6 +338,8 @@ class TimeLineWidget(QtWidgets.QWidget):
         # currently zoomed-in time
         self.t0=self.mintime
         self.t1=self.maxtime
+
+        self.logger.debug("setDay t0=%s, t1=%s", self.t0, self.t1)
 
         self.mouse_press_x = 0
         self.mouse_press_y = 0
@@ -414,7 +415,7 @@ class TimeLineWidget(QtWidgets.QWidget):
         dt = self.t1 - self.t0
         t0 = t
         t1 = t0 + dt
-        self.logger.debug("panTO %i, %i, %i, %i", t0, t1, self.T0, self.T1)
+        self.logger.debug("panTo %i, %i, %i, %i", t0, t1, self.T0, self.T1)
         t0=max(self.mintime, t0)
         t1=min(self.maxtime, t1)
         self.t0=t0
@@ -882,9 +883,13 @@ class TimeLineWidget(QtWidgets.QWidget):
         if (self.mstime != None):
             qp.setPen(self.pen_timebar)
             qp.setBrush(self.color_timebar)
+            self.logger.debug("paintTimeBar: mstime=%s, t0=%s, lmx=%s",\
+                self.mstime, self.t0, self.lmx)
             x0=int(round((self.mstime - self.t0) * self.pixel_per_msec)) + self.lmx
             y0=0
             y1=self.h + self.lmy + self.umy
+            self.logger.debug("paintTimeBar: x0=%s, y0=%s, y1=%s",\
+                x0, y0, y1)
             qp.drawLine(QtCore.QLine(x0, y0, x0, y1))
 
 
@@ -933,10 +938,6 @@ class TimeLineWidget(QtWidgets.QWidget):
         qp.setPen(pen)
         qp.setBrush(brush)
         
-        if limits[0] < 0 or limits[1] < 0:
-            self.logger.critical("bad paintLimits: %i, %i, %i, %i", x0, x1, y0, y1)
-            return
-
         x0 = int(round(self.pixel_per_msec * (limits[0] - self.t0))) + self.lmx
         x1 = int(round(self.pixel_per_msec * (limits[1] - self.t0)))
         y0 = self.ytick + self.mitick
@@ -1015,12 +1016,12 @@ class TimeLineWidget(QtWidgets.QWidget):
     def drawWidget(self, qp):
         self.paintCanvas(qp)
         self.paintBackground(qp)
-        if self.fstimelimits is not None:
+        if (self.fstimelimits is not None) and (self.fstimelimits != (0,0)):
             self.paintFSLimits(qp)
-        if self.seltimelimits is not None:
+        if (self.seltimelimits is not None) and (self.seltimelimits != (0,0)):
             self.paintSelectionLimits(qp)
-        if self.blocktimelimits is not None:
-            self.paintBlockLimits(qp)            
+        if self.blocktimelimits is not None and (self.blocktimelimits != (0,0)):
+            self.paintBlockLimits(qp)        
         self.paintEvents(qp)
         # self.paintDeviceNames(qp)
         self.paintTickMargin(qp)
@@ -1140,9 +1141,16 @@ class TimeLineWidget(QtWidgets.QWidget):
     """
 
     # ***** SLOTS ******
+
+    def zoom_fs_limits_slot(self):
+        self.logger.debug("zoom_fs_limits_slot")
+        self.zoomToFS()
+
+
     def set_fs_time_limits_slot(self, limits: tuple):
         assert(isinstance(limits, tuple))
         self.setFSTimeLimits(limits)
+        self.logger.debug("set_fs_time_limits_slot : %s -> %s", formatMstimestamp(limits[0]), formatMstimestamp(limits[1]))
         self.repaint()
         
     def set_block_time_limits_slot(self, limits: tuple):
@@ -1165,13 +1173,17 @@ class TimeLineWidget(QtWidgets.QWidget):
                 self.logger.debug("postMouseRelease: click outside fs time limits")
         else:
         """
-        self.mstime = mstimestamp
+
+        """incoming mstimestamp = 0 means time not set
+
+        internally in this widget, time not set is indicated with
+        self.mstime = None
+        """
+        if mstimestamp <= 0:
+            self.mstime = None
+        else:
+            self.mstime = mstimestamp
         self.repaint()
-
-    def zoom_fs_limits_slot(self):
-        self.logger.debug("zoom_fs_limits_slot")
-        self.zoomToFS()
-
 
 
 class MyGui(QtWidgets.QMainWindow):

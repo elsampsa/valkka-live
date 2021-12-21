@@ -36,7 +36,7 @@ shmem_image_interval = None
 use_playback = True
 load_layout = False
 
-# local dirs
+# local dirs # set in main.py
 config_dir = None
 valkkafs_dir = None
 logs_dir = None

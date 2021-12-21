@@ -30,7 +30,7 @@ from enum import Enum
 from valkka import core
 # api2 versions of the thread classes
 from valkka.api2.threads import LiveThread, USBDeviceThread, OpenGLThread
-from valkka.api2.valkkafs import ValkkaFSManager, ValkkaFS
+from valkka.fs import ValkkaFSManager, ValkkaMultiFS, ValkkaSingleFS
 from valkka.api2.tools import parameterInitCheck, typeCheck, generateGetters
 from valkka.api2.chains.port import ViewPort
 
@@ -107,11 +107,6 @@ class MultiForkFilterchain(BaseFilterchain):
                    |            |            |
                  on-demand terminals for RGB images, for example
         
-
-
-
-
-
     """
     
     parameter_defs = {
@@ -227,7 +222,7 @@ class MultiForkFilterchain(BaseFilterchain):
 
         self.record_type = None
         self.id_rec = None
-        self.valkkafsmanager = None
+        # self.valkkafsmanager = None
         
         self.closed = False
 
@@ -244,7 +239,7 @@ class MultiForkFilterchain(BaseFilterchain):
     def requestClose(self):
         if not self.closed:
             self.avthread.requestStopCall()
-            self.clearRecording()
+            self.disconnectRec()
             self.releaseAllShmem()
             self.clearAllViewPorts()
         self.closed = True
@@ -276,6 +271,7 @@ class MultiForkFilterchain(BaseFilterchain):
             
     # (De)activate ValkkaFSWriterThread for this slot
     
+    """
     def setRecording(self, record_type: RecordType, manager: ValkkaFSManager, id_rec: int = None, ):
         # for the moment, only one ValkkaFSManager can be set
         if self.record_type == RecordType.never:
@@ -319,7 +315,27 @@ class MultiForkFilterchain(BaseFilterchain):
         self.record_type = None
         self.id_rec = None
         self.valkkafsmanager = None
-        
+    """
+
+    def connectRecTo(self, framefilter, record_type: RecordType):
+        self.record_type=record_type
+        self.fork_filter_file.connect("recorder_" + str(self.slot) , framefilter)
+        if self.record_type== RecordType.always:
+            self.fs_gate.set()
+        elif self.record_type == RecordType.movement:
+            print("setRecording: movement")
+            self.movement_client(inc = 1)
+            self.movement_filter.setCallback(self.movement_cb)
+
+    def disconnectRec(self):
+        if self.record_type is None:
+            return
+        if self.record_type == RecordType.always:
+            self.fs_gate.unSet()
+        elif self.record_type == RecordType.movement:
+            self.movement_client(inc = -1)
+        self.fork_filter_file.disconnect("recorder_" + str(self.slot))
+        self.record_type=None
 
     # *** Context creation for the relevant thread (LiveThread or USBDeviceThread) ***
     
@@ -651,11 +667,6 @@ class MultiForkFilterchain(BaseFilterchain):
         for key in list(self.shmem_terminals_qt.keys()):
             self.releaseShmemQt(key)
     
-
-
-
-
-            
     # *** Sending video to OpenGLThreads ***
     # now in the mother class        
     
@@ -703,18 +714,23 @@ def createTestThreads():
 def test1():
     """Test basic functionality of the MultiForkFilterchain
     """
-    valkkafs = ValkkaFS.newFromDirectory(
+    singleton.sema_uuid = "test1"
+
+    valkkafs = ValkkaSingleFS.newFromDirectory(
         dirname = "/home/sampsa/tmp/testvalkkafs",
         blocksize = 512*1024,
         n_blocks = 10,
         verbose = True
         )
         
-    valkkafsmanager = ValkkaFSManager(valkkafs)
+    valkkafsmanager = ValkkaFSManager([valkkafs])
+    valkkafsmanager.start() # TODO: remember to add this elsewhere
+
+    # getattr(valkkafsmanager,"iterateFsInput")
         
     livethread, usbdevicethread, openglthread = createTestThreads()
     
-    address = "rtsp://admin:12345@192.168.0.124"
+    address = sys.argv[2]
     context_type = ContextType.live
     
     #address = "/dev/video0"
@@ -731,7 +747,10 @@ def test1():
         usbdevicethread  = usbdevicethread,
         address          = address,
         slot             = 2,
-        _id              = 123
+        _id              = 123,
+        shmem_image_dimensions = (1920//4, 1080//4),
+        shmem_n_buffer   = 10,
+        shmem_image_interval = 1000
         )
     
     window_id = openglthread.createWindow()
@@ -750,20 +769,68 @@ def test1():
     time.sleep(n)
     
     print("\nsetRecording (always)\n")
-    fc.setRecording(12345, RecordType.always, valkkafsmanager)
+    # fc.setRecording(12345, RecordType.always, valkkafsmanager)
+    for valkkafs, inputfilter in valkkafsmanager.iterateFsInput():
+        valkkafsmanager.map_(
+            valkkafs=valkkafs,
+            # read & cached stream is sent/output'd here:
+            # (in this test it is not used)
+            # framefilter=playback_fc.getInputFilter(),
+            framefilter=None,
+            write_slot=fc.slot,
+            read_slot=None,
+            _id=fc.slot
+        )
+        fc.connectRecTo(
+            inputfilter,
+            RecordType.always
+        )
     print("\nsleep\n")
     time.sleep(n)
     
     print("\nclearRecording\n")
-    fc.clearRecording()
+    for valkkafs, inputfilter in valkkafsmanager.iterateFsInput():
+        valkkafsmanager.unmap(valkkafs, _id=fc.slot)
+        fc.disconnectRec()
+
     print("\nsleep\n")
     time.sleep(n)
     
+    """
     print("\nsetRecording (movement)\n")
-    fc.setRecording(12345, RecordType.movement, valkkafsmanager)
+    for valkkafs, inputfilter in valkkafsmanager.iterateFsInput():
+        fc.connectRecTo(
+            inputfilter,
+            RecordType.movement
+        )
     print("\nsleep\n")
     time.sleep(n)
-    
+    """
+
+    again = True
+    record_type = RecordType.always
+    # record_type = RecordType.movement # ssssegfauuult!
+
+    if again:
+        print("\nsetRecording (always) again\n")
+        for valkkafs, inputfilter in valkkafsmanager.iterateFsInput():
+            valkkafsmanager.map_(
+                valkkafs=valkkafs,
+                # read & cached stream is sent/output'd here:
+                # (in this test it is not used)
+                # framefilter=playback_fc.getInputFilter(),
+                framefilter=None,
+                write_slot=fc.slot,
+                read_slot=None,
+                _id=fc.slot
+            )
+            fc.connectRecTo(
+                inputfilter,
+                record_type
+            )
+        print("\nsleep\n")
+        time.sleep(n)
+
     print("\nsetRecording getShmem\n")
     name = fc.getShmem()
     print("\nsleep\n")
@@ -773,23 +840,32 @@ def test1():
     fc.releaseShmem(name)
     print("\nsleep\n")
     time.sleep(n)
-    
-    print("\nclearRecording\n")
-    fc.clearRecording()
-    print("\nsleep\n")
-    time.sleep(n)
-    
+
+    if again:
+        print("\nclearRecording\n")
+        for valkkafs, inputfilter in valkkafsmanager.iterateFsInput():
+            valkkafsmanager.unmap(valkkafs, _id=fc.slot)
+            fc.disconnectRec()
+
+    print("req close")
+
     fc.             requestClose()
     valkkafsmanager.requestClose()
     livethread.     requestClose()
     usbdevicethread.requestClose()
     openglthread.   requestClose()
     
+    print("wait close fc")
     fc.             waitClose()
+    print("wait close manager")
     valkkafsmanager.waitClose()
+    print("wait close live")
     livethread.     waitClose()
+    print("wait close usb")
     usbdevicethread.waitClose()
+    print("wait close gl")
     openglthread.   waitClose()
+    print("bye")
 
 
 def main():

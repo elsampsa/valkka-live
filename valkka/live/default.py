@@ -37,8 +37,8 @@ def get_memory_config():
 def get_valkkafs_config():
     valkkafs_config = {
         "dirname"    : singleton.valkkafs_dir.get(),
-        "n_blocks"   : 10,
-        "blocksize"  : 10,
+        "n_blocks"   : 100,
+        "blocksize"  : 1,
         "fs_flavor"  : "file",
         "record"     : False,
         "partition_uuid" : None
@@ -46,4 +46,3 @@ def get_valkkafs_config():
     return valkkafs_config
 
 fps = 25
-

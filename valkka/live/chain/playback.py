@@ -60,7 +60,7 @@ class PlaybackFilterchain(BaseFilterchain):
     
     parameter_defs = {
         "openglthreads"     : list,
-        "valkkafsmanager"   : ValkkaFSManager,
+        # "valkkafsmanager"   : ValkkaFSManager,
         #"record_type"       : RecordType,
         
         # common to LiveThread & USBDeviceThread
@@ -142,8 +142,10 @@ class PlaybackFilterchain(BaseFilterchain):
 
     def make_main_branch(self):
         self.fork_filter_main = core.ForkFrameFilterN("fork_filter_main_" + str(self.slot))
-        self.valkkafsmanager.setOutput(self._id, self.slot, self.fork_filter_main)
-
+        # self.valkkafsmanager.setOutput(self._id, self.slot, self.fork_filter_main) # old
+        
+    def getInputFilter(self):
+        return self.fork_filter_main
 
     def make_decode_branch(self):
         self.fork_filter_decode = core.ForkFrameFilterN("fork_filter_decode_" + str(self.slot))

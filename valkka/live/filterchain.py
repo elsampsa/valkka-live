@@ -49,11 +49,16 @@ class FilterChainGroup:
         self.chains = []
         self.closed = False
         
-        
     def __del__(self):
         if not self.closed:
             self.close()
         
+    def __len__(self):
+        return len(self.chains)
+
+    def dump(self):
+        for chain in self.chains:
+            print(chain)
         
     def close(self):
         self.closed = True
@@ -77,6 +82,9 @@ class FilterChainGroup:
 
         That searches a filterchain with the member address == "rtsp://some_address"
         """
+        if len(self.chains) < 1:
+            print("FilterChainGroup: WARNING: empty")
+            return None
         for chain in self.chains:
             for key in kwargs:
                 getter_name = "get_"+key
@@ -85,6 +93,8 @@ class FilterChainGroup:
                     getter = getattr(chain, getter_name) # e.g. "get_address"
                     if (getter() == kwargs[key]):
                         return chain
+                else:
+                    print("FilterChainGroup: no such getter", getter_name)
         return None
     
 
@@ -301,16 +311,15 @@ class LiveFilterChainGroup(FilterChainGroup):
         print(self.pre, "getDevice :", pars, device)
         return device
 
-
+    """removed: this worked only with ValkkaMultiFS
     def setRecording(self, record_type: RecordType, manager: ValkkaFSManager):
-        """Set recording state for all filterchains in this group
-        """
+        # Set recording state for all filterchains in this group
         for chain in self.chains:
             chain.setRecording(
                 record_type = record_type,
                 manager = manager
                 )
-
+    """
     
 class PlaybackFilterChainGroup(FilterChainGroup):
     """Create & manage filterchains for live video
@@ -320,7 +329,7 @@ class PlaybackFilterChainGroup(FilterChainGroup):
     parameter_defs = {
         "datamodel"        : DataModel,
         "gpu_handler"      : GPUHandler,
-        "valkkafsmanager"  : ValkkaFSManager,
+        # "valkkafsmanager"  : ValkkaFSManager,
         "verbose"          : (bool, False),
         "cpu_scheme"       : None
         }
@@ -367,7 +376,7 @@ class PlaybackFilterChainGroup(FilterChainGroup):
             chain = PlaybackFilterchain( # decoding and branching the stream happens here
                 openglthreads
                             = self.gpu_handler.openglthreads,
-                valkkafsmanager  = self.valkkafsmanager,
+                # valkkafsmanager  = self.valkkafsmanager,
                 slot        = device.getRecSlot(),
                 _id         = device._id,
                 affinity    = affinity,
