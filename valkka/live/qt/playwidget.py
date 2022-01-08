@@ -13,7 +13,7 @@ Valkka Python3 examples library is free software: you can redistribute it and/or
 @author  Petri Eränkö
 @author  Sampsa Riikonen
 @date    2017
-@version 1.2.2 
+@version 1.1.0 
 @brief
 """
 
@@ -86,10 +86,10 @@ class MouseClickContext:
     def atPressEvent(self, e):
         self.t = time.time()
         if (self.timer.isActive()):
-            print("timer active!")
+            # print("MouseClickContext: timer active!")
             self.double_click_flag = True
         else: 
-            print("reset")
+            # print("MouseClickContext: reset")
             self.double_click_flag = False
             self.button = e.button()
             self.pos = e.globalPos()
@@ -107,7 +107,7 @@ class MouseClickContext:
     
     def timer_slot(self):
         if self.callback is not None:
-            print("callback", self.double_click_flag)
+            # print("MouseClickContext: callback", self.double_click_flag)
             self.callback(self)
         
 
@@ -1062,10 +1062,10 @@ class TimeLineWidget(QtWidgets.QWidget):
             ie, dms=self.findNearestEvent(i, self.mouse_press_x)
         """
         if ctx.double_click_flag:
-            self.logger.debug("postMouseRelease: double click")
+            self.logger.debug("playwidget: postMouseRelease: double click")
         if (self.mouse_place_flavor == self.mouse_place_normal):
             mstime = int(round((self.mouse_press_x - self.lmx) * self.msec_per_pixel)) + self.t0
-            print("mstime1=",mstime)
+            # print("playwidget: postMouseRelease: mstime1=",mstime)
             if self.fstimelimits is not None: 
                 if mstime >= self.fstimelimits[0] and mstime <= self.fstimelimits[1]:
                     self.mstime = mstime
@@ -1073,10 +1073,10 @@ class TimeLineWidget(QtWidgets.QWidget):
                     self.logger.debug("postMouseRelease: click outside fs time limits")
                     return
             else:
-                print("mstime2=",mstime)
+                # print("playwidget: postMouseRelease: mstime2=",mstime)
                 self.mstime = mstime
                 
-            print("mstime3=",mstime)
+            # print("playwidget: postMouseRelease: mstime3=",mstime)
             self.logger.debug("postMouseRelease: mstime now %s", str(self.mstime))
             # self.time_signal.emit(self.mstime)
             self.repaint()

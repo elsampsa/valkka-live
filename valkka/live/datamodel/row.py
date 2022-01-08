@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    row.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief
 """
 
@@ -102,6 +102,11 @@ class RTSPCameraRow(Row):
             key_name="force_tcp",
             label_name="Force TCP",
             def_value=False),
+        ColumnSpec(
+            CheckBoxColumn,
+            key_name="record",
+            label_name="Enable recording",
+            def_value=False),
         
         ColumnSpec(
             LineEditColumn, 
@@ -182,6 +187,7 @@ class RTSPCameraRow(Row):
         self.placeWidget(cc, "port"); cc+=1
         self.placeWidget(cc, "tail"); cc+=1
         self.placeWidget(cc, "force_tcp"); cc+=1
+        self.placeWidget(cc, "record"); cc+=1
         # self.setVisible("tail", False) # test
         
         # Mainstream
@@ -374,22 +380,14 @@ class ValkkaFSConfigRow(Row):
     "n_blocks"   : 10,
     "blocksize"  : 10
     """
-
     columns = [
-        # TODO: for valkkafs metadata directory: (1) add a non-editable column
-        ColumnSpec(
-            CheckBoxColumn, 
-            key_name    = "record", 
-            label_name  = "Activate recording & playback",
-            def_value   = False),
-
         ColumnSpec(
             SpinBoxIntegerColumn,
             key_name    = "blocksize",
             label_name  = "Blocksize (MB)",
             min_value   = 1,
             max_value   = 1024*1024*1024, # 1 GB
-            def_value   = default.get_valkkafs_config()["blocksize"]), 
+            def_value   = default.get_valkkafs_config()["blocksize"]),
 
         ColumnSpec(
             SpinBoxIntegerColumn,
@@ -398,21 +396,30 @@ class ValkkaFSConfigRow(Row):
             min_value   = 5,
             max_value   = 999999999,
             def_value   = default.get_valkkafs_config()["n_blocks"]), 
-        # Calculate Total Size (MB)
-
-        ColumnSpec(ConstantRadioButtonColumn, 
-            key_name = "fs_flavor",    
-            label_name = "ValkkaFS type", 
-            list = [("Normal file", "file"),("Dedicated block device", "valkkafs")]),
-
-        ColumnSpec(ConstantComboBoxColumn, 
-            key_name = "partition_uuid",    
-            label_name = "Available Devices", 
-            callback = getValkkaFSDevices)
         ]
-        # TODO:
-        # Actions (buttons): format, save, cancel (exit without applying changes)
-  
+    """stuff removed from that list:
+
+    # this is now on per-rtsp-stream basis
+    ColumnSpec(
+        CheckBoxColumn, 
+        key_name    = "record", 
+        label_name  = "Activate recording & playback",
+        def_value   = False),
+
+    # this is now always ValkkaSingleFS & regular files
+    ColumnSpec(ConstantRadioButtonColumn, 
+        key_name = "fs_flavor",    
+        label_name = "ValkkaFS type", 
+        list = [("Normal file", "file"),("Dedicated block device", "valkkafs")]),
+
+    ColumnSpec(ConstantComboBoxColumn, 
+        key_name = "partition_uuid",    
+        label_name = "Available Devices", 
+        callback = getValkkaFSDevices)
+    """
+    # TODO:
+    # Actions (buttons): format, save, cancel (exit without applying changes)
+
 
     def makeWidget(self):
         """Subclassed from Row : custom form.  Add a total disk space field.
@@ -421,7 +428,7 @@ class ValkkaFSConfigRow(Row):
         self.lay = QtWidgets.QGridLayout(self.widget)
         
         cc = 0
-        self.placeWidget(cc, "record"); cc+=1
+        # self.placeWidget(cc, "record"); cc+=1
         self.placeWidget(cc, "blocksize"); cc+=1
         self.placeWidget(cc, "n_blocks"); cc+=1
 
@@ -429,8 +436,8 @@ class ValkkaFSConfigRow(Row):
         self.label_total_size_value = QtWidgets.QLabel("", self.widget)
         self.placeWidgetPair(cc, (self.label_total_size, self.label_total_size_value)); cc+=1
 
-        self.placeWidget(cc, "fs_flavor"); cc+=1
-        self.placeWidget(cc, "partition_uuid"); cc+=1
+        #self.placeWidget(cc, "fs_flavor"); cc+=1
+        #self.placeWidget(cc, "partition_uuid"); cc+=1
         
         self.connectNotifications()
 
@@ -438,18 +445,19 @@ class ValkkaFSConfigRow(Row):
             total_size_mb = self["blocksize"].getValue()*self["n_blocks"].getValue()
             self.label_total_size_value.setText(str(total_size_mb))
 
+        """
         def block_device_slot():
             self["partition_uuid"].updateWidget()
             n_devs = self["partition_uuid"].widget.count() # QComboBox.count()
             if n_devs < 1:
                 self["fs_flavor"]["file"].setChecked(True)
-            
+        """
         self["blocksize"].widget.valueChanged.connect(fs_size_changed)
         self["n_blocks"].widget.valueChanged.connect(fs_size_changed)
-        self["fs_flavor"]["valkkafs"].clicked.connect(block_device_slot)
+        # self["fs_flavor"]["valkkafs"].clicked.connect(block_device_slot)
 
         fs_size_changed()
-        block_device_slot()
+        # block_device_slot()
 
         """
         self.label3  = QtWidgets.QLabel("Actions", self.widget)

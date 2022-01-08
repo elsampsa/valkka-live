@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    form.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   Custom cute_mongo_forms
 """
 
@@ -61,7 +61,13 @@ class SlotFormSet(EditFormSet2):
     def makeWidget(self):
         super().makeWidget()
         i = self.lay.count()
-        self.info_label = QtWidgets.QLabel("Cameralists and services are reinitiated\n once you close this window", self.widget)
+        self.info_label = QtWidgets.QLabel(
+            (
+                "Cameralists and services are reinitiated\n" 
+                "once you save & close this window\n"
+            ), 
+            self.widget
+        )
         self.lay.insertWidget(i,self.info_label)
         
         # give a signal thats emitted once discovery has modified the camera list

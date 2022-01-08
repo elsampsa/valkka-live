@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    video.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   a container that manages widgets for video
 """
 

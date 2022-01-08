@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    grid.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   Classes implementing a N x M grid, based on the RootVideoContainer (see root.py)
 """
 
@@ -26,7 +26,8 @@ import copy
 import datetime
 
 from valkka.api2.tools import parameterInitCheck
-from valkka.api2 import ValkkaFSManager, ValkkaFS
+# from valkka.api2 import ValkkaFSManager, ValkkaFS # old
+from valkka.fs import ValkkaFSManager, ValkkaSingleFS
 
 from valkka.live import style
 from valkka.live.gpuhandler import GPUHandler
@@ -291,7 +292,7 @@ class MyGui(QtWidgets.QMainWindow):
     def setupUi(self):
         self.setGeometry(QtCore.QRect(100,100,800,800))
 
-        self.valkkafs = ValkkaFS.loadFromDirectory(dirname="/home/sampsa/tmp/testvalkkafs")
+        self.valkkafs = ValkkaSingleFS.loadFromDirectory(dirname="/home/sampsa/tmp/testvalkkafs")
         self.manager = ValkkaFSManager(self.valkkafs)
         self.manager.setOutput_(925412, 1) # id => slot
 

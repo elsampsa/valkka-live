@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    device.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   Device objects used in drag'n'drop
 """
 
@@ -39,6 +39,7 @@ class RTSPCameraDevice:
         "port"      : (str, ""),
         "tail"      : (str, ""),
         "force_tcp" : (bool, False),
+        "record"    : (bool, False),
 
         "subaddress_main" : (str, ""),
         "live_main" : (bool, True),

@@ -1,4 +1,4 @@
-import os
+import os, glob, shutil
 from valkka.fs import ValkkaSingleFS, ValkkaFSLoadError
 
 class ValkkaSingleFSHandler:
@@ -12,6 +12,21 @@ class ValkkaSingleFSHandler:
         self.n_blocks = n_blocks
         self.blocksize = blocksize
         self.fs_by_id = {}
+
+    def wipe(self):
+        for di in glob.glob(
+            os.path.join(
+                self.basedir,
+                "valkkafs_*"
+            )):
+            print("ValkkaSingleFSHandler: wipe: removing", di)
+            shutil.rmtree(di)
+
+    def clear(self):
+        for _id in self.fs_by_id.keys():
+            path=self.getDir(_id)
+            print("ValkkaSingleFSHandler: removing", path)
+            # TODO
 
     def __str__(self):
         return "<ValkkaSingleFSHandler @ "+self.basedir+" %i filesystems>" %\

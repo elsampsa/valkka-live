@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    gui.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   Main graphical user interface for the Valkka Live program
 """
 import imp
@@ -185,8 +185,8 @@ class MyGui(QtWidgets.QMainWindow):
 
         self.valkkafs = None # NEW: list of valkkafs'
 
-        self.config_modified = False
-        self.valkkafs_modified = False
+        self.config_modified = False # should valkka services be restarted?
+        self.valkkafs_modified = False # remove recorded streams?
 
 
     def initConfigFiles(self):
@@ -785,8 +785,8 @@ class MyGui(QtWidgets.QMainWindow):
         # see datamodel.row.ValkkaFSConfigRow
         blocksize = valkkafs_config["blocksize"]
         n_blocks  = valkkafs_config["n_blocks"]
-        fs_flavor = valkkafs_config["fs_flavor"] 
-        record    = valkkafs_config["record"]
+        #fs_flavor = valkkafs_config["fs_flavor"] 
+        #record    = valkkafs_config["record"]
     
         self.filterchain_group = LiveFilterChainGroup(
             datamodel     = singleton.data_model, 
@@ -796,28 +796,33 @@ class MyGui(QtWidgets.QMainWindow):
             cpu_scheme    = self.cpu_scheme)
         self.filterchain_group.read()
 
-        # NEW
-        # TODO: set default values to 100 blocks x 10 MB ~ 1 GB
         # TODO: RecordType..?
         if singleton.use_playback:
             print("openValkka: ValkkaFS **PLAYBACK & RECORDING ACTIVATED**")
+            # ValkkaSingleFSHandler: 
             # directory handling and valkkafs <-> stream id association
             self.valkka_fs_handler = ValkkaSingleFSHandler(
                 basedir = singleton.valkkafs_dir.get(),
-                blocksize = valkkafs_config["blocksize"] * 1024*1024, # MB
-                n_blocks = valkkafs_config["n_blocks"]
+                blocksize = blocksize * 1024*1024, # MB
+                n_blocks = n_blocks
             )
+            if self.valkkafs_modified:
+                print("openValkka: removing all recorded streams")
+                self.valkka_fs_handler.clear()
+                self.valkka_fs_handler.wipe()
+
             for row in singleton.data_model.camera_collection.get():
                 _id=row["_id"] # get stream id
                 slot=row["slot"]
                 classname=row["classname"]
                 if classname!="EmptyRow":
-                    print(">", row)
+                    # print(">", row)
                     self.valkka_fs_handler.load(_id)
-                    # creates new valkka if doesn't exist
+                    # ..creates new valkka if doesn't exist
             self.valkkafsmanager = ValkkaFSManager(
                 self.valkka_fs_handler.tolist()
                 )
+            self.valkkafsmanager.start()
             #self.filterchain_group.setRecording(RecordType.always, self.valkkafsmanager)# OLD
             # self.filterchain_group: source for live stream
             # self.filterchain_group_play: sink where the playback/saved stream should
@@ -827,9 +832,7 @@ class MyGui(QtWidgets.QMainWindow):
                 gpu_handler   = self.gpu_handler, 
                 cpu_scheme    = self.cpu_scheme)
             self.filterchain_group_play.read()
-
-            print("self.filterchain_group_play: len=", len(self.filterchain_group_play))
-
+            # print("openValkka: self.filterchain_group_play: len=", len(self.filterchain_group_play))
             # connect live & playback filterchains with the manager
             for valkkafs, inputfilter in self.valkkafsmanager.iterateFsInput():
                 _id = self.valkka_fs_handler.getId(valkkafs)
@@ -1080,11 +1083,11 @@ class MyGui(QtWidgets.QMainWindow):
         self.manage_cameras_container.choose_first_slot()
         
     def config_modified_slot(self):
-        self.config_modified = True
+        self.config_modified = True # restart valkka services
         
     def valkkafs_modified_slot(self):
-        self.config_modified = True
-        self.valkkafs_modified = True
+        self.config_modified = True # restart valkka services
+        self.valkkafs_modified = True # reset streams
 
     def camera_list_slot(self):
         self.camera_list_win.show()

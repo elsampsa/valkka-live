@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    multifork.py
 @author  Sampsa Riikonen
 @date    2019
-@version 1.0.1 
+@version 1.1.0 
 @brief   
 """
 
@@ -532,10 +532,10 @@ class MultiForkFilterchain(BaseFilterchain):
         """
         if self.decoding_client_count < 1 and inc > 0:
             # connect the analysis branch
-            print("start decoding for slot", self.slot)
+            print(self.__class__.__name__, "start decoding for slot", self.slot)
             self.avthread.decodingOnCall()
         elif self.decoding_client_count == 1 and inc < 0:
-            print("stop decoding for slot", self.slot)
+            print(self.__class__.__name__, "stop decoding for slot", self.slot)
             self.avthread.decodingOffCall()
         self.decoding_client_count += inc
         

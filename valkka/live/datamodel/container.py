@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    container.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   
 """
 
@@ -160,7 +160,7 @@ class ValkkaFSForm(SimpleForm):
         save = Signal()
 
     parameter_defs = {
-        "row_class": RowWatcher,
+        "row_class": RowWatcher, # actually, "ValkkaFSConfigRow"
         "collection": None
     }
 
@@ -180,8 +180,18 @@ class ValkkaFSForm(SimpleForm):
         self.save_button = QtWidgets.QPushButton("Save", self.button_row)
         self.button_lay.addWidget(self.reset_button)
         self.button_lay.addWidget(self.save_button)
-
-        self.info_label = QtWidgets.QLabel("(not yet functional)", self.widget)
+        self.save_button.setEnabled(False)
+        # row class instance => column (blocksize)=> corresponding widget
+        # ValkkaFSConfigRow has "blocksize" widget that is QSpinBox
+        self.row_instance["blocksize"].widget.valueChanged.connect(self.mod_slot)
+        self.row_instance["n_blocks"].widget.valueChanged.connect(self.mod_slot)
+        # should fix cutemongoforms: SpinBoxIntegerColumn should have
+        # getNotifySignal implemented..
+        st=(
+            "- Recording streams is experimental; please report bugs\n"
+            "- Modifying & saving the new parameters will clear all your recordings\n"
+        )
+        self.info_label = QtWidgets.QLabel(st, self.widget)
         self.lay.addWidget(self.info_label)
         
         self.reset_button.clicked.connect(self.row_instance.clear)
@@ -211,10 +221,10 @@ class ValkkaFSForm(SimpleForm):
             self.row_instance.update(self.collection, _id)
 
         self.signals.save.emit()
+        self.save_button.setEnabled(False)
 
-
-
-
+    def mod_slot(self):
+        self.save_button.setEnabled(True)
 
 
 

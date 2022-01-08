@@ -13,7 +13,7 @@ Valkka Python3 examples library is free software: you can redistribute it and/or
 @author  Petri Eränkö
 @author  Sampsa Riikonen
 @date    2019
-@version 1.2.2 
+@version 1.1.0 
 @brief   A controller that brings together TimeLineWidget, CalendarWidget and the ValkkaFSManager
 """
 
@@ -115,15 +115,6 @@ class PlaybackController:
         CalendarWidget.Signals.set_day_click
             TimeLineWidget.set_day_click_slot
 
-
-
-    TODO
-
-    use the register/deregister scheme from Valkka Live here
-
-
-
-
     """
     parameter_defs = {
         #"timeline_widget"   : None,
@@ -184,9 +175,6 @@ class PlaybackController:
     def deregister(self, widget_set: WidgetSet):
         self.deregister__(widget_set)
         self.widget_sets.remove(widget_set)
-        if len(self.widget_sets) < 1:
-            self.valkkafs_manager.clearTime()
-        # TODO: create a diagram of this mess!
 
     def createConnections__(self):
         """Connect signals to slots

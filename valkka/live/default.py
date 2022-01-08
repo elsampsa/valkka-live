@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    default.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.0.1 
+@version 1.1.0 
 @brief   Default configuration values
 """
 
@@ -37,8 +37,8 @@ def get_memory_config():
 def get_valkkafs_config():
     valkkafs_config = {
         "dirname"    : singleton.valkkafs_dir.get(),
-        "n_blocks"   : 100,
-        "blocksize"  : 1,
+        "n_blocks"   : 50,
+        "blocksize"  : 2, # 50*2MB = 100 MB
         "fs_flavor"  : "file",
         "record"     : False,
         "partition_uuid" : None
