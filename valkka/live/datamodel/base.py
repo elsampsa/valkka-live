@@ -92,6 +92,11 @@ class DataModel:
         cc = nstart
         for i in range(1, min((n + 1, constant.max_devices + 1))):
             print(i)
+            # TODO: this sucks:
+            # the only place where the data structure is defined
+            # should be row.py:RTSPCameraRow
+            # ..it should also have some default values defined therein
+            # => no need to readjust the columns all over the place
             self.camera_collection.new(
                 RTSPCameraRow, 
                 {
@@ -101,6 +106,8 @@ class DataModel:
                     "password":     password,
                     "port":         port,
                     "tail":         tail,
+                    "force_tcp":    False,
+                    "record":       False,
                     
                     "subaddress_main" : "",
                     "live_main"       : True,
@@ -243,22 +250,24 @@ class DataModel:
         
 
     def writeDefaultValkkaFSConfig(self):
+        # TODO: when ValkkaFSConfigRow is changed
+        # there should be no need to change the column names everywhere
+        # => ValkkaFSConfigRow should define some default..
+        # (it should be the only place for "ground truth")
         self.valkkafs_collection.new(
             ValkkaFSConfigRow,
             {
                 # "dirname"    : default.valkkafs_config["dirname"], # not written to db for the moment
                 "n_blocks"   : default.get_valkkafs_config()["n_blocks"],
                 "blocksize"  : default.get_valkkafs_config()["blocksize"],
-                "fs_flavor"  : default.get_valkkafs_config()["fs_flavor"],
-                "record"     : default.get_valkkafs_config()["record"],
-                "partition_uuid" : default.get_valkkafs_config()["partition_uuid"]
+                #"fs_flavor"  : default.get_valkkafs_config()["fs_flavor"],
+                #"record"     : default.get_valkkafs_config()["record"],
+                #"partition_uuid" : default.get_valkkafs_config()["partition_uuid"]
             })
 
 
     def writeDefaultMemoryConfig(self):
         self.config_collection.new(MemoryConfigRow, default.get_memory_config())
-
-
 
 
 class MyGui(QtWidgets.QMainWindow):

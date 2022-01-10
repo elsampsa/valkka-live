@@ -43,11 +43,15 @@
 <li><p>Choose a slot for the camera</p></li>
 <li><p>Choose <em>RTSP Camera</em> from the drop-down menu</p></li>
 <li><p>Type in the camera information (ip address, user, password, etc.)</p></li>
+<li><p>Remember to enable recording if you want that (see “6. Playback” below)</p></li>
 <li><p>Repeat for all cameras</p></li>
 <li><p>Press <em>SAVE</em></p></li>
 <li><p>Close the window from the upper-right (X) as usual</p></li>
 </ul>
-<p>You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in <em>Memory Configuration</em> tab, as Valkka pre-reserves all resources</p>
+<p>You should also give an estimate of the number of hd-ready, full-hd, 2K etc. streams in <em>Memory Configuration</em> tab, as Valkka pre-reserves all resources.  That can be done in:</p>
+<ul class="simple">
+<li><p><em>Configuration / Configuration Dialog / Memory Configuration</em></p></li>
+</ul>
 </div>
 <div class="section" id="viewing-cameras">
 <h2>2. Viewing Cameras<a class="headerlink" href="#viewing-cameras" title="Permalink to this headline">¶</a></h2>
@@ -84,6 +88,24 @@
 <li><p>Open a machine vision terminal from the <em>Machine Vision</em> menu</p></li>
 <li><p>Drag’n drop a camera to that terminal</p></li>
 </ul>
+</div>
+<div class="section" id="playback">
+<h2>6. Playback<a class="headerlink" href="#playback" title="Permalink to this headline">¶</a></h2>
+<p><em>NEW</em></p>
+<p>The experimental playback feature is now enabled by default.  Do the following to see the recorded video:</p>
+<ul class="simple">
+<li><p>Navigate to <em>View / Playback Video Grid / 2x2</em></p></li>
+<li><p>Drag’n’drop the camera you want to see recorded video for into the grid</p></li>
+<li><p>Click your mouse in the timeline where you want to seek.  Use the mouse wheel to zoom in/out in the timeline</p></li>
+<li><p>When you press the “limits” button, the timeline zooms within the limits of all your recorded streams</p></li>
+</ul>
+<p>You ideally want 1-2 key-frames in a single block in order to achieve efficient seeking of the recorded video.</p>
+<p>Blocksize can be adjusted in:</p>
+<ul class="simple">
+<li><p><em>Configuration / Configuration Dialog / Recording Configuration</em></p></li>
+</ul>
+<p>We recommend adjusting your camera’s keyframe interval to one keyframe per second and then setting your camera’s bitrate &amp; valkkafs blocksize accordingly.</p>
+<p>Read more about the block-based filesystem in <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/lesson_11.html">here</a></p>
 </div>
 </div>
 
@@ -132,6 +154,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#removing-cameras">3. Removing Cameras</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#saving-and-loading-the-layout">4. Saving and Loading the Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#machine-vision">5. Machine Vision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#playback">6. Playback</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>

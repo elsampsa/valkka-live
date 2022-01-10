@@ -77,7 +77,7 @@ def process_cl_args():
     parser.add_argument("--reset", action="store", type=str2bool, default=False, 
         help="reset views, cameras lists etc.")
 
-    parser.add_argument("--playback", action="store", type=str2bool, default=False, 
+    parser.add_argument("--playback", action="store", type=str2bool, default=True, 
         help="enable / disable experimental playback")
 
     parser.add_argument("--load", action="store", type=str2bool, default=False, 

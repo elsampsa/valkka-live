@@ -276,6 +276,7 @@ class DiscoveryWidget(QWidget):
                                         "password": device.password,
                                         "port"    : "",
                                         "tail"    : "",
+                                        "record"  : False, # TODO: these datamodels should only be in one place!
 
                                         "subaddress_main" : "",
                                         "live_main"       : True,
