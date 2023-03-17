@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    formtest.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.1.0 
+@version 1.1.1 
 @brief   Test Cute Mongo Forms forms
 """
 
