@@ -1,21 +1,17 @@
 # Valkka Live
 
-*A modular, hackable and customizable OpenSource approach to modern video surveillance and management solutions in local area networks*
+Valkka Live is a modular and hackable opensource video surveillance program for local area networks.
 
-Now also with Yolo object detection.
+It is a proof-of-concept demo of a [libValkka](https://elsampsa.github.io/valkka-examples/_build/html/index.html) based 
+NVR (Network Video Recorder).
 
 For installation instructions, manual, etc. go [here](https://elsampsa.github.io/valkka-live)
-
-
-## Changelog
-
-
 
 ## Authors
 Sampsa Riikonen
 
 ## Copyright
-(C) 2017, 2018 Sampsa Riikonen
+(C) 2017 - 2022 Sampsa Riikonen
 
 ## License
 AGPLv3+

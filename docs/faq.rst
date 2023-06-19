@@ -2,6 +2,12 @@
 FAQ 
 ===
 
+Discarding late frame
+---------------------
+
+One of the typical error messages you might find in the terminal, 
+please read about them from `here <file:///home/sampsa/python3_packages/valkka_examples/docs/_build/html/pitfalls.html>`_
+
 2K and 4K cameras
 -----------------
 
@@ -20,5 +26,3 @@ The substream address depends on the manufacturer.  For HIK, mainstream and subs
 
     
 in Valkka Live camera config menu, you should then use *Streaming/Channels/102* at the *Tail* field
-
-

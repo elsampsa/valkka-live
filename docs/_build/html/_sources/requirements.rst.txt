@@ -20,6 +20,7 @@ System requirements
 Installing
 ----------
 
+
 We'll be installing directly from github, so git is required:
 
 ::
@@ -69,7 +70,6 @@ If and when the program crashes (with "dangling" machine vision python multiproc
 .. ::
 ..
 ..    valkka-bionic-install
-    
 
 Command-line options
 --------------------

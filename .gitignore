@@ -1,2 +1,10 @@
 __pycache__
 *.egg-info
+upload.bash
+valkka/live/onvif/pauli
+.vscode
+TODO.md
+build/
+dist/
+scrap/
+tmp/

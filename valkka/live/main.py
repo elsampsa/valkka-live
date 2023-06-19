@@ -62,7 +62,7 @@ class MyGui(get_valkka_live_universe("xxx")):
 def process_cl_args():
 
     def str2bool(v):
-        print("vittu")
+        # print("vittu")
         return v.lower() in ("yes", "true", "t", "1")
 
     parser = argparse.ArgumentParser("valkka-live")

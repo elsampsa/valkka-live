@@ -37,7 +37,8 @@
 <h1>Valkka Live<a class="headerlink" href="#valkka-live" title="Permalink to this headline">¶</a></h1>
 <style> .myright {font-size: 10pt; text-align: right;} </style><p class="myright"><em>Screenshot : Valkka Live running on Ubuntu 18 with Yolo object detection</em></p>
 <a class="reference internal image-reference" href="_images/screenshot_1.png"><img alt="_images/screenshot_1.png" src="_images/screenshot_1.png" style="width: 100%;" /></a>
-<p>Valkka Live is an OpenSource video surveillance and management program for Linux</p>
+<p>Valkka Live is an OpenSource video surveillance and management program for Linux.  It is a proof-of-concept program demonstrating the
+capabilities of <a class="reference external" href="https://elsampsa.github.io/valkka-examples/">libValkka</a></p>
 <div class="section" id="some-highlights-of-valkka-live">
 <h2>Some highlights of Valkka Live<a class="headerlink" href="#some-highlights-of-valkka-live" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -75,6 +76,11 @@
 </pre></div>
 </div>
 <p>(the first script installs valkka-core modules, the second one tunes the maximum socket buffer sizes).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>LibValkka comes precompiled and packaged for a certain ubuntu distribution version. This means that the compilation and it’s dependencies assume the default
+python version of that distribution.  Using custom-installed python versions, anacondas and whatnot might cause dependency problems.</p>
+</div>
 <p>In the case that <em>install-valkka-core</em> etc. scripts refuse to work, you must fix your path with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/.local/bin
 </pre></div>
@@ -107,6 +113,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#discarding-late-frame">Discarding late frame</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#k-and-4k-cameras">2K and 4K cameras</a></li>
 </ul>
 </li>
@@ -170,7 +177,7 @@
   <li><a href="https://github.com/elsampsa/valkka-live/issues"><i class="fas fa-bug"></i> Issue Tracker</a></li>
   <!-- <li><a href="https://pypi.org/project/valkka-live/"><i class="fas fa-archive"></i> Package Repository</a></li> -->
   <li><a href="https://elsampsa.github.io/valkka-examples/"><i class="fas fa-cog"></i> valkka library</a></li>
-  <li><a href="http://www.dasys.fi"><i class="fas fa-building"></i> Dasys Ltd.</a></li>
+  <!-- li><a href="http://www.dasys.fi"><i class="fas fa-building"></i> Dasys Ltd.</a></li -->
 </ul>
 <h3><a href="#">Table of Contents</a></h3>
 <ul>

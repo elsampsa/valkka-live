@@ -385,6 +385,7 @@ class MultiForkFilterchain(BaseFilterchain):
 
         self.ctx.address = self.address
         # stream address, i.e. "rtsp://.."
+        print("RTSP reconnection time:", self.msreconnect)
         self.ctx.msreconnect = self.msreconnect
         
         self.ctx.recv_buffer_size = self.recv_buffer_size

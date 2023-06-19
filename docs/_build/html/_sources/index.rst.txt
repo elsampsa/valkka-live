@@ -27,7 +27,8 @@ Valkka Live
 .. <img src="demo1.png" lowsrc="demo1_lowres.png", width="200">
 .. <a href='https://photos.google.com/share/AF1QipMcrbBZ8R8isnglrqBUMWj7mtVQeU0ZA-kgfDO9WmAMu0BSArdPcej9ddgQ6IcYcA?key=R2tRRVA5ZTZ1THJWZFhBWE9MQ1d2SElJR0h0Z1hn&source=ctrlq.org'><img src='https://lh3.googleusercontent.com/fd9hK8vFgSnfkz1ZbBaMp5EJD2hdsd6-7j-Q8f1CyxAY3gidyPDTvnTasUNx3e9xOsJzVRx6MKyX2kyqhYhEVeU39XKCLbtTbuIKF_TwfRGGBW8sUtPNFG-U6QHhWIhiDqWDyGq3Lw=w2400' /></a>
     
-Valkka Live is an OpenSource video surveillance and management program for Linux 
+Valkka Live is an OpenSource video surveillance and management program for Linux.  It is a proof-of-concept program demonstrating the
+capabilities of `libValkka <https://elsampsa.github.io/valkka-examples/>`_
 
 Some highlights of Valkka Live
 ------------------------------
@@ -82,6 +83,9 @@ After that, install (and in the future, update) with:
     valkka-tune
 
 (the first script installs valkka-core modules, the second one tunes the maximum socket buffer sizes).
+
+.. note:: LibValkka comes precompiled and packaged for a certain ubuntu distribution version. This means that the compilation and it's dependencies assume the default
+          python version of that distribution.  Using custom-installed python versions, anacondas and whatnot might cause dependency problems.
     
 In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with
 

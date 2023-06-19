@@ -154,10 +154,11 @@ html_sidebars = {
     
 html_theme_options = {
   'github_user'  : 'elsampsa',
+  'page_width'   : '60%',
+  'body_max_width': '100%'
   # 'github_repo'  : 'valkka_live',
   # 'analytics_id' : 'XX-XXX-X' # for google analytics tracking, uncomment this
 }
-
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
