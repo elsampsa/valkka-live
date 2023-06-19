@@ -6,7 +6,7 @@ Discarding late frame
 ---------------------
 
 One of the typical error messages you might find in the terminal, 
-please read about them from `here <file:///home/sampsa/python3_packages/valkka_examples/docs/_build/html/pitfalls.html>`_
+please read about them from `here <https://elsampsa.github.io/valkka-examples/_build/html/pitfalls.html>`_
 
 2K and 4K cameras
 -----------------
