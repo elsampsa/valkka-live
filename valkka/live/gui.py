@@ -793,7 +793,8 @@ class MyGui(QtWidgets.QMainWindow):
             livethread    = self.livethread, 
             usbthread     = self.usbthread,
             gpu_handler   = self.gpu_handler, 
-            cpu_scheme    = self.cpu_scheme)
+            cpu_scheme    = self.cpu_scheme,
+            vaapi         = singleton.vaapi)
         self.filterchain_group.read()
 
         # TODO: RecordType..?

@@ -124,7 +124,8 @@ class LiveFilterChainGroup(FilterChainGroup):
         "usbthread"        : USBDeviceThread,
         "gpu_handler"      : GPUHandler,
         "verbose"          : (bool, False),
-        "cpu_scheme"       : None
+        "cpu_scheme"       : None,
+        "vaapi"            : (bool, False)
         }
     
 
@@ -134,6 +135,8 @@ class LiveFilterChainGroup(FilterChainGroup):
         self.chains = []
         self.context_type = None
         self.closed = False
+        if self.vaapi:
+            print("LiveFilterChainGroup: enabling VAAPI")
 
     
     def read(self):
@@ -195,6 +198,7 @@ class LiveFilterChainGroup(FilterChainGroup):
                 msreconnect = 10000,
                 # verbose     = True,
                 verbose      = False,
+                vaapi        = self.vaapi,
                 
                 time_correction = self.time_correction, # overwrite timestamps or not?
 

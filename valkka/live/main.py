@@ -83,6 +83,9 @@ def process_cl_args():
     parser.add_argument("--load", action="store", type=str2bool, default=False, 
         help="load layout saved previously")
 
+    parser.add_argument("--vaapi", action="store", type=str2bool, default=False, 
+        help="use VAAPI hw acceleration")
+
     parser.add_argument("--www", action="store", type=str2bool, default=False, 
         help="starts the web- and websocket servers.  Before this, you need to install the www extras with 'pip3 install --user -e .[www]'")
 
@@ -130,6 +133,9 @@ def main():
         
     #print(singleton.start_www)
     #return
+
+    if parsed_args.vaapi:
+        singleton.vaapi = True
 
     from valkka.live.gui import MyGui as MyGuiBase
 

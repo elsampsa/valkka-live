@@ -35,8 +35,8 @@ version_tag = "%i.%i.%i" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
 # required libValkka version
 MIN_VALKKA_VERSION_MAJOR = 1
-MIN_VALKKA_VERSION_MINOR = 3
-MIN_VALKKA_VERSION_PATCH = 6
+MIN_VALKKA_VERSION_MINOR = 5
+MIN_VALKKA_VERSION_PATCH = 1
 
 # required darknet_py version # https://github.com/elsampsa/darknet-python
 MIN_DARKNET_VERSION_MAJOR = 0

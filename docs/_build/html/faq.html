@@ -34,6 +34,27 @@
             
   <div class="section" id="faq">
 <h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="could-not-load-the-qt-platform-plugin-xcb">
+<h2>Could not load the Qt platform plugin “xcb”<a class="headerlink" href="#could-not-load-the-qt-platform-plugin-xcb" title="Permalink to this headline">¶</a></h2>
+<p>If you get this error:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qt</span><span class="o">.</span><span class="n">qpa</span><span class="o">.</span><span class="n">plugin</span><span class="p">:</span> <span class="n">Could</span> <span class="ow">not</span> <span class="n">load</span> <span class="n">the</span> <span class="n">Qt</span> <span class="n">platform</span> <span class="n">plugin</span> <span class="s2">&quot;xcb&quot;</span> <span class="ow">in</span> <span class="s2">&quot;&quot;</span> <span class="n">even</span> <span class="n">though</span> <span class="n">it</span> <span class="n">was</span> <span class="n">found</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Then you are <em>not</em> running valkka-live directly in a desktop, but from remote etc. connection (or in docker, etc. “headless” environment).</p>
+<p>It has really nothing to do with libValkka or valkka-live.  In fact, <em>none</em> of your Qt-based desktop programs would work at all.  Check with this command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>echo $XDG_SESSION_TYPE
+</pre></div>
+</div>
+<p>and make sure that it reports the value <cite>x11</cite>.</p>
+<p>If this error still persists and is reported by python’s cv2 module, you have a broken cv2 version, so uninstall cv2 with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">uninstall</span> <span class="n">opencv</span><span class="o">-</span><span class="n">python</span>
+</pre></div>
+</div>
+<p>And install your linux distro’s default opencv instead with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">opencv</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="discarding-late-frame">
 <h2>Discarding late frame<a class="headerlink" href="#discarding-late-frame" title="Permalink to this headline">¶</a></h2>
 <p>One of the typical error messages you might find in the terminal,
@@ -94,6 +115,7 @@ please read about them from <a class="reference external" href="https://elsampsa
 <li class="toctree-l1"><a class="reference internal" href="requirements.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="manual.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#could-not-load-the-qt-platform-plugin-xcb">Could not load the Qt platform plugin “xcb”</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#discarding-late-frame">Discarding late frame</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#k-and-4k-cameras">2K and 4K cameras</a></li>
 </ul>

@@ -46,6 +46,9 @@ ipc_dir = None
 start_www = None
 www_module = None
 
+# use vaapi or not
+vaapi = False
+
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]
 

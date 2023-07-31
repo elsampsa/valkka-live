@@ -150,6 +150,8 @@ class MultiForkFilterchain(BaseFilterchain):
         "shmem_n_buffer"         : None, # (int, 10),
         "shmem_image_interval"   : None, # (int, 1000),
         
+        "vaapi": (bool, False),
+
         # "movement_interval" : (int, 100), # pass frames at 10 fps # USE shmem_image_interval
         # "movement_treshold" : (float, 0.01),
         "movement_treshold" : (float, 0.0), # pass always
@@ -348,10 +350,10 @@ class MultiForkFilterchain(BaseFilterchain):
     
     def closeContext(self):
         if self.context_type == ContextType.live:
-            self.livethread.stopStream(self.ctx)
-            self.livethread.deRegisterStream(self.ctx)
+            self.livethread.stopStreamCall(self.ctx)
+            self.livethread.deRegisterStreamCall(self.ctx)
         elif self.context_type == ContextType.usb:
-            self.usbdevicethread.stopStream(self.ctx)
+            self.usbdevicethread.stopStreamCall(self.ctx)
     
     
     def createLiveContext(self):
@@ -402,7 +404,7 @@ class MultiForkFilterchain(BaseFilterchain):
         self.ctx.framefilter = self.fork_filter_main
 
         # send the information about the stream to LiveThread
-        self.livethread.registerStream(self.ctx)
+        self.livethread.registerStream(self.ctx) # NOTE: api level 2
         self.livethread.playStream(self.ctx)
 
     
@@ -465,10 +467,17 @@ class MultiForkFilterchain(BaseFilterchain):
         self.framefifo_ctx.n_signal = self.n_signal
         self.framefifo_ctx.flush_when_full = self.flush_when_full
         
-        self.avthread = core.AVThread(
-            "avthread_" + str(self.slot),
-            self.fork_filter_decode,
-            self.framefifo_ctx)
+        if self.vaapi:
+            # print("using VAAPI!")
+            self.avthread = core.VAAPIThread(
+                "avthread_" + str(self.slot),
+                self.fork_filter_decode,
+                self.framefifo_ctx)
+        else:
+            self.avthread = core.AVThread(
+                "avthread_" + str(self.slot),
+                self.fork_filter_decode,
+                self.framefifo_ctx)
 
         if self.affinity > -1: # affinity overwrites number of threads
             self.avthread.setAffinity(self.affinity)
