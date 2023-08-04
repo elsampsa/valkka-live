@@ -84,6 +84,10 @@ Files are sent to a file in the "/tmp" directory, reading and writing frames is 
 Yolo Object Detection
 ---------------------
 
+LibValkka is framework agnostic, so you can use *any* deep-learning framework with libValkka and valkka-live.
+
+However, for demonstration and proof-of-concept purposes, we provide an independent deep-learning "framework", which based on pjreddie's original darknet and yolo.
+
 Once you have installed and tested `our Darknet python bindings <https://github.com/elsampsa/darknet-python>`_, the Yolo 3 object detector will appear in the Machine Vision plug-in menu.
 
 Several Yolo versions are provided:

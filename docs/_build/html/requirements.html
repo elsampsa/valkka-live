@@ -59,7 +59,12 @@
 </pre></div>
 </div>
 <p>(the first script installs valkka-core modules, the second one tunes the maxmimum socket buffer sizes)</p>
-<p>Be also aware of <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#installing">some issues</a> regarding to numpy and OpenCV installation</p>
+<p>Be also aware of <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#installing">some issues</a> regarding to numpy and OpenCV installation.
+You can test your libValkka installation with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">elsampsa</span><span class="o">/</span><span class="n">valkka</span><span class="o">-</span><span class="n">examples</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">quicktest</span><span class="o">.</span><span class="n">py</span>
+<span class="n">python3</span> <span class="n">quicktest</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
 <p>In the case that <em>install-valkka-core</em> etc. scripts refuse to work, you must fix your path with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/.local/bin
 </pre></div>

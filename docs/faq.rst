@@ -13,7 +13,7 @@ If you get this error:
 
 Then you are *not* running valkka-live directly in a desktop, but from remote etc. connection (or in docker, etc. "headless" environment).
 
-It has really nothing to do with libValkka or valkka-live.  In fact, *none* of your Qt-based desktop programs would work at all.  Check with this command:
+It has really nothing to do with libValkka or valkka-live.  In fact, *none* of your Qt and KDE-based desktop programs would work at all.  Check with this command:
 
 ::
 
@@ -21,11 +21,21 @@ It has really nothing to do with libValkka or valkka-live.  In fact, *none* of y
 
 and make sure that it reports the value `x11`.
 
-If this error still persists and is reported by python's cv2 module, you have a broken cv2 version, so uninstall cv2 with:
+If the error persists, you're desktop environment might have missing or broken Qt/KDE dependencies.  Install the whole KDE and Qt stack with:
+
+::
+
+    sudo apt-get install kate
+
+(this pulls a minimal KDE + Qt installation as dependencies of the Kate editor)
+
+
+If this error *still* persists and is reported by python's cv2 module, you have a broken cv2 version, so uninstall cv2 with:
 
 ::
 
     pip3 uninstall opencv-python
+    sudo pip3 uninstall opencv-python # just in case!
 
 And install your linux distro's default opencv instead with:
 

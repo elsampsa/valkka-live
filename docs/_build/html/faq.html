@@ -41,13 +41,19 @@
 </pre></div>
 </div>
 <p>Then you are <em>not</em> running valkka-live directly in a desktop, but from remote etc. connection (or in docker, etc. “headless” environment).</p>
-<p>It has really nothing to do with libValkka or valkka-live.  In fact, <em>none</em> of your Qt-based desktop programs would work at all.  Check with this command:</p>
+<p>It has really nothing to do with libValkka or valkka-live.  In fact, <em>none</em> of your Qt and KDE-based desktop programs would work at all.  Check with this command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>echo $XDG_SESSION_TYPE
 </pre></div>
 </div>
 <p>and make sure that it reports the value <cite>x11</cite>.</p>
-<p>If this error still persists and is reported by python’s cv2 module, you have a broken cv2 version, so uninstall cv2 with:</p>
+<p>If the error persists, you’re desktop environment might have missing or broken Qt/KDE dependencies.  Install the whole KDE and Qt stack with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">kate</span>
+</pre></div>
+</div>
+<p>(this pulls a minimal KDE + Qt installation as dependencies of the Kate editor)</p>
+<p>If this error <em>still</em> persists and is reported by python’s cv2 module, you have a broken cv2 version, so uninstall cv2 with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">uninstall</span> <span class="n">opencv</span><span class="o">-</span><span class="n">python</span>
+<span class="n">sudo</span> <span class="n">pip3</span> <span class="n">uninstall</span> <span class="n">opencv</span><span class="o">-</span><span class="n">python</span> <span class="c1"># just in case!</span>
 </pre></div>
 </div>
 <p>And install your linux distro’s default opencv instead with:</p>
