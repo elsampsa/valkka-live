@@ -21,7 +21,7 @@ You should have received a copy of the GNU Affero General Public License along w
 """
 
 from valkka.live.qimport import QtWidgets, QtCore, QtGui, Signal, Slot  # Qt5
-import sys
+import sys, os
 import copy
 # from valkka.core import *
 from valkka.api2.tools import parameterInitCheck
@@ -46,15 +46,34 @@ class GPUHandler:
         self.true_screens = []  # list of QtCore.QScreen
         self.openglthreads = [] # list of OpenGLThread instances
         self.findXScreens()
-
         # self.true_screens=[self.true_screens[0]]
 
-        for n_gpu, screen in enumerate(self.true_screens):
+        if "DISPLAY" in os.environ:
+            dispvar = os.environ["DISPLAY"] # [host]:<display>[.screen]
+        else:
+            print("GPUHandler: WARNING: no DISPLAY env variable set! will try 0.0, but no guaranteed to work")
+            dispvar = ":0"
 
-            x_connection = ":0." + str(n_gpu)
-            # x_connection=":0.1"
-            # x_connection=":1.0" # nopes
+        try:
+            d_ = dispvar.split(":")[-1].split(".") # variations: ":.0" -> [0] / ":0" -> [0] / ":0.0" -> [0,0]
+            # print(">>", d_)
+            if len(d_) == 2:
+                disp, screen = d_
+            else:
+                disp, screen = "0", d_[0]
+        except Exception as e:
+            print("GPUHandler: could not extract display/screen number from", dispvar,":", e)
+            disp = "0"
+            screen = "0"
 
+        #for n_gpu, screen in enumerate(self.true_screens):
+        #    x_connection = f":{disp}.{str(n_gpu)}" 
+        for dummy in range(0,1):
+            """Should create (and debug) code (in multi-screen system) that gets the correct x-screen numbers: I've found
+            an exotic x-screen configuration, where $DISPLAY is ":2" and there was no display ":0" at all (!)
+            """
+            x_connection = f":{disp}.{screen}"
+            
             print(pre, "GPUHandler: starting OpenGLThread with", x_connection)
 
             affinity = -1
@@ -62,7 +81,8 @@ class GPUHandler:
                 affinity = self.cpu_scheme.getOpenGL()
 
             openglthread = OpenGLThread(
-                name="gpu_" + str(n_gpu),
+                # name="gpu_" + str(n_gpu),
+                name="gpu_" + str(dummy),
                 # reserve stacks of YUV video frames for various resolutions
                 n_720p  = self.n_720p,
                 n_1080p = self.n_1080p,
@@ -80,6 +100,14 @@ class GPUHandler:
 
         
     def findXScreens(self):
+        """NOTE: finding correct X-screen numbers with Qt doesn't really work?
+
+        Anyways would need multi-screen hardware setup to try/debug that.
+
+        Something along these lines: https://stackoverflow.com/questions/11367354/obtaining-list-of-all-xorg-displays
+
+        Read also this: https://unix.stackexchange.com/questions/367732/what-are-display-and-screen-with-regard-to-0-0
+        """
         qapp = QtCore.QCoreApplication.instance()
         if not qapp: # QApplication has not been started
             return

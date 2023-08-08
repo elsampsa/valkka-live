@@ -468,11 +468,12 @@ class MultiForkFilterchain(BaseFilterchain):
         self.framefifo_ctx.flush_when_full = self.flush_when_full
         
         if self.vaapi:
-            # print("using VAAPI!")
+            print("using VAAPIThread")
             self.avthread = core.VAAPIThread(
                 "avthread_" + str(self.slot),
                 self.fork_filter_decode,
                 self.framefifo_ctx)
+            
         else:
             self.avthread = core.AVThread(
                 "avthread_" + str(self.slot),
@@ -481,8 +482,10 @@ class MultiForkFilterchain(BaseFilterchain):
 
         if self.affinity > -1: # affinity overwrites number of threads
             self.avthread.setAffinity(self.affinity)
-        elif self.number_of_threads > 1:
+        elif (self.number_of_threads > 1) and (not self.vaapi):
+            # ffmpeg vaapi api doesn't like multithreading!
             self.avthread.setNumberOfThreads(self.number_of_threads) # two by default
+            # ..will enforce this at cpp level
         
         # get input FrameFilter from AVThread
         self.av_in_filter = self.avthread.getFrameFilter()
