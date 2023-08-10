@@ -485,7 +485,7 @@ class MultiForkFilterchain(BaseFilterchain):
         elif (self.number_of_threads > 1) and (not self.vaapi):
             # ffmpeg vaapi api doesn't like multithreading!
             self.avthread.setNumberOfThreads(self.number_of_threads) # two by default
-            # ..will enforce this at cpp level
+            # that's been fixed in the core libValkka: only one decoding thread for vaapi
         
         # get input FrameFilter from AVThread
         self.av_in_filter = self.avthread.getFrameFilter()

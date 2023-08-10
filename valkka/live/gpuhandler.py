@@ -26,6 +26,8 @@ import copy
 # from valkka.core import *
 from valkka.api2.tools import parameterInitCheck
 from valkka.api2 import OpenGLThread
+# from singleton import display
+# print(">>>>", display)
 
 pre = "gpuhandler :"
 
@@ -48,21 +50,48 @@ class GPUHandler:
         self.findXScreens()
         # self.true_screens=[self.true_screens[0]]
 
+        #if display:
+        #    print("GPUHandler: WARNING: using custom-defined X11 DISPLAY:", display)
+        #else:
         if "DISPLAY" in os.environ:
             dispvar = os.environ["DISPLAY"] # [host]:<display>[.screen]
         else:
             print("GPUHandler: WARNING: no DISPLAY env variable set! will try 0.0, but no guaranteed to work")
             dispvar = ":0"
 
+        """DISPLAY env variable, see: https://www.x.org/archive/X11R6.8.1/doc/X.7.html
+
+        if [] are optional, then, THIS IS WRONG:
+
+        [host]:[display.]screen
+
+        THIS IS CORRECT:
+
+        [host]:display[.screen]
+
+        :D.S -> display =D, screen=S
+        :.S -> display=0, screen=S
+        :D -> display=0, screen=0
+
+        "display" is basically the same as an X server and gives the increment to the default X server port number
+        where the server is found
+        each X server administers screens (that can span multiple monitors)
+        """
+        host=""
+        disp="0"
+        screen="0"
         try:
-            d_ = dispvar.split(":")[-1].split(".") # variations: ":.0" -> [0] / ":0" -> [0] / ":0.0" -> [0,0]
-            # print(">>", d_)
-            if len(d_) == 2:
-                disp, screen = d_
+            host, serv_screen = dispvar.split(":")
+            # print(">", host, serv_screen)
+            if "." in serv_screen:
+                disp, screen = serv_screen.split(".")
+                if disp == "":
+                    disp="0"
             else:
-                disp, screen = "0", d_[0]
+                disp = serv_screen
         except Exception as e:
             print("GPUHandler: could not extract display/screen number from", dispvar,":", e)
+            host = ""
             disp = "0"
             screen = "0"
 
@@ -72,7 +101,7 @@ class GPUHandler:
             """Should create (and debug) code (in multi-screen system) that gets the correct x-screen numbers: I've found
             an exotic x-screen configuration, where $DISPLAY is ":2" and there was no display ":0" at all (!)
             """
-            x_connection = f":{disp}.{screen}"
+            x_connection = f"{host}:{disp}.{screen}"
             
             print(pre, "GPUHandler: starting OpenGLThread with", x_connection)
 

@@ -89,6 +89,9 @@ def process_cl_args():
     parser.add_argument("--www", action="store", type=str2bool, default=False, 
         help="starts the web- and websocket servers.  Before this, you need to install the www extras with 'pip3 install --user -e .[www]'")
 
+    #parser.add_argument("--display", action="store", type=str, default=None, 
+    #    help="give explicit $DISPLAY value for connecting to x-server and screen for libValkka.  format: '[host]:display[.screen]' where [] parts are optional.")
+
     parsed_args, unparsed_args = parser.parse_known_args()
     return parsed_args, unparsed_args
 
@@ -118,12 +121,10 @@ def main():
     else:
         singleton.use_playback = False
 
-
     if parsed_args.load:
         singleton.load_layout = True
     else:
         singleton.load_layout = False
-
 
     if parsed_args.www:
         singleton.start_www = True
@@ -136,6 +137,8 @@ def main():
 
     if parsed_args.vaapi:
         singleton.vaapi = True
+
+    # singleton.display = parsed_args.display
 
     from valkka.live.gui import MyGui as MyGuiBase
 

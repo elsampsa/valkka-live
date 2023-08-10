@@ -49,6 +49,9 @@ www_module = None
 # use vaapi or not
 vaapi = False
 
+# explicit X11 DISPLAY variable for libValkka / OpenGLThread
+display = None# not used!
+
 # search for machine vision packages
 mvision_package_names = ["valkka.mvision"]
 
