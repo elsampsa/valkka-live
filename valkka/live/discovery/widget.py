@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    NAME.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.1.1 
+@version 1.2.1 
 @brief   
 """
 
@@ -64,16 +64,21 @@ class DiscoveryThread(QThread):
 
     def run(self):
         print(">wsdiscovery")
-        ips = runWSDiscovery()
+        # so, this has changed: now this returns a list of (ip, onvif-port):
+        ips = [item[0] for item in runWSDiscovery()] # list of (ip, port) -> # pick up the ip addresses only
+        # runARPScan similarly: returns a list of (ip, rtsp-port)
         print(">wsdiscovery done")
         # print(ips)
         ips2 = []
         if self.arp:
             print(">arp-scan")
-            ips2 = runARPScan(exclude_list = ips)
+            # pick up only the ip addresses
+            ips2 = [item[0] for item in runARPScan(exclude_list = ips)]
         ips = ips + ips2
         self.signals.ip_list.emit(ips)
         print(">discovery thread bye")
+        # so, we'd need to include the rtsp port information into this
+        # pipeline, might do that someday..
 
 
 class DiscoveryTree(QTreeView):

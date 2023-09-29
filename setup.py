@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 import sys
 
 # modified by setver.bash
-version = '1.1.1'
+version = '1.2.1'
 
 # # https://setuptools.readthedocs.io/en/latest/setuptools.html#basic-use
 setup(
@@ -22,8 +22,9 @@ setup(
         'cute_mongo_forms >= 0.7.4',
         'imutils >= 0.4.6',
         'pypng >= 0.0.18',
-        'zeep >= 3.4.0',
-        'lxml >= 4.5.0',
+        # 'zeep >= 3.4.0',
+        # 'lxml >= 4.5.0',
+        'valkka-onvif', # new!
         'setproctitle',
         'Pillow'
         # 'cute_mongo_forms@git+https://github.com/elsampsa/cute_mongo_forms.git@master' # (**) won't work at the moment

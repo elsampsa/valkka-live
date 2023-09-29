@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    mvision.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.1.1 
+@version 1.2.1 
 @brief   a container class that manages Qt widgets for stream visualization and frame streaming to machine vision modules
 """
 from pprint import pprint, pformat
