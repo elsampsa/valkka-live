@@ -12,7 +12,7 @@ This plugin is free software: you can redistribute it and/or modify it under the
 @file    file.py
 @author  Sampsa Riikonen
 @date    2018
-@version 1.2.1 
+@version 1.2.2 
 @brief   A GUI for testing your machine vision with plain video files
 """
 

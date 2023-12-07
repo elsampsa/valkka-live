@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 @file    multifork.py
 @author  Sampsa Riikonen
 @date    2019
-@version 1.2.1 
+@version 1.2.2 
 @brief   
 """
 
