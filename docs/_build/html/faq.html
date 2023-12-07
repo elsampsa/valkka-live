@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>FAQ &#8212; valkka_live  documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=1c8f121f" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Modules" href="modules.html" />
@@ -32,10 +31,10 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="faq">
-<h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="could-not-load-the-qt-platform-plugin-xcb">
-<h2>Could not load the Qt platform plugin “xcb”<a class="headerlink" href="#could-not-load-the-qt-platform-plugin-xcb" title="Permalink to this headline">¶</a></h2>
+  <section id="faq">
+<h1>FAQ<a class="headerlink" href="#faq" title="Link to this heading">¶</a></h1>
+<section id="could-not-load-the-qt-platform-plugin-xcb">
+<h2>Could not load the Qt platform plugin “xcb”<a class="headerlink" href="#could-not-load-the-qt-platform-plugin-xcb" title="Link to this heading">¶</a></h2>
 <p>If you get this error:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qt</span><span class="o">.</span><span class="n">qpa</span><span class="o">.</span><span class="n">plugin</span><span class="p">:</span> <span class="n">Could</span> <span class="ow">not</span> <span class="n">load</span> <span class="n">the</span> <span class="n">Qt</span> <span class="n">platform</span> <span class="n">plugin</span> <span class="s2">&quot;xcb&quot;</span> <span class="ow">in</span> <span class="s2">&quot;&quot;</span> <span class="n">even</span> <span class="n">though</span> <span class="n">it</span> <span class="n">was</span> <span class="n">found</span><span class="o">.</span>
 </pre></div>
@@ -56,18 +55,20 @@
 <span class="n">sudo</span> <span class="n">pip3</span> <span class="n">uninstall</span> <span class="n">opencv</span><span class="o">-</span><span class="n">python</span> <span class="c1"># just in case!</span>
 </pre></div>
 </div>
+<p>That name of that sneaky broken opencv python package might also be “opencv-python-headless-something”.   You can see the versions installed
+with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">freeze</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">-i</span> <span class="pre">&quot;opencv&quot;</span></code></p>
 <p>And install your linux distro’s default opencv instead with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">opencv</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="discarding-late-frame">
-<h2>Discarding late frame<a class="headerlink" href="#discarding-late-frame" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="discarding-late-frame">
+<h2>Discarding late frame<a class="headerlink" href="#discarding-late-frame" title="Link to this heading">¶</a></h2>
 <p>One of the typical error messages you might find in the terminal,
 please read about them from <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/pitfalls.html">here</a></p>
-</div>
-<div class="section" id="k-and-4k-cameras">
-<h2>2K and 4K cameras<a class="headerlink" href="#k-and-4k-cameras" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="k-and-4k-cameras">
+<h2>2K and 4K cameras<a class="headerlink" href="#k-and-4k-cameras" title="Link to this heading">¶</a></h2>
 <p><em>I have benchmarked Valkka against an expensive commercial program.  The other program is capable of showing 20 live 2K cameras on the screen using a cheap laptop.</em></p>
 <p>That commercial program is not streaming at 2K resolution.  Instead, it requests the so-called “substream” from those cameras which is typically 720p or less.</p>
 <p>If you want to benchmark against Valkka, you must use the substream address instead.</p>
@@ -77,8 +78,8 @@ please read about them from <a class="reference external" href="https://elsampsa
 </pre></div>
 </div>
 <p>in Valkka Live camera config menu, you should then use <em>Streaming/Channels/102</em> at the <em>Tail</em> field</p>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -135,12 +136,12 @@ please read about them from <a class="reference external" href="https://elsampsa
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -149,8 +150,8 @@ please read about them from <a class="reference external" href="https://elsampsa
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="_sources/faq.rst.txt"

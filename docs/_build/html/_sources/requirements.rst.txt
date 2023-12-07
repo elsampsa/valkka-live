@@ -42,7 +42,7 @@ You can test your libValkka installation with:
 
 ::
 
-    curl https://raw.githubusercontent.com/elsampsa/valkka-examples/master/quicktest.py
+    curl https://raw.githubusercontent.com/elsampsa/valkka-examples/master/quicktest.py -o quicktest.py
     python3 quicktest.py
     
 In the case that *install-valkka-core* etc. scripts refuse to work, you must fix your path with

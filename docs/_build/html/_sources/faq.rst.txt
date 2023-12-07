@@ -37,6 +37,9 @@ If this error *still* persists and is reported by python's cv2 module, you have 
     pip3 uninstall opencv-python
     sudo pip3 uninstall opencv-python # just in case!
 
+That name of that sneaky broken opencv python package might also be "opencv-python-headless-something".   You can see the versions installed
+with ``pip freeze | grep -i "opencv"``
+
 And install your linux distro's default opencv instead with:
 
 ::

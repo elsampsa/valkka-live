@@ -63,6 +63,9 @@ class DiscoveryThread(QThread):
 
 
     def run(self):
+        # this should be rewritten at some stage to take
+        # advantage of all the new stuff
+        # ..but so should be whole valkka live
         print(">wsdiscovery")
         # so, this has changed: now this returns a list of (ip, onvif-port):
         ips = [item[0] for item in runWSDiscovery()] # list of (ip, port) -> # pick up the ip addresses only
@@ -73,7 +76,10 @@ class DiscoveryThread(QThread):
         if self.arp:
             print(">arp-scan")
             # pick up only the ip addresses
-            ips2 = [item[0] for item in runARPScan(exclude_list = ips)]
+            # runARPScan returns ArpRTSPScanResult objects
+            # member "ip" gives the ip addres
+            # https://github.com/elsampsa/valkka-onvif
+            ips2 = [res.ip for res in runARPScan(exclude_list = ips)]
         ips = ips + ips2
         self.signals.ip_list.emit(ips)
         print(">discovery thread bye")

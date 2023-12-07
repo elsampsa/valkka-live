@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Modules &#8212; valkka_live  documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=1c8f121f" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Copyright and License" href="license.html" />
@@ -32,10 +31,10 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="modules">
-<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="machine-vision">
-<h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
+  <section id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Link to this heading">¶</a></h1>
+<section id="machine-vision">
+<h2>Machine Vision<a class="headerlink" href="#machine-vision" title="Link to this heading">¶</a></h2>
 <p><em>Warning: version 0.12.0 has seen a major revision and reorganization in the multiprocessing architecture</em></p>
 <p>Once Valkka has decoded a frame from a certain camera, that decoded frame can be dumped to screen (to hundred windows if necessary) and passed to machine vision routines.  There is no overhead, as the stream from a certain camera is decoded only once.</p>
 <p>Decoded frames can be pushed to machine vision routines that are programmed at the python level.  You can easily construct your own too.  At the moment, there are two schemes of plugging-in a python machine vision module.</p>
@@ -80,23 +79,23 @@
 </pre></div>
 </div>
 <p>where <em>N</em> is the test number.  Test number 4 in particular, lets you to test the machine vision module with video files (see each <em>base.py</em> for more information).</p>
-</div>
-<div class="section" id="machine-vision-examples">
-<h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="movement-detector">
-<h3>Movement Detector<a class="headerlink" href="#movement-detector" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="machine-vision-examples">
+<h2>Machine Vision Examples<a class="headerlink" href="#machine-vision-examples" title="Link to this heading">¶</a></h2>
+<section id="movement-detector">
+<h3>Movement Detector<a class="headerlink" href="#movement-detector" title="Link to this heading">¶</a></h3>
 <p>This is an extremely simple demo, using OpenCV.  It reports when there is movement.  A good basis for using your own, OpenCV based module.</p>
 <p>This module needs OpenCV installed.  See <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/requirements.html#opencv">here</a>.</p>
 <p>This one also demonstrates how to communicate machine vision parameters to your machine vision multiprocess: click on the “Define Analyzer” button, and you’ll see what is going on with the analysis</p>
 <p>By clicking on the appearing window, you can define a line and a normal direction for line-crossing.  The parameters are communicated to the multiprocess.  This is just to demo the process of sending parameters to your machine vision module / multiprocess (does nothing else).</p>
-</div>
-<div class="section" id="nix">
-<h3>Nix<a class="headerlink" href="#nix" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="nix">
+<h3>Nix<a class="headerlink" href="#nix" title="Link to this heading">¶</a></h3>
 <p>Demonstrates how to send frames to an external process.</p>
 <p>Files are sent to a file in the “/tmp” directory, reading and writing frames is synchronized using communication through stdin and stdout.</p>
-</div>
-<div class="section" id="yolo-object-detection">
-<h3>Yolo Object Detection<a class="headerlink" href="#yolo-object-detection" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="yolo-object-detection">
+<h3>Yolo Object Detection<a class="headerlink" href="#yolo-object-detection" title="Link to this heading">¶</a></h3>
 <p>LibValkka is framework agnostic, so you can use <em>any</em> deep-learning framework with libValkka and valkka-live.</p>
 <p>However, for demonstration and proof-of-concept purposes, we provide an independent deep-learning “framework”, which based on pjreddie’s original darknet and yolo.</p>
 <p>Once you have installed and tested <a class="reference external" href="https://github.com/elsampsa/darknet-python">our Darknet python bindings</a>, the Yolo 3 object detector will appear in the Machine Vision plug-in menu.</p>
@@ -113,15 +112,15 @@
 <li><p>Each client receives textual information (labels and boxes) from the common master process</p></li>
 </ul>
 <p>All of this is orchestrated under-the-hood using libValkka multiprocessing servers and clients</p>
-</div>
-</div>
-<div class="section" id="creating-packages">
-<h2>Creating Packages<a class="headerlink" href="#creating-packages" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="creating-packages">
+<h2>Creating Packages<a class="headerlink" href="#creating-packages" title="Link to this heading">¶</a></h2>
 <p>You can create your own packages with machine vision modules using namespaces starting with <em>valkka.mvision</em>.</p>
 <p>If you create, a namespace package to, say, namespace <em>valkka.mvision_myown</em>, and use the same conventions (directories, classnames, etc.) explained above for <em>valkka.mvision</em>, they will appear automagically in Valkka Live’s <em>Machine Vision</em> menus.</p>
 <p>For creating namespace modules under <em>valkka.</em>, refer <a class="reference external" href="https://github.com/elsampsa/valkka-skeleton">here</a></p>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -183,12 +182,12 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -197,8 +196,8 @@
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="_sources/modules.rst.txt"

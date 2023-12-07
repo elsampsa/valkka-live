@@ -8,3 +8,4 @@ build/
 dist/
 scrap/
 tmp/
+tmptest.py

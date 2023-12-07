@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Tutorial &#8212; valkka_live  documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=1c8f121f" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="FAQ" href="faq.html" />
@@ -32,11 +31,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="tutorial">
-<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+  <section id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Link to this heading">¶</a></h1>
 <p>The basic user interface is simple and intuitive and is based on drag’n’dropping the cameras into views.</p>
-<div class="section" id="manage-cameras">
-<h2>1. Manage Cameras<a class="headerlink" href="#manage-cameras" title="Permalink to this headline">¶</a></h2>
+<section id="manage-cameras">
+<h2>1. Manage Cameras<a class="headerlink" href="#manage-cameras" title="Link to this heading">¶</a></h2>
 <p>First, let’s register some RTSP cameras.</p>
 <ul class="simple">
 <li><p>Navigate to <em>Configuration / Configuration Dialog / Camera Configuration</em></p></li>
@@ -52,9 +51,9 @@
 <ul class="simple">
 <li><p><em>Configuration / Configuration Dialog / Memory Configuration</em></p></li>
 </ul>
-</div>
-<div class="section" id="viewing-cameras">
-<h2>2. Viewing Cameras<a class="headerlink" href="#viewing-cameras" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="viewing-cameras">
+<h2>2. Viewing Cameras<a class="headerlink" href="#viewing-cameras" title="Link to this heading">¶</a></h2>
 <p>Let’s see a list of installed cameras and view their live video</p>
 <ul class="simple">
 <li><p>Navigate to <em>View / Camera List</em>.  The camera list widget appears on screen</p></li>
@@ -66,31 +65,31 @@
 <li><p>Double-clicking on the video, maximizes the video size</p></li>
 <li><p>Double-clicking again, restores the normal size</p></li>
 </ul>
-</div>
-<div class="section" id="removing-cameras">
-<h2>3. Removing Cameras<a class="headerlink" href="#removing-cameras" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="removing-cameras">
+<h2>3. Removing Cameras<a class="headerlink" href="#removing-cameras" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Right-click on a video in the video grid</p></li>
 <li><p>Choose <em>Remove Camera</em></p></li>
 </ul>
-</div>
-<div class="section" id="saving-and-loading-the-layout">
-<h2>4. Saving and Loading the Layout<a class="headerlink" href="#saving-and-loading-the-layout" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="saving-and-loading-the-layout">
+<h2>4. Saving and Loading the Layout<a class="headerlink" href="#saving-and-loading-the-layout" title="Link to this heading">¶</a></h2>
 <p>Camera views can be saved, and recovered for the next time when you use Valkka Live</p>
 <ul class="simple">
 <li><p>Navigate to <em>File / Save Window Layout</em>.  Now your view layout is saved</p></li>
 <li><p>When starting the program again, navigate to <em>File / Load Window Layout</em></p></li>
 </ul>
-</div>
-<div class="section" id="machine-vision">
-<h2>5. Machine Vision<a class="headerlink" href="#machine-vision" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="machine-vision">
+<h2>5. Machine Vision<a class="headerlink" href="#machine-vision" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Open a machine vision terminal from the <em>Machine Vision</em> menu</p></li>
 <li><p>Drag’n drop a camera to that terminal</p></li>
 </ul>
-</div>
-<div class="section" id="playback">
-<h2>6. Playback<a class="headerlink" href="#playback" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="playback">
+<h2>6. Playback<a class="headerlink" href="#playback" title="Link to this heading">¶</a></h2>
 <p><em>NEW</em></p>
 <p>The experimental playback feature is now enabled by default.  Do the following to see the recorded video:</p>
 <ul class="simple">
@@ -106,8 +105,8 @@
 </ul>
 <p>We recommend adjusting your camera’s keyframe interval to one keyframe per second and then setting your camera’s bitrate &amp; valkkafs blocksize accordingly.</p>
 <p>Read more about the block-based filesystem in <a class="reference external" href="https://elsampsa.github.io/valkka-examples/_build/html/lesson_11.html">here</a></p>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -167,12 +166,12 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -181,8 +180,8 @@
       &copy;2018 Sampsa Riikonen.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="_sources/manual.rst.txt"
