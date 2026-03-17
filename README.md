@@ -1,3 +1,7 @@
+# ABANDONWARE WARNING
+
+## LibValkka has been archived.  For a similar project, please take a look at [Limef](https://elsampsa.github.io/limef-docs/sphinx/_build/html/index.html)
+
 # Valkka Live
 
 Valkka Live is a modular and hackable opensource video surveillance program for local area networks.
